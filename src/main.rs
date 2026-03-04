@@ -83,7 +83,7 @@ fn main() -> process::ExitCode {
     }
 
     if let Err(sanity_check_failures) = settings.sanity_check() {
-        eprintln!("[!] Configuration has errors:");
+        eprintln!("[X] Configuration has errors:");
 
         for error in sanity_check_failures {
             eprintln!("  * {error}");
@@ -100,7 +100,7 @@ fn main() -> process::ExitCode {
     let peers = match wireguard::read_peer_list(&settings.paths.peer_list, settings.debug) {
         Ok(peers) => peers,
         Err(e) => {
-            eprintln!("[!] Error reading peers file: {}", e);
+            eprintln!("[X] Error reading peers file: {}", e);
             return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
         }
     };
@@ -116,7 +116,7 @@ fn main() -> process::ExitCode {
             output
         }
         Err(e) => {
-            eprintln!("[!] Error executing command: {e}");
+            eprintln!("[X] Error executing command: {e}");
             return process::ExitCode::from(
                 defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
             );
@@ -126,7 +126,7 @@ fn main() -> process::ExitCode {
     let handshake_validation_errors = wireguard::validate_handshakes(&latest_handshakes_output);
 
     if !handshake_validation_errors.is_empty() {
-        eprintln!("[!] Error validating latest-handshakes output:");
+        eprintln!("[X] Error validating latest-handshakes output:");
 
         for error in handshake_validation_errors {
             eprintln!("  * {error}");
@@ -145,7 +145,7 @@ fn main() -> process::ExitCode {
     let mut notifiers = build_notifiers(&settings);
 
     if notifiers.is_empty() {
-        eprintln!("[!] No notifiers configured.");
+        eprintln!("[X] No notifiers configured.");
 
         if settings.dry_run {
             println!("[!] Continuing anyway because --dry-run is set.");
@@ -335,7 +335,7 @@ fn run_loop(
                 {
                     match notify::send_reminder(notifiers, ctx, settings.verbose) {
                         true => {
-                            println!("[:] Repeat reminders sent successfully");
+                            println!("[O] Repeat reminders sent successfully");
                             ctx.last_report = Some(ctx.now);
                         }
                         false => eprintln!("[!] Failed to send some repeat reminders"),
@@ -372,7 +372,7 @@ fn run_loop(
 
         match notify::send_notification(notifiers, ctx, &delta, settings.verbose) {
             true => {
-                println!("[:] Notifications sent successfully");
+                println!("[O] Notifications sent successfully");
             }
             false => {
                 // We can either drop down here, rotate hashmaps and unset first_run
@@ -400,7 +400,7 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
     let mut settings = Settings::default();
 
     if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
-        eprintln!("[!] Error resolving default configuration directory: {}", e);
+        eprintln!("[X] Error resolving default configuration directory: {}", e);
         return Err(process::ExitCode::from(
             defaults::exit_codes::FAILED_TO_RESOLVE_CONFIG_DIR,
         ));
@@ -408,7 +408,7 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
 
     if !settings.paths.config_dir.exists() && !cli.save {
         eprintln!(
-            "[!] Configuration directory {} does not exist. \
+            "[X] Configuration directory {} does not exist. \
             Create it or run with `--save` to generate default configuration and resources.",
             settings.paths.config_dir.display()
         );
@@ -423,7 +423,7 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
         Ok(cfg) => cfg,
         Err(e) => {
             eprintln!(
-                "[!] Failed to read configuration file {}: {e}",
+                "[X] Failed to read configuration file {}: {e}",
                 settings.paths.config_file.display()
             );
             return Err(process::ExitCode::from(
@@ -434,7 +434,7 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
 
     if !cli.save && config.is_none() {
         eprintln!(
-            "[!] No configuration file found at {}. \
+            "[X] No configuration file found at {}. \
             Create it or run with `--save` to generate default configuration and resources.",
             settings.paths.config_file.display()
         );
@@ -452,13 +452,13 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
             match fs::create_dir_all(&settings.paths.config_dir) {
                 Ok(()) => {
                     println!(
-                        "[:] Configuration directory {} created.",
+                        "[O] Configuration directory {} created.",
                         settings.paths.config_dir.display()
                     );
                 }
                 Err(e) => {
                     eprintln!(
-                        "[!] Failed to create configuration directory {}: {e}",
+                        "[X] Failed to create configuration directory {}: {e}",
                         settings.paths.config_dir.display()
                     );
 
@@ -473,7 +473,7 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
 
         if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
             eprintln!(
-                "[!] Failed to write configuration file {}: {e}",
+                "[X] Failed to write configuration file {}: {e}",
                 settings.paths.config_file.display()
             );
 
@@ -486,13 +486,13 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
             match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
                 Ok(()) => {
                     println!(
-                        "[:] Empty peer list file {} created.",
+                        "[O] Empty peer list file {} created.",
                         settings.paths.peer_list.display()
                     );
                 }
                 Err(e) => {
                     eprintln!(
-                        "[!] Failed to write empty peer list file {}: {e}",
+                        "[X] Failed to write empty peer list file {}: {e}",
                         &settings.paths.peer_list.display()
                     );
 
@@ -504,7 +504,7 @@ fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
         }
 
         println!(
-            "[:] Configuration and resources written successfully to {}.",
+            "[O] Configuration and resources written successfully to {}.",
             settings.paths.config_dir.display()
         );
         return Err(process::ExitCode::SUCCESS);

@@ -20,7 +20,7 @@ pub fn read_peer_list(
     debug: bool,
 ) -> io::Result<HashMap<String, peer::WireguardPeer>> {
     if debug {
-        println!("[:] Reading peers from file: '{}'\n", path.display());
+        println!("[i] Reading peers from file: '{}'\n", path.display());
     }
 
     let file = fs::File::open(path)?;
@@ -77,7 +77,7 @@ pub fn read_peer_list(
     }
 
     if debug {
-        println!("[:] Total peers loaded: {}\n", peers.len());
+        println!("[i] Total peers loaded: {}\n", peers.len());
     }
 
     Ok(peers)
