@@ -351,12 +351,12 @@ fn run_loop(
                         true => {
                             println!("[O] Repeat reminders sent successfully");
                             ctx.last_report = Some(ctx.now);
+                            ctx.num_consecutive_reminders += 1;
                         }
                         false => eprintln!("[!] Failed to send some repeat reminders"),
                     }
 
                     println!();
-                    ctx.num_consecutive_reminders += 1;
                 }
             }
 
