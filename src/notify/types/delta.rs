@@ -65,4 +65,21 @@ impl Delta {
             &mut self.went_missing_keys,
         );
     }
+
+    /// Prints the non-empty vectors in the `Delta` for debugging purposes,
+    /// showing which peers changed status.
+    pub fn print_nonempty_prefixed(&self, prefix: &str) {
+        if !self.no_longer_late_keys.is_empty() {
+            println!("{prefix}no longer late: {:?}", self.no_longer_late_keys);
+        }
+        if !self.became_late_keys.is_empty() {
+            println!("{prefix}became late: {:?}", self.became_late_keys);
+        }
+        if !self.returned_keys.is_empty() {
+            println!("{prefix}returned: {:?}", self.returned_keys);
+        }
+        if !self.went_missing_keys.is_empty() {
+            println!("{prefix}went missing: {:?}", self.went_missing_keys);
+        }
+    }
 }
