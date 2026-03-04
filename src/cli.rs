@@ -29,6 +29,10 @@ pub struct Cli {
     #[arg(long)]
     pub show: bool,
 
+    /// Print some additional information
+    #[arg(short = 'v', long)]
+    pub verbose: bool,
+
     /// Print additional debug information
     #[arg(short = 'd', long)]
     pub debug: bool,

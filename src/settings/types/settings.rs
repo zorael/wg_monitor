@@ -27,6 +27,9 @@ pub struct Settings {
     /// If true, the program will not send any Batsign notifications and will only print what it would do.
     pub dry_run: bool,
 
+    /// If true, the program will print some additional information.
+    pub verbose: bool,
+
     /// If true, the program will print additional debug information.
     pub debug: bool,
 }
@@ -104,6 +107,7 @@ impl Settings {
         // because it affects how other settings are loaded from disk.
         self.resume = cli.resume;
         self.dry_run = cli.dry_run;
+        self.verbose = cli.verbose;
         self.debug = cli.debug;
     }
 }
