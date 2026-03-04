@@ -241,6 +241,14 @@ fn run_loop(
     notifiers: &mut [Box<dyn notify::NotificationSender>],
     settings: Settings,
 ) -> process::ExitCode {
+    /// Perform some cleanup and sleep at the end of each loop duration.
+    fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
+        ctx.rotate();
+        ctx.first_run = false;
+        ctx.resume = false;
+        thread::sleep(duration);
+    }
+
     let mut delta = notify::Delta::with_capacity(ctx.peers.len());
 
     ctx.first_run = !settings.resume;
@@ -309,9 +317,7 @@ fn run_loop(
 
         if delta.is_empty() {
             if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
-                ctx.rotate();
-                ctx.first_run = false;
-                thread::sleep(settings.monitor.check_interval);
+                end_loop(ctx, settings.monitor.check_interval);
                 continue;
             }
 
@@ -346,9 +352,7 @@ fn run_loop(
                 }
             }
 
-            ctx.rotate();
-            ctx.first_run = false;
-            thread::sleep(settings.monitor.check_interval);
+            end_loop(ctx, settings.monitor.check_interval);
             continue;
         }
 
@@ -375,20 +379,18 @@ fn run_loop(
                 // We can either drop down here, rotate hashmaps and unset first_run
                 // so as to force a retry of the same notification after sleeping,
                 // or we can just log the failure and move on.
-                // For now, just log. Failed notifications will be swallowed.
+                // For now, just log. Failed notifications will be lost.
                 eprintln!("[!] Failed to send some notifications");
-                /*thread::sleep(defaults::LOOP_INTERVAL);
+                /*end_loop(ctx, settings.monitor.check_interval);
                 continue;*/
             }
         }
 
         println!();
 
-        ctx.rotate();
         ctx.num_consecutive_reminders = 0;
-        ctx.first_run = false;
         ctx.last_report = Some(ctx.now);
-        thread::sleep(settings.monitor.check_interval);
+        end_loop(ctx, settings.monitor.check_interval);
     }
 }
 
