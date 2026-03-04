@@ -21,6 +21,9 @@ pub struct Settings {
     /// Paths to resources, resolved at runtime.
     pub paths: super::PathBufs,
 
+    /// If true, the program will skip sending notifications specifically about program startup.
+    pub resume: bool,
+
     /// If true, the program will not send any Batsign notifications and will only print what it would do.
     pub dry_run: bool,
 
@@ -98,7 +101,8 @@ impl Settings {
     /// Applies CLI settings, returning the resulting settings.
     pub fn apply_cli(&mut self, cli: &cli::Cli) {
         // Config directory is applied separately in `inherit_config_dir`
-        //because it affects how other settings are loaded from disk.
+        // because it affects how other settings are loaded from disk.
+        self.resume = cli.resume;
         self.dry_run = cli.dry_run;
         self.debug = cli.debug;
     }

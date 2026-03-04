@@ -21,6 +21,10 @@ pub struct Cli {
     #[arg(short = 'c', long, value_name = "path")]
     pub config_dir: Option<String>,
 
+    /// Skip notifications about program startup
+    #[arg(long)]
+    pub resume: bool,
+
     /// Show the resolved configuration and exit
     #[arg(long)]
     pub show: bool,

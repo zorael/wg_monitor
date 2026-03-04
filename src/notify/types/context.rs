@@ -33,6 +33,10 @@ pub struct Context {
     /// Indicates whether this is the first run of the notifier, which can be used
     /// to adjust the messaging (e.g., to indicate that the initial state is being reported).
     pub first_run: bool,
+
+    /// Indicates that the program is resuming from a previous run, which means
+    /// that some startup notifications should be skipped.
+    pub resume: bool,
 }
 
 impl Context {
@@ -47,6 +51,7 @@ impl Context {
             now: time::SystemTime::UNIX_EPOCH,
             last_report: None,
             first_run: false,
+            resume: false,
         }
     }
 

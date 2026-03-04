@@ -50,6 +50,13 @@ pub fn format_generic_message(
         );
     };
 
+    if ctx.resume {
+        add_section(&ctx.late_keys, &strings.still_lost);
+        add_section(&ctx.missing_keys, &strings.still_missing);
+        message.push_str(&strings.footer);
+        return message.replace("\\n", "\n").trim_end().to_owned();
+    }
+
     let late_sans_new_late_keys =
         utils::get_elements_not_in_other_vec(&ctx.late_keys, &delta.became_late_keys);
 

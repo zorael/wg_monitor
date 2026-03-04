@@ -243,7 +243,8 @@ fn run_loop(
 ) -> process::ExitCode {
     let mut delta = notify::Delta::with_capacity(ctx.peers.len());
 
-    ctx.first_run = true;
+    ctx.first_run = !settings.resume;
+    ctx.resume = settings.resume;
 
     loop {
         match wireguard::get_handshakes(&settings.monitor.interface) {
