@@ -20,7 +20,7 @@ pub fn read_peer_list(
     debug: bool,
 ) -> io::Result<HashMap<String, peer::WireguardPeer>> {
     if debug {
-        println!("Reading peers from file: '{}'\n", path.display());
+        println!("[:] Reading peers from file: '{}'\n", path.display());
     }
 
     let file = fs::File::open(path)?;
@@ -40,7 +40,7 @@ pub fn read_peer_list(
 
         if let Some((key, human_name)) = line.split_once(' ') {
             if !peer::WireguardPeer::validate_public_key(key) {
-                eprintln!("Warning: Invalid public key in peers file: '{}'", key);
+                eprintln!("[!] Invalid public key in peers file: '{}'", key);
                 continue;
             }
 
@@ -72,12 +72,12 @@ pub fn read_peer_list(
             peers.insert(key, peer);
         } else {
             // Invalid line format, skip it
-            eprintln!("Warning: Invalid line in peers file: '{}'", line);
+            eprintln!("[!] Invalid line in peers file: '{}'", line);
         }
     }
 
     if debug {
-        println!("Total peers loaded: {}\n", peers.len());
+        println!("[:] Total peers loaded: {}\n", peers.len());
     }
 
     Ok(peers)
@@ -95,12 +95,14 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
         }
 
         let Some((key, timestamp)) = line.split_once('\t') else {
-            errors.push(format!("Invalid line in handshakes output: '{line}'"));
+            errors.push(format!("[!] Invalid line in handshakes output: '{line}'"));
             continue;
         };
 
         if timestamp.parse::<u64>().ok().is_none() {
-            errors.push(format!("Invalid timestamp for key '{key}': '{timestamp}'"));
+            errors.push(format!(
+                "[!] Invalid timestamp for key '{key}': '{timestamp}'"
+            ));
             continue;
         };
     }
@@ -149,11 +151,10 @@ pub fn get_handshakes(interface: &str) -> io::Result<String> {
         .output()?;
 
     if !output.status.success() {
-        println!("{}", String::from_utf8_lossy(&output.stderr));
-
         return Err(io::Error::other(format!(
-            "Command 'wg show {interface} latest-handshakes' failed with status: {}",
-            output.status
+            "'wg show {interface} latest-handshakes' failed with status: {}\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr)
         )));
     }
 

@@ -74,7 +74,7 @@ impl Settings {
 
         if self.dry_run {
             println!();
-            println!("(DRY RUN)");
+            println!("[!] DRY RUN");
         }
     }
 
