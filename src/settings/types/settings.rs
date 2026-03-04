@@ -24,6 +24,9 @@ pub struct Settings {
     /// If true, the program will skip sending notifications specifically about program startup.
     pub resume: bool,
 
+    /// If true, the program will skip the first run and thus the first notification.
+    pub skip_first: bool,
+
     /// If true, the program will not send any Batsign notifications and will only print what it would do.
     pub dry_run: bool,
 
@@ -106,6 +109,7 @@ impl Settings {
         // Config directory is applied separately in `inherit_config_dir`
         // because it affects how other settings are loaded from disk.
         self.resume = cli.resume;
+        self.skip_first = cli.skip_first;
         self.dry_run = cli.dry_run;
         self.verbose = cli.verbose;
         self.debug = cli.debug;

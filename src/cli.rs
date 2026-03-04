@@ -25,6 +25,10 @@ pub struct Cli {
     #[arg(long)]
     pub resume: bool,
 
+    /// Skip the first run and thus the first notification
+    #[arg(long)]
+    pub skip_first: bool,
+
     /// Show the resolved configuration and exit
     #[arg(long)]
     pub show: bool,
