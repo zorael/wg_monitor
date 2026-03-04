@@ -58,7 +58,12 @@ impl backend::Backend for BatsignBackend {
     /// Builds the message to be sent to Batsign based on the notification context and delta.
     fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
         let mut message = String::new();
-        message.push_str(&format!("Subject: {}\n", &self.strings.header));
+        let header = match ctx.first_run {
+            true => &self.strings.first_run_header,
+            false => &self.strings.header,
+        };
+
+        message.push_str(&format!("Subject: {}\n", header));
         message.push_str(&notify::format_generic_message(ctx, delta, &self.strings));
         message
     }

@@ -55,7 +55,7 @@ impl Default for MessageStrings {
     fn default() -> Self {
         Self {
             header: "Wireguard Monitor report".to_string(),
-            first_run_header: "\\n(Monitor starting up.)\\n".to_string(),
+            first_run_header: "Wireguard Monitor starting up".to_string(),
             first_run_missing: "Missing peers:\\n".to_string(),
             lost: "Just lost:\\n".to_string(),
             forgot: "Lost track of due to a restart of the VPN:\\n".to_string(),
