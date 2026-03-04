@@ -34,7 +34,11 @@ pub fn format_generic_message(
             }
         }
 
-        message.push_str(&strings.footer);
+        if !strings.footer.is_empty() {
+            message.push('\n');
+            message.push_str(&strings.footer);
+        }
+
         return message.replace("\\n", "\n").trim_end().to_owned();
     }
 
@@ -69,7 +73,12 @@ pub fn format_generic_message(
     add_section(&delta.returned_keys, &strings.appeared);
     add_section(&late_sans_new_late_keys, &strings.still_lost);
     add_section(&missing_sans_new_missing_keys, &strings.still_missing);
-    message.push_str(&strings.footer);
+
+    if !strings.footer.is_empty() {
+        message.push('\n');
+        message.push_str(&strings.footer);
+    }
+
     message.replace("\\n", "\n").trim_end().to_owned()
 }
 
@@ -95,7 +104,12 @@ pub fn format_generic_reminder(
 
     add_section(&ctx.late_keys, &strings.still_lost);
     add_section(&ctx.missing_keys, &strings.still_missing);
-    message.push_str(&strings.footer);
+
+    if !strings.footer.is_empty() {
+        message.push('\n');
+        message.push_str(&strings.footer);
+    }
+
     message.replace("\\n", "\n").trim_end().to_owned()
 }
 
