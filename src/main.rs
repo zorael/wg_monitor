@@ -164,47 +164,71 @@ fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSende
     let mut notifiers: Vec<Box<dyn notify::NotificationSender>> = Vec::new();
     let client = Arc::new(blocking::Client::new());
 
-    let build_slack_notifier = |i: usize, url: &str| {
-        let slack_backend = backend::SlackBackend::new(
+    fn build_and_push_notifiers<B, F>(
+        vec: &mut Vec<Box<dyn notify::NotificationSender>>,
+        urls: &[String],
+        mut make_backend_fn: F,
+        dry_run: bool,
+    ) where
+        B: backend::Backend + 'static,
+        F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
+    {
+        for (i, url) in urls.iter().enumerate() {
+            let backend = make_backend_fn(i, url);
+            let boxed = Box::new(notify::Notifier::new(backend, dry_run));
+            vec.push(boxed);
+        }
+    }
+
+    let make_slack_backend = |i: usize, url: &String| {
+        backend::SlackBackend::new(
             i,
             Arc::clone(&client),
             url,
             &settings.slack.strings,
             &settings.slack.reminder_strings,
-        );
-
-        notify::Notifier::new(slack_backend, settings.dry_run)
+        )
     };
 
-    let build_batsign_notifier = |i: usize, url: &str| {
-        let batsign_backend = backend::BatsignBackend::new(
+    let make_batsign_backend = |i: usize, url: &String| {
+        backend::BatsignBackend::new(
             i,
             Arc::clone(&client),
             url,
             &settings.batsign.strings,
             &settings.batsign.reminder_strings,
-        );
-
-        notify::Notifier::new(batsign_backend, settings.dry_run)
+        )
     };
 
     if settings.dry_run {
-        notifiers.push(Box::new(build_slack_notifier(0, defaults::DUMMY_SLACK_URL)));
-        notifiers.push(Box::new(build_batsign_notifier(
-            0,
-            defaults::DUMMY_BATSIGN_URL,
-        )));
+        let dummy_slack_urls = vec![defaults::DUMMY_SLACK_URL.to_string()];
+        let dummy_batsign_urls = vec![defaults::DUMMY_BATSIGN_URL.to_string()];
+
+        build_and_push_notifiers(&mut notifiers, &dummy_slack_urls, make_slack_backend, true);
+
+        build_and_push_notifiers(
+            &mut notifiers,
+            &dummy_batsign_urls,
+            make_batsign_backend,
+            true,
+        );
     } else {
         if settings.slack.enabled && !settings.slack.urls.is_empty() {
-            for (i, url) in settings.slack.urls.iter().enumerate() {
-                notifiers.push(Box::new(build_slack_notifier(i, url)));
-            }
+            build_and_push_notifiers(
+                &mut notifiers,
+                &settings.slack.urls,
+                make_slack_backend,
+                false,
+            );
         }
 
         if settings.batsign.enabled && !settings.batsign.urls.is_empty() {
-            for (i, url) in settings.batsign.urls.iter().enumerate() {
-                notifiers.push(Box::new(build_batsign_notifier(i, url)));
-            }
+            build_and_push_notifiers(
+                &mut notifiers,
+                &settings.batsign.urls,
+                make_batsign_backend,
+                false,
+            )
         }
     }
 
