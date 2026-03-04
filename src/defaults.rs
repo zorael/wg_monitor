@@ -13,8 +13,8 @@ pub const TIMEOUT: Duration = Duration::from_secs(600);
 /// Default check interval for monitoring the Wireguard interface.
 pub const CHECK_INTERVAL: Duration = Duration::from_secs(60);
 
-/// Default reminder interval for sending reminder notifications.
-pub const REMINDER_INTERVAL: Duration = Duration::from_secs(3600 * 12);
+/// Default reminder interval for sending reminder notifications. Base value, will be grown.
+pub const REMINDER_INTERVAL: Duration = Duration::from_secs(3600 * 6);
 
 /// Default configuration file name.
 pub const CONFIG_FILENAME: &str = "config.toml";
