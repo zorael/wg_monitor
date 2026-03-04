@@ -250,6 +250,7 @@ fn run_loop(
     }
 
     let mut delta = notify::Delta::with_capacity(ctx.peers.len());
+    let mut should_skip_next = settings.skip_first;
 
     ctx.first_run = !settings.resume;
     ctx.resume = settings.resume;
@@ -314,6 +315,12 @@ fn run_loop(
         }
 
         delta.compute_from(ctx);
+
+        if should_skip_next {
+            should_skip_next = false;
+            end_loop(ctx, settings.monitor.check_interval);
+            continue;
+        }
 
         if delta.is_empty() {
             if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
