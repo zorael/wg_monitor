@@ -1,0 +1,83 @@
+//! Slack backend for sending notifications to a Slack channel.
+
+use reqwest::blocking;
+use std::sync;
+
+use crate::notify;
+use crate::settings;
+
+/// Defines the Slack backend for sending notifications to a Slack channel.
+pub struct SlackBackend {
+    /// Unique identifier for the Slack backend instance, used for logging and identification purposes.
+    id: usize,
+
+    /// HTTP client used to send requests to the Slack API.
+    client: sync::Arc<blocking::Client>,
+
+    /// Slack webhook URL to which the notification will be sent.
+    url: String,
+
+    /// Message strings for Slack notifications.
+    strings: settings::MessageStrings,
+
+    /// Message strings for Slack reminder notifications.
+    reminder_strings: settings::ReminderStrings,
+}
+
+impl SlackBackend {
+    /// Creates a new instance of SlackBackend.
+    pub fn new(
+        id: usize,
+        client: sync::Arc<blocking::Client>,
+        url: &str,
+        strings: &settings::MessageStrings,
+        reminder_strings: &settings::ReminderStrings,
+    ) -> Self {
+        Self {
+            id,
+            client,
+            url: url.to_owned(),
+            strings: strings.clone(),
+            reminder_strings: reminder_strings.clone(),
+        }
+    }
+}
+
+impl super::Backend for SlackBackend {
+    /// Returns the name of the backend, which is "slack" in this case.
+    fn name(&self) -> String {
+        // This can be cached if it turns out to be a hotspot.
+        format!("slack#{}", self.id)
+    }
+
+    /// Builds the message to be sent to Slack based on the notification context and delta.
+    fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
+        let mut message = String::new();
+        message.push_str(&format!("{}\n", &self.strings.header));
+        message.push_str(&notify::format_generic_message(ctx, delta, &self.strings));
+        serde_json::json!({ "text": format!("{message}") }).to_string()
+    }
+
+    /// Builds the reminder message to be sent to Slack based on the notification context.
+    fn build_reminder(&self, ctx: &notify::Context) -> String {
+        let mut message = String::new();
+        message.push_str(&format!("{}\n", &self.reminder_strings.header));
+        message.push_str(&notify::format_generic_reminder(
+            ctx,
+            &self.reminder_strings,
+        ));
+        serde_json::json!({ "text": format!("{message}") }).to_string()
+    }
+
+    /// Sends a notification via the Slack backend by making a POST request
+    /// to the specified URL with the message as a JSON payload.
+    fn send(&mut self, message: &str) -> Result<(), String> {
+        let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
+
+        match self.client.post(&self.url).json(&json).send() {
+            Ok(resp) if resp.status().is_success() => Ok(()),
+            Ok(resp) => Err(format!("HTTP {}", resp.status())),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+}

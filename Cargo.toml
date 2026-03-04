@@ -1,0 +1,19 @@
+[package]
+name = "wg_monitor"
+version = "0.0.5"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+repository = "https://github.com/zorael/wg_monitor"
+authors = [ "jr" ]
+
+[dependencies]
+chrono = { version = "0.4" }
+clap = { version = "4.5", features = ["derive"] }
+confy = { version = "2.0" }
+constcat = { version = "0.6" }
+humantime = { version = "2.3" }
+humantime-serde = { version = "1.1" }
+reqwest = { version = "0.13", features = ["blocking", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+users = { version = "0.11" }

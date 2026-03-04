@@ -1,0 +1,116 @@
+//! FIXME
+
+use serde::{Deserialize, Serialize};
+
+use crate::settings;
+
+/// Notification message string configuration struct for the program.
+#[derive(Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MessageStringsConfig {
+    /// Message header in notifications.
+    pub header: Option<String>,
+
+    /// Message header for the first run (first loop) of the program.
+    pub first_run_header: Option<String>,
+
+    /// Section header for peers that are missing on the first run of the program.
+    pub first_run_missing: Option<String>,
+
+    /// Section header for peers that disappeared since the last check.
+    pub lost: Option<String>,
+
+    /// Section header for peers that were present but are now missing, probably
+    /// due to a restart of the VPN.
+    pub forgot: Option<String>,
+
+    /// Section header for peers that appeared for the first time since the last check.
+    pub appeared: Option<String>,
+
+    /// Section header for peers that returned after being lost.
+    pub returned: Option<String>,
+
+    /// Section header for peers that are still lost.
+    pub still_lost: Option<String>,
+
+    /// Section header for peers that have still not appeared since the last restart.
+    pub still_missing: Option<String>,
+
+    /// Message footer in notifications.
+    pub footer: Option<String>,
+
+    /// Bullet point string for listing peers in notifications.
+    pub bullet_point: Option<String>,
+
+    /// Message string for a peer with a timestamp, used in notifications
+    /// when the timestamp of the last seen time is known.
+    pub peer_with_timestamp: Option<String>,
+
+    /// Message string for a peer without a timestamp, used in notifications
+    /// when the timestamp of the last seen time is zero.
+    pub peer_no_timestamp: Option<String>,
+}
+
+impl From<&settings::MessageStrings> for MessageStringsConfig {
+    /// Converts a `MessageStrings` into a `MessageStringsConfig` for serialization.
+    fn from(strings: &settings::MessageStrings) -> Self {
+        Self {
+            header: Some(strings.header.clone()),
+            first_run_header: Some(strings.first_run_header.clone()),
+            first_run_missing: Some(strings.first_run_missing.clone()),
+            lost: Some(strings.lost.clone()),
+            forgot: Some(strings.forgot.clone()),
+            appeared: Some(strings.appeared.clone()),
+            returned: Some(strings.returned.clone()),
+            still_lost: Some(strings.still_lost.clone()),
+            still_missing: Some(strings.still_missing.clone()),
+            footer: Some(strings.footer.clone()),
+            bullet_point: Some(strings.bullet_point.clone()),
+            peer_with_timestamp: Some(strings.peer_with_timestamp.clone()),
+            peer_no_timestamp: Some(strings.peer_no_timestamp.clone()),
+        }
+    }
+}
+
+/// Reminder message string configuration structures for the program.
+#[derive(Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ReminderStringsConfig {
+    /// Message header for reminder notifications.
+    pub header: Option<String>,
+
+    /// Section header for peers that are still lost in reminder notifications.
+    pub still_lost: Option<String>,
+
+    /// Section header for peers that have not yet been seen since the last restart.
+    pub still_missing: Option<String>,
+
+    /// Message footer for reminder notifications.
+    pub footer: Option<String>,
+
+    /// Bullet point string for listing peers in reminder notifications.
+    pub bullet_point: Option<String>,
+
+    /// Message string for a peer with a timestamp, used in notifications
+    /// when the timestamp of the last seen time is known.
+    pub peer_with_timestamp: Option<String>,
+
+    /// Message string for a peer without a timestamp, used in notifications
+    /// when the timestamp of the last seen time is zero.
+    pub peer_no_timestamp: Option<String>,
+}
+
+impl From<&settings::ReminderStrings> for ReminderStringsConfig {
+    /// Converts a `ReminderStrings` into a `ReminderStringsConfig`.
+    fn from(strings: &settings::ReminderStrings) -> Self {
+        Self {
+            header: Some(strings.header.clone()),
+            still_lost: Some(strings.still_lost.clone()),
+            still_missing: Some(strings.still_missing.clone()),
+            footer: Some(strings.footer.clone()),
+            bullet_point: Some(strings.bullet_point.clone()),
+            peer_with_timestamp: Some(strings.peer_with_timestamp.clone()),
+            peer_no_timestamp: Some(strings.peer_no_timestamp.clone()),
+        }
+    }
+}

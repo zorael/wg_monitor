@@ -1,0 +1,105 @@
+//! FIXME
+
+use std::path;
+
+use crate::cli;
+use crate::defaults;
+use crate::file_config;
+
+/// Application settings, including defaults and sanity checks.
+#[derive(Debug, Default)]
+pub struct Settings {
+    /// Monitor settings for the Wireguard interface and connection status.
+    pub monitor: super::MonitorSettings,
+
+    /// Slack settings.
+    pub slack: super::SlackSettings,
+
+    /// Batsign settings.
+    pub batsign: super::BatsignSettings,
+
+    /// Paths to resources, resolved at runtime.
+    pub paths: super::PathBufs,
+
+    /// If true, the program will not send any Batsign notifications and will only print what it would do.
+    pub dry_run: bool,
+
+    /// If true, the program will print additional debug information.
+    pub debug: bool,
+}
+
+impl Settings {
+    /// Applies the configuration directory setting, resolving the resource paths
+    /// based on the provided directory or the default. This is used to set up
+    /// the resource paths before loading resources from disk.
+    pub fn inherit_config_dir(&mut self, config_dir: &Option<String>) -> Result<(), String> {
+        if let Some(dir) = config_dir {
+            self.paths.config_dir = path::PathBuf::from(dir);
+            return Ok(());
+        }
+
+        match file_config::resolve_default_config_directory_from_env() {
+            Ok(path) => {
+                self.paths.config_dir = path;
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Cleans up settings by trimming whitespace from URLs and removing empty URLs.
+    pub fn clean_up(&mut self) {
+        self.slack.trim_urls();
+        self.batsign.trim_urls();
+    }
+
+    /// Sanity check settings, returning a list of errors if any are found.
+    pub fn sanity_check(&self) -> Result<(), Vec<String>> {
+        let mut vec = Vec::new();
+
+        self.monitor.sanity_check(&mut vec);
+        self.slack.sanity_check(&mut vec);
+        self.batsign.sanity_check(&mut vec);
+
+        if !self.slack.enabled && !self.batsign.enabled {
+            vec.push("At least one notifier backend must be enabled.".to_string());
+        }
+
+        if vec.is_empty() { Ok(()) } else { Err(vec) }
+    }
+
+    /// Prints the settings in a human-readable format.
+    pub fn print(&self) {
+        println!("{:#?}", self);
+
+        if self.dry_run {
+            println!();
+            println!("(DRY RUN)");
+        }
+    }
+
+    /// Resolves the resource paths based on the config directory.
+    pub fn resolve_resource_paths(&mut self) {
+        self.paths.config_file = self.paths.config_dir.join(defaults::CONFIG_FILENAME);
+        self.paths.peer_list = self.paths.config_dir.join(defaults::PEER_LIST_FILENAME);
+    }
+
+    /// Applies config file settings to the default settings, returning the resulting settings.
+    pub fn apply_file(&mut self, file_config: &Option<file_config::FileConfig>) {
+        let Some(file_config) = file_config else {
+            return;
+        };
+
+        self.monitor.apply_file(&file_config.monitor);
+        self.slack.apply_file(&file_config.slack);
+        self.batsign.apply_file(&file_config.batsign);
+    }
+
+    /// Applies CLI settings, returning the resulting settings.
+    pub fn apply_cli(&mut self, cli: &cli::Cli) {
+        // Config directory is applied separately in `inherit_config_dir`
+        //because it affects how other settings are loaded from disk.
+        self.dry_run = cli.dry_run;
+        self.debug = cli.debug;
+    }
+}
