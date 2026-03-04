@@ -354,19 +354,16 @@ fn run_loop(
 
         if settings.debug {
             if !delta.no_longer_late_keys.is_empty() {
-                println!(
-                    "... no_longer_late_keys:    {:#?}",
-                    delta.no_longer_late_keys
-                );
+                println!("... no_longer_late_keys: {:#?}", delta.no_longer_late_keys);
             }
             if !delta.became_late_keys.is_empty() {
-                println!("... became_late_keys:     {:#?}", delta.became_late_keys);
+                println!("... became_late_keys:    {:#?}", delta.became_late_keys);
             }
             if !delta.returned_keys.is_empty() {
-                println!("... returned_keys: {:#?}", delta.returned_keys);
+                println!("... returned_keys:       {:#?}", delta.returned_keys);
             }
             if !delta.went_missing_keys.is_empty() {
-                println!("... went_missing_keys:  {:#?}", delta.went_missing_keys);
+                println!("... went_missing_keys:   {:#?}", delta.went_missing_keys);
             }
         }
 
