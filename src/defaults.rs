@@ -26,6 +26,12 @@ pub const PEER_LIST_FILENAME: &str = "peers.txt";
 pub const EMPTY_PEER_LIST_CONTENT: &str = "# <public key> <description>\n\
     # PeerKey/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Humanly-readable description of peer\n";
 
+/// Default URL for testing Slack notifications with a dummy webhook URL.
+pub const DUMMY_SLACK_URL: &str = "https://hooks.slack.com/services/DUMMY/HOOK/url";
+
+/// Default URL for testing Batsign notifications with a dummy Batsign URL.
+pub const DUMMY_BATSIGN_URL: &str = "https://batsign.me/at/example@mail.tld/asdf1234";
+
 pub mod program_metadata {
     //! Program metadata constants, such as the program name, version, authors, and source repository URL.
 
