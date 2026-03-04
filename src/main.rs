@@ -333,7 +333,7 @@ fn run_loop(
                     .unwrap_or(time::Duration::ZERO)
                     > next_report_interval
                 {
-                    match notify::send_reminder(notifiers, ctx) {
+                    match notify::send_reminder(notifiers, ctx, settings.verbose) {
                         true => {
                             println!("[:] Repeat reminders sent successfully");
                             ctx.last_report = Some(ctx.now);
@@ -370,7 +370,7 @@ fn run_loop(
             }
         }
 
-        match notify::send_notification(notifiers, ctx, &delta) {
+        match notify::send_notification(notifiers, ctx, &delta, settings.verbose) {
             true => {
                 println!("[:] Notifications sent successfully");
             }

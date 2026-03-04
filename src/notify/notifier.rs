@@ -13,10 +13,10 @@ pub trait NotificationSender {
         &mut self,
         ctx: &super::Context,
         delta: &super::Delta,
-    ) -> super::NotificationResult;
+    ) -> (super::NotificationResult, String);
 
     /// Sends a reminder notification.
-    fn push_reminder(&mut self, ctx: &super::Context) -> super::NotificationResult;
+    fn push_reminder(&mut self, ctx: &super::Context) -> (super::NotificationResult, String);
 }
 
 /// A `Notifier` that uses a specific backend to send notifications about Wireguard peer status changes.
@@ -40,30 +40,30 @@ impl<B: backend::Backend> NotificationSender for Notifier<B> {
         &mut self,
         ctx: &super::Context,
         delta: &super::Delta,
-    ) -> super::NotificationResult {
+    ) -> (super::NotificationResult, String) {
         let message = self.backend.build_message(ctx, delta);
 
         if self.dry_run {
-            return super::NotificationResult::DryRun(message);
+            return (super::NotificationResult::DryRun, message);
         }
 
         match self.backend.send(&message) {
-            Ok(_) => super::NotificationResult::Success,
-            Err(e) => super::NotificationResult::Failure(e),
+            Ok(_) => (super::NotificationResult::Success, message),
+            Err(e) => (super::NotificationResult::Failure(e), message),
         }
     }
 
     /// Sends a reminder notification.
-    fn push_reminder(&mut self, ctx: &super::Context) -> super::NotificationResult {
+    fn push_reminder(&mut self, ctx: &super::Context) -> (super::NotificationResult, String) {
         let reminder = self.backend.build_reminder(ctx);
 
         if self.dry_run {
-            return super::NotificationResult::DryRun(reminder);
+            return (super::NotificationResult::DryRun, reminder);
         }
 
         match self.backend.send(&reminder) {
-            Ok(_) => super::NotificationResult::Success,
-            Err(e) => super::NotificationResult::Failure(e),
+            Ok(_) => (super::NotificationResult::Success, reminder),
+            Err(e) => (super::NotificationResult::Failure(e), reminder),
         }
     }
 }

@@ -11,25 +11,29 @@ pub fn send_notification(
     notifiers: &mut [Box<dyn super::NotificationSender>],
     ctx: &super::Context,
     delta: &super::Delta,
+    verbose: bool,
 ) -> bool {
     let mut success = true;
 
+    let verbose_print = |message: &str| {
+        if verbose {
+            println!("{SEP}\n{message}\n{SEP}");
+        }
+    };
+
     for n in notifiers.iter_mut() {
         match n.push_notification(ctx, delta) {
-            super::NotificationResult::DryRun(message) => {
-                println!(
-                    "[{}] DRY RUN, would have sent:\n{SEP}\n{message}\n{SEP}",
-                    n.name()
-                );
+            (super::NotificationResult::DryRun, message) => {
+                println!("[{}] DRY RUN", n.name());
+                verbose_print(&message);
             }
-            super::NotificationResult::Success => {
+            (super::NotificationResult::Success, message) => {
                 println!("[{}] Notification sent successfully", n.name());
+                verbose_print(&message);
             }
-            super::NotificationResult::Failure(message) => {
-                eprintln!(
-                    "[{}] Failed to send notification:\n{SEP}\n{message}\n{SEP}",
-                    n.name()
-                );
+            (super::NotificationResult::Failure(e), message) => {
+                eprintln!("[{}] Failed to send notification: {e}", n.name());
+                verbose_print(&message);
                 success = false;
             }
         }
@@ -43,25 +47,29 @@ pub fn send_notification(
 pub fn send_reminder(
     notifiers: &mut [Box<dyn super::NotificationSender>],
     ctx: &super::Context,
+    verbose: bool,
 ) -> bool {
     let mut success = true;
 
+    let verbose_print = |message: &str| {
+        if verbose {
+            println!("{SEP}\n{message}\n{SEP}");
+        }
+    };
+
     for n in notifiers.iter_mut() {
         match n.push_reminder(ctx) {
-            super::NotificationResult::DryRun(message) => {
-                println!(
-                    "[{}] DRY RUN, would have sent reminder:\n{SEP}\n{message}\n{SEP}",
-                    n.name()
-                );
+            (super::NotificationResult::DryRun, message) => {
+                println!("[{}] DRY RUN", n.name());
+                verbose_print(&message);
             }
-            super::NotificationResult::Success => {
+            (super::NotificationResult::Success, message) => {
                 println!("[{}] Reminder sent successfully", n.name());
+                verbose_print(&message);
             }
-            super::NotificationResult::Failure(message) => {
-                eprintln!(
-                    "[{}] Failed to send reminder:\n{SEP}\n{message}\n{SEP}",
-                    n.name()
-                );
+            (super::NotificationResult::Failure(e), message) => {
+                eprintln!("[{}] Failed to send reminder: {e}", n.name());
+                verbose_print(&message);
                 success = false;
             }
         }
