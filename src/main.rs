@@ -78,6 +78,7 @@ fn main() -> process::ExitCode {
     };
 
     if cli.show {
+        // If --show was passed, print settings here and exit early.
         settings.print();
         return process::ExitCode::SUCCESS;
     }
@@ -105,9 +106,14 @@ fn main() -> process::ExitCode {
         }
     };
 
+    // Print resolved settings as part of program startup.
     settings.print();
     println!();
 
+    // Verify that we can execute the `wg show` command but don't actually case
+    // about the handshakes at this point. We just want to verify that the
+    // command executes successfully before entering the main loop.
+    // Exit now if it doesn't.
     let latest_handshakes_output = match wireguard::get_handshakes(&settings.monitor.interface) {
         Ok(output) => {
             /*if settings.debug {
@@ -155,6 +161,7 @@ fn main() -> process::ExitCode {
         }
     }
 
+    // All done, create the initial context and enter the loop.
     let mut ctx = notify::Context::inherit(peers);
     run_loop(&mut ctx, &mut notifiers, settings)
 }
@@ -165,6 +172,7 @@ fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSende
     let mut notifiers: Vec<Box<dyn notify::NotificationSender>> = Vec::new();
     let client = Arc::new(blocking::Client::new());
 
+    /// Helper function to build and push notifiers for a passed backend type.
     fn build_and_push_notifiers<B, F>(
         vec: &mut Vec<Box<dyn notify::NotificationSender>>,
         urls: &[String],
@@ -181,6 +189,7 @@ fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSende
         }
     }
 
+    // Helper closure to build a Slack backend instance.
     let make_slack_backend = |i: usize, url: &String| {
         backend::SlackBackend::new(
             i,
@@ -191,6 +200,7 @@ fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSende
         )
     };
 
+    // Helper closure to build a Batsign backend instance.
     let make_batsign_backend = |i: usize, url: &String| {
         backend::BatsignBackend::new(
             i,
@@ -202,11 +212,12 @@ fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSende
     };
 
     if settings.dry_run {
+        // Use dummy URLs for dry runs so that we can get output for all backends
+        // even if no URLs were configured.
         let dummy_slack_urls = vec![defaults::DUMMY_SLACK_URL.to_string()];
         let dummy_batsign_urls = vec![defaults::DUMMY_BATSIGN_URL.to_string()];
 
         build_and_push_notifiers(&mut notifiers, &dummy_slack_urls, make_slack_backend, true);
-
         build_and_push_notifiers(
             &mut notifiers,
             &dummy_batsign_urls,
@@ -253,6 +264,8 @@ fn run_loop(
     let mut delta = notify::Delta::with_capacity(ctx.peers.len());
     let mut should_skip_next = settings.skip_first;
 
+    // If `resume` is set, we want to skip the first run. The easiest way is to
+    // just set `first_run` to `false` here.
     ctx.first_run = !settings.resume;
     ctx.resume = settings.resume;
 
@@ -260,6 +273,7 @@ fn run_loop(
         match wireguard::get_handshakes(&settings.monitor.interface) {
             Ok(output) => {
                 if settings.debug {
+                    // This is very spammy so gate it behind debug instead of verbose mode.
                     println!("{output}");
                 }
                 wireguard::update_handshakes(&output, &mut ctx.peers);
@@ -283,7 +297,6 @@ fn run_loop(
 
                     if settings.debug {
                         let dt: chrono::DateTime<chrono::Local> = last_seen.into();
-
                         println!(
                             "  * Peer '{}': last seen {} seconds ago at {}",
                             peer.human_name,
@@ -317,6 +330,7 @@ fn run_loop(
 
         delta.compute_from(ctx);
 
+        // --skip-first logic is here
         if should_skip_next {
             should_skip_next = false;
             end_loop(ctx, settings.monitor.check_interval);
@@ -325,18 +339,20 @@ fn run_loop(
 
         if delta.is_empty() {
             if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
+                // All is well
                 end_loop(ctx, settings.monitor.check_interval);
                 continue;
             }
 
             if let Some(last_report_timestamp) = ctx.last_report {
+                // Grow the reminder interval over time but cap it at 48h
                 let growth_multiplier = match ctx.num_consecutive_reminders {
                     0 => 1, // 6h (assuming default reminder interval)
                     1 => 2, // 12h
                     2 => 2, // 12h
                     3 => 4, // 24h
                     4 => 4, // 24h
-                    _ => 8, // 48h+
+                    _ => 8, // 48h
                 };
 
                 let next_report_interval = growth_multiplier * settings.monitor.reminder_interval;
@@ -373,7 +389,7 @@ fn run_loop(
                 println!("[O] Notifications sent successfully");
             }
             false => {
-                // We can either drop down here, rotate hashmaps and unset first_run
+                // We can either drop down here and invoke end_loop
                 // so as to force a retry of the same notification after sleeping,
                 // or we can just log the failure and move on.
                 // For now, just log. Failed notifications will be lost.
