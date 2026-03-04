@@ -315,22 +315,35 @@ fn run_loop(
                 continue;
             }
 
-            if let Some(last_report_timestamp) = ctx.last_report
-                && ctx
+            if let Some(last_report_timestamp) = ctx.last_report {
+                let growth_multiplier = match ctx.num_consecutive_reminders {
+                    0 => 1, // 6h (assuming default reminder interval)
+                    1 => 2, // 12h
+                    2 => 2, // 12h
+                    3 => 4, // 24h
+                    4 => 4, // 24h
+                    _ => 8, // 48h+
+                };
+
+                let next_report_interval = growth_multiplier * settings.monitor.reminder_interval;
+
+                if ctx
                     .now
                     .duration_since(last_report_timestamp)
                     .unwrap_or(time::Duration::ZERO)
-                    > settings.monitor.reminder_interval
-            {
-                match notify::send_reminder(notifiers, ctx) {
-                    true => {
-                        println!("[:] Repeat reminders sent successfully");
-                        ctx.last_report = Some(ctx.now);
+                    > next_report_interval
+                {
+                    match notify::send_reminder(notifiers, ctx) {
+                        true => {
+                            println!("[:] Repeat reminders sent successfully");
+                            ctx.last_report = Some(ctx.now);
+                        }
+                        false => eprintln!("[!] Failed to send some repeat reminders"),
                     }
-                    false => eprintln!("[!] Failed to send some repeat reminders"),
-                }
 
-                println!();
+                    println!();
+                    ctx.num_consecutive_reminders += 1;
+                }
             }
 
             ctx.rotate();
@@ -375,6 +388,7 @@ fn run_loop(
         println!();
 
         ctx.rotate();
+        ctx.num_consecutive_reminders = 0;
         ctx.first_run = false;
         ctx.last_report = Some(ctx.now);
         thread::sleep(settings.monitor.check_interval);

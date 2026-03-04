@@ -30,6 +30,9 @@ pub struct Context {
     /// Timestamp of the last report sent, used for reminder notifications.
     pub last_report: Option<time::SystemTime>,
 
+    /// Number of consecutive reminder notifications sent.
+    pub num_consecutive_reminders: u32,
+
     /// Indicates whether this is the first run of the notifier, which can be used
     /// to adjust the messaging (e.g., to indicate that the initial state is being reported).
     pub first_run: bool,
@@ -49,6 +52,7 @@ impl Context {
             previous_late_keys: Vec::with_capacity(capacity),
             previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
+            num_consecutive_reminders: 0,
             last_report: None,
             first_run: false,
             resume: false,
