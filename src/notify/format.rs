@@ -16,21 +16,21 @@ pub fn format_generic_message(
     let mut message = String::new();
 
     if ctx.first_run {
-        if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
-            message.push_str(&strings.first_run_missing);
-            message.push('\n');
+        // This is only called if there are actually misisng or late peers,
+        // so we don't need to check for whether missing_keys and late_keys are empty here
+        message.push_str(&strings.first_run_missing);
+        message.push('\n');
 
-            let bp = &strings.bullet_point;
+        let bp = &strings.bullet_point;
 
-            for key in ctx.missing_keys.iter().chain(ctx.late_keys.iter()) {
-                if let Some(peer) = ctx.peers.get(key) {
-                    let line = format_peer_line(
-                        peer,
-                        &strings.peer_with_timestamp,
-                        &strings.peer_no_timestamp,
-                    );
-                    message.push_str(&format!("{bp}{line}\n"));
-                }
+        for key in ctx.missing_keys.iter().chain(ctx.late_keys.iter()) {
+            if let Some(peer) = ctx.peers.get(key) {
+                let line = format_peer_line(
+                    peer,
+                    &strings.peer_with_timestamp,
+                    &strings.peer_no_timestamp,
+                );
+                message.push_str(&format!("{bp}{line}\n"));
             }
         }
 
