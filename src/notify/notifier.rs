@@ -1,11 +1,15 @@
-//! FIXME
+//! Module defining the `NotificationSender` trait and the `Notifier` struct,
+//! which implements the trait using a specific backend to send notifications
+//! about Wireguard peer status changes.
 
 use crate::backend;
 
-/// Defines the `NotificationSender` trait.
+/// Defines the `NotificationSender` trait, implemented by types that can send
+/// notifications about Wireguard peer status changes.
 pub trait NotificationSender {
-    /// Returns the name of the notifier, which is typically the name of the backend
-    /// it uses (e.g., "slack" or "batsign") plus potentially any other identifier.
+    /// Returns the name of the notifier, which is typically the name of the
+    /// backend it uses (e.g., "slack" or "batsign") plus potentially any other
+    /// unique identifiers.
     fn name(&self) -> String;
 
     /// Sends a notification.
@@ -19,18 +23,21 @@ pub trait NotificationSender {
     fn push_reminder(&mut self, ctx: &super::Context) -> (super::NotificationResult, String);
 }
 
-/// A `Notifier` that uses a specific backend to send notifications about Wireguard peer status changes.
+/// A `Notifier` that uses a specific backend to send notifications about
+/// Wireguard peer status changes.
 pub struct Notifier<B: backend::Backend> {
     /// The backend used to send notifications (e.g., Slack, Batsign).
     backend: B,
 
-    /// Indicates whether the notifier is in dry run mode, which means that instead of
-    /// actually sending notifications, it will print the messages to the console for testing purposes.
+    /// Indicates whether the notifier is in dry run mode, in which no
+    /// notifications actually will be sent.
     dry_run: bool,
 }
 
 impl<B: backend::Backend> NotificationSender for Notifier<B> {
-    /// Returns the name of the backend used by this notifier.
+    /// Returns the name of the notifier, which is typically the name of the
+    /// backend it uses (e.g., "slack" or "batsign") plus potentially any other
+    /// unique identifiers.
     fn name(&self) -> String {
         self.backend.name()
     }

@@ -1,22 +1,29 @@
-//! FIXME
+//! Module defining the `Delta` struct, which represents the changes in peer
+//! status between two checks, containing vectors of public keys for peers that
+//! became late, went missing, are no longer late or returned after being missing.
+//!
+//! The `Delta` is computed based on the current and previous peer status in
+//! the `Context` struct.
 
 use crate::notify;
 use crate::utils;
 
-/// Represents the changes in peer status between two checks, containing vectors of
-/// public keys for peers that became late, went missing, are no longer late, or returned
-/// after being missing.
+/// Structure representing the changes in peer status between two checks.
 pub struct Delta {
-    /// Public keys of peers that became late (seen but not within the expected time).
+    /// Public keys of peers that were lost (time since last seen exceeds the
+    /// timeout threshold) since the last check.
     pub became_late_keys: Vec<String>,
 
-    /// Public keys of peers that went missing (not seen at all).
+    /// Public keys of peers that went missing (not seen at all) since the last check.
+    /// This is indicative of a VPN restart.
     pub went_missing_keys: Vec<String>,
 
-    /// Public keys of peers that are no longer late (seen within the expected time after being late).
+    /// Public keys of peers that returned (time since last seen is now within
+    /// the timeout threshold) since the last check.
     pub no_longer_late_keys: Vec<String>,
 
-    /// Public keys of peers that returned after being missing (seen after being missing).
+    /// Public keys of peers that appeared after being missing (not seen at all)
+    /// since the last check.
     pub returned_keys: Vec<String>,
 }
 
@@ -39,7 +46,7 @@ impl Delta {
         self.returned_keys.clear();
     }
 
-    /// Checks if the `Delta` is empty, meaning there are no changes in peer status.
+    /// Checks if the `Delta` is empty, indicating there were no changes in peer status.
     pub fn is_empty(&self) -> bool {
         self.became_late_keys.is_empty()
             && self.went_missing_keys.is_empty()
@@ -47,8 +54,9 @@ impl Delta {
             && self.returned_keys.is_empty()
     }
 
-    /// Computes the `Delta` based on the current and previous peer status in the provided `Context`,
-    /// populating the vectors with the appropriate public keys for each category of change.
+    /// Computes the `Delta` based on the current and previous peer status in
+    /// the provided `Context`, populating the vectors with the appropriate
+    /// public keys for each category of change.
     pub fn compute_from(&mut self, ctx: &notify::Context) {
         self.clear();
 

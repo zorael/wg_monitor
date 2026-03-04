@@ -1,10 +1,11 @@
-//! FIXME
+//! Configuration file structure for the base monitoring functionality of the
+//! program, which can be deserialized from a configuration file on disk.
 
 use serde::{Deserialize, Serialize};
 use std::time;
 
-/// Monitor configuration structures for the program, which can be deserialized from a
-/// configuration file on disk. These structures mirror the settings used by the program.
+/// Monitor configuration structures for the program. This mirrors the runtime
+/// settings struct used by the program for monitoring the Wireguard interface.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MonitorConfig {
@@ -21,8 +22,9 @@ pub struct MonitorConfig {
     #[serde(with = "humantime_serde")]
     pub timeout: Option<time::Duration>,
 
-    /// Reminder interval for sending reminder notifications about missing peers,
-    /// specified as a human-readable duration.
+    /// Base reminder interval for sending reminder notifications about missing
+    /// peers, specified as a human-readable duration. This duration will be
+    /// grown as consecutive reminders are sent.
     #[serde(with = "humantime_serde")]
     pub reminder_interval: Option<time::Duration>,
 }

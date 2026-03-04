@@ -1,4 +1,5 @@
-//! FIXME
+//! Module responsible for formatting notification messages based on the current
+//! context and changes in peer status.
 
 use std::collections;
 
@@ -6,8 +7,8 @@ use crate::peer;
 use crate::settings;
 use crate::utils;
 
-/// Builds a generic notification message based on the provided context and delta,
-/// using the specified message strings for formatting.
+/// Builds a generic notification message based on the provided `Context` and
+/// `Delta`, using the specified message strings for formatting.
 pub fn format_generic_message(
     ctx: &super::Context,
     delta: &super::Delta,
@@ -16,7 +17,7 @@ pub fn format_generic_message(
     let mut message = String::new();
 
     if ctx.first_run && !ctx.resume {
-        // This is only called if there are actually misisng or late peers,
+        // This is only called if there are actually missing or late peers,
         // so we don't need to check for whether missing_keys and late_keys are empty here
         message.push_str(&strings.first_run_missing);
         message.push('\n');
@@ -82,8 +83,8 @@ pub fn format_generic_message(
     message.replace("\\n", "\n").trim_end().to_owned()
 }
 
-/// Builds a generic reminder message based on the provided context, using the specified
-/// message strings for formatting.
+/// Builds a generic reminder message based on the provided `Context`, using the
+/// specified message strings for formatting.
 pub fn format_generic_reminder(
     ctx: &super::Context,
     strings: &settings::ReminderStrings,
@@ -113,8 +114,8 @@ pub fn format_generic_reminder(
     message.replace("\\n", "\n").trim_end().to_owned()
 }
 
-/// Formats a single peer line for notifications, using the provided patterns
-/// for peers with and without timestamps.
+/// Formats a single peer line for notifications, using the provided string
+/// patterns for peers with and without timestamps.
 fn format_peer_line(
     peer: &peer::WireguardPeer,
     pattern_with_timestamp: &str,

@@ -159,7 +159,8 @@ fn main() -> process::ExitCode {
     run_loop(&mut ctx, &mut notifiers, settings)
 }
 
-/// Construct notifiers based on the settings, returning a vector of boxed trait objects.
+/// Construct notifiers based on the passed settings, returning a vector of
+/// boxed trait objects.
 fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSender>> {
     let mut notifiers: Vec<Box<dyn notify::NotificationSender>> = Vec::new();
     let client = Arc::new(blocking::Client::new());

@@ -1,4 +1,5 @@
-//! FIXME
+//! Defines the types used for runtime settings in the application, including settings for
+//! Batsign, Slack, and the base monitoring system.
 
 mod batsign;
 mod monitor;

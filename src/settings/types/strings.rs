@@ -7,51 +7,55 @@ use crate::file_config;
 /// This must mirror `file_config::MessageStringsConfig`.
 #[derive(Clone, Debug)]
 pub struct MessageStrings {
-    /// Message header in notifications.
+    /// Message header.
     pub header: String,
 
-    /// Message header for the first run (first loop) of the program.
+    /// Message header for the first run (first loop) of the program. This is
+    /// used instead of `header` at such times.
     pub first_run_header: String,
 
     /// Section header for peers that are missing on the first run of the program.
     pub first_run_missing: String,
 
-    /// Section header for peers that disappeared since the last check.
+    /// Section header for peers that were lost (timed out) since the last check.
     pub lost: String,
 
-    /// Section header for peers that were present but are now missing, probably
-    /// due to a restart of the VPN.
+    /// Section header for peers that were present but are now missing, usually
+    /// (or always?) due to a restart of the VPN.
     pub forgot: String,
 
     /// Section header for peers that appeared for the first time since the last check.
     pub appeared: String,
 
-    /// Section header for peers that returned after being lost.
+    /// Section header for peers that returned after being lost (timed out).
     pub returned: String,
 
-    /// Section header for peers that are still lost.
+    /// Section header for peers that are still lost (timed out).
     pub still_lost: String,
 
     /// Section header for peers that have still not appeared since the last restart.
     pub still_missing: String,
 
-    /// Message footer in notifications.
+    /// Message footer.
     pub footer: String,
 
-    /// Bullet point string for listing peers in notifications.
+    /// Bullet point string for listing peers.
     pub bullet_point: String,
 
     /// Message string for a peer with a timestamp, used in notifications
-    /// when the timestamp of the last seen time is known.
+    /// when the timestamp of the last seen time is known. This translates to
+    /// "lost" peers.
     pub peer_with_timestamp: String,
 
     /// Message string for a peer without a timestamp, used in notifications
-    /// when the timestamp of the last seen time is zero.
+    /// when the timestamp of the last seen time is zero. This translates to
+    /// "missing" peers.
     pub peer_no_timestamp: String,
 }
 
 impl Default for MessageStrings {
-    /// Default values for the message strings, used as a base for applying config file overrides.
+    /// Default values for the message strings, used as a base for applying
+    /// config file overrides.
     fn default() -> Self {
         Self {
             header: "Wireguard Monitor report".to_string(),
@@ -133,32 +137,35 @@ impl MessageStrings {
 /// This must mirror `file_config::ReminderStringsConfig`.
 #[derive(Clone, Debug)]
 pub struct ReminderStrings {
-    /// Message header for reminder notifications.
+    /// Message header.
     pub header: String,
 
-    /// Section header for peers that are still lost in reminder notifications.
+    /// Section header for peers that are still lost (timed out).
     pub still_lost: String,
 
-    /// Section header for peers that have not yet been seen since the last restart.
+    /// Section header for peers that have still not appeared since the last restart.
     pub still_missing: String,
 
-    /// Message footer for reminder notifications.
+    /// Message footer.
     pub footer: String,
 
-    /// Bullet point string for listing peers in reminder notifications.
+    /// Bullet point string for listing peers.
     pub bullet_point: String,
 
     /// Message string for a peer with a timestamp, used in notifications
-    /// when the timestamp of the last seen time is known.
+    /// when the timestamp of the last seen time is known. This translates to
+    /// "lost" peers.
     pub peer_with_timestamp: String,
 
     /// Message string for a peer without a timestamp, used in notifications
-    /// when the timestamp of the last seen time is zero.
+    /// when the timestamp of the last seen time is zero. This translates to
+    /// "missing" peers.
     pub peer_no_timestamp: String,
 }
 
 impl Default for ReminderStrings {
-    /// Default values for the reminder message strings, used as a base for applying config file overrides.
+    /// Default values for the reminder message strings, used as a base for
+    /// applying configuration file overrides.
     fn default() -> Self {
         Self {
             header: "Wireguard Monitor reminder".to_string(),

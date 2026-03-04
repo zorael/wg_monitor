@@ -1,4 +1,5 @@
-//! FIXME
+//! Defines the main `Settings` struct that holds all runtime settings for the
+//! application, including monitoring settings, notifier settings, and resource paths.
 
 use std::path;
 
@@ -6,7 +7,7 @@ use crate::cli;
 use crate::defaults;
 use crate::file_config;
 
-/// Application settings, including defaults and sanity checks.
+/// Application runtime settings root struct.
 #[derive(Debug, Default)]
 pub struct Settings {
     /// Monitor settings for the Wireguard interface and connection status.
@@ -21,26 +22,25 @@ pub struct Settings {
     /// Paths to resources, resolved at runtime.
     pub paths: super::PathBufs,
 
-    /// If true, the program will skip sending notifications specifically about program startup.
+    /// Whether to skip sending notifications specifically about program startup.
     pub resume: bool,
 
-    /// If true, the program will skip the first run and thus the first notification.
+    /// Whether to skip the first run and thus the first notification.
     pub skip_first: bool,
 
-    /// If true, the program will not send any Batsign notifications and will only print what it would do.
+    /// Whether to send any notifications at all.
     pub dry_run: bool,
 
-    /// If true, the program will print some additional information.
+    /// Whether to print additional verbose information.
     pub verbose: bool,
 
-    /// If true, the program will print additional debug information.
+    /// Whether to print additional debug information.
     pub debug: bool,
 }
 
 impl Settings {
     /// Applies the configuration directory setting, resolving the resource paths
-    /// based on the provided directory or the default. This is used to set up
-    /// the resource paths before loading resources from disk.
+    /// based on the provided directory or the default.
     pub fn inherit_config_dir(&mut self, config_dir: &Option<String>) -> Result<(), String> {
         if let Some(dir) = config_dir {
             self.paths.config_dir = path::PathBuf::from(dir);
@@ -52,7 +52,10 @@ impl Settings {
                 self.paths.config_dir = path;
                 Ok(())
             }
-            Err(e) => Err(e),
+            Err(()) => Err(
+                "could not resolve default configuration directory from environment variables"
+                    .to_string(),
+            ),
         }
     }
 
@@ -62,7 +65,8 @@ impl Settings {
         self.batsign.trim_urls();
     }
 
-    /// Sanity check settings, returning a list of errors if any are found.
+    /// Sanity check settings, returning a list of strings of errors in the
+    /// `Err` case if any are found.
     pub fn sanity_check(&self) -> Result<(), Vec<String>> {
         let mut vec = Vec::new();
 
@@ -77,7 +81,7 @@ impl Settings {
         if vec.is_empty() { Ok(()) } else { Err(vec) }
     }
 
-    /// Prints the settings in a human-readable format.
+    /// Pretty-prints all runtime settings in a humanly-readable format.
     pub fn print(&self) {
         println!("{:#?}", self);
 

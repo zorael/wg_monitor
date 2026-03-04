@@ -1,10 +1,11 @@
-//! FIXME
+//! Batsign backend configuration structures for the program, which can be deserialized from a
+//! configuration file on disk.
 
 use super::*;
 use serde::{Deserialize, Serialize};
 
-/// Batsign configuration structures for the program, which can be deserialized from a
-/// configuration file on disk. These structures mirror the settings used by the program.
+/// Batsign configuration structure. This mirrors the runtime settings struct
+/// used by the program for the Batsign backend.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct BatsignConfig {

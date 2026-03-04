@@ -1,4 +1,5 @@
-//! FIXME
+//! Module defining the `Context` struct, which holds the state of peers and timing information
+//! used for building notification messages in the `notify` module.
 
 use std::collections::HashMap;
 use std::mem;
@@ -9,7 +10,7 @@ use crate::peer;
 /// Context for building notification messages, containing the current and previous
 /// state of peers, as well as timing information.
 pub struct Context {
-    /// Map of public keys to `peer::WireguardPeer` structs, representing all known peers.
+    /// Map of public keys to `WireguardPeer` structs, representing all known peers.
     pub peers: HashMap<String, peer::WireguardPeer>,
 
     /// Current peers that are late (seen but not within the expected time).
@@ -18,16 +19,16 @@ pub struct Context {
     /// Current peers that are missing (not seen at all).
     pub missing_keys: Vec<String>,
 
-    /// Previous peers that were late in the last check.
+    /// Peers that were previously late in the last check.
     pub previous_late_keys: Vec<String>,
 
-    /// Previous peers that were missing in the last check.
+    /// Peers that were previously missing in the last check.
     pub previous_missing_keys: Vec<String>,
 
-    /// Current timestamp.
+    /// Current time.
     pub now: time::SystemTime,
 
-    /// Timestamp of the last report sent, used for reminder notifications.
+    /// Time of the last report sent, used for scheduling reminder notifications.
     pub last_report: Option<time::SystemTime>,
 
     /// Number of consecutive reminder notifications sent.
@@ -52,8 +53,8 @@ impl Context {
             previous_late_keys: Vec::with_capacity(capacity),
             previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
-            num_consecutive_reminders: 0,
             last_report: None,
+            num_consecutive_reminders: 0,
             first_run: false,
             resume: false,
         }
@@ -68,7 +69,7 @@ impl Context {
     }
 
     /// Rotates the current late and missing peer vectors into the previous vectors,
-    /// clearing the current ones.
+    /// clearing the current ones. They retain their capacity.
     pub fn rotate(&mut self) {
         mem::swap(&mut self.late_keys, &mut self.previous_late_keys);
         mem::swap(&mut self.missing_keys, &mut self.previous_missing_keys);

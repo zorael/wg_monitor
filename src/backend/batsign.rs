@@ -45,7 +45,9 @@ impl BatsignBackend {
 }
 
 impl backend::Backend for BatsignBackend {
-    /// Returns the name of the backend, which is "batsign" in this case.
+    /// Returns the name of this backend instance. It is in the format
+    /// "batsign#{id}:{email}", where {id} is the unique numeric identifier of
+    /// the instance, and {email} is extracted from the Batsign URL.
     fn name(&self) -> String {
         // This can be cached if it turns out to be a hotspot.
         format!(
@@ -80,7 +82,7 @@ impl backend::Backend for BatsignBackend {
     }
 
     /// Sends a notification via the Batsign backend by making a POST request
-    /// to the specified URL with the message as the body.
+    /// to the specified URL, with the passed message as the request body.
     fn send(&mut self, message: &str) -> Result<(), String> {
         match self.client.post(&self.url).body(message.to_owned()).send() {
             Ok(resp) if resp.status().is_success() => Ok(()),

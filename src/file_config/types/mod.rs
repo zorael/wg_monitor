@@ -1,4 +1,5 @@
-//! FIXME
+//! Configuration file structures for the program, which can be deserialized
+//! from a configuration file on disk.
 
 mod batsign;
 mod fileconfig;

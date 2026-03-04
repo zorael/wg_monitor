@@ -83,7 +83,8 @@ pub fn read_peer_list(
     Ok(peers)
 }
 
-/// Validates the list of peers, returning a vector of error messages for any obvious issues found.
+/// Validates the list of peers, returning a vector of string error messages for
+/// any obvious issues found.
 pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
     let mut errors = Vec::new();
 
@@ -111,7 +112,7 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 }
 
 /// Updates the last seen timestamps for peers based on the output of the
-/// `wg show iface latest-handshakes` command.
+/// `wg show {iface} latest-handshakes` command.
 pub fn update_handshakes(terminal_output: &str, peers: &mut HashMap<String, peer::WireguardPeer>) {
     for line in terminal_output.lines() {
         let line = line.trim();

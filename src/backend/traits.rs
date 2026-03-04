@@ -1,18 +1,21 @@
-//! FIXME
+//! Backend traits for notification backends (e.g., Slack, Batsign).
 
 use crate::notify;
 
-/// Defines the `Backend` trait, which is implemented by all notification backends (e.g., Slack, Batsign).
+/// The `Backend` trait, which is implemented by all notification backends
+/// (e.g., Slack, Batsign).
 pub trait Backend {
-    /// Returns the name of the backend, which is used for logging and identification purposes.
+    /// Returns the name of the instance of the backend, which is used for
+    /// logging and identification purposes.
     fn name(&self) -> String;
 
-    /// Builds the message to be sent based on the notification context and delta.
+    /// Builds the message to be sent based on the notification context and the
+    /// delta expressing the changes since the last notification.
     fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String;
 
     /// Builds the reminder message to be sent based on the notification context.
     fn build_reminder(&self, ctx: &notify::Context) -> String;
 
-    /// Deliver the already-built message using backend-owned configuration.
+    /// Delivers the already-built message using backend-owned methods.
     fn send(&mut self, message: &str) -> Result<(), String>;
 }

@@ -1,11 +1,6 @@
-//! This module defines the structure of the configuration file used by the
-//! Wireguard monitor program, as well as functions for deserializing the
-//! configuration from disk and resolving the default configuration directory
-//! from environment variables.
-//!
-//! The configuration file allows users to override default settings for
-//! monitoring and notifications, and is loaded at runtime to determine how
-//! the program should operate.
+//! Module for handling the file-based configuration of the application.
+//! This includes structures that mirror the runtime settings used by the
+//! program, but are designed to be deserialized from a configuration file on disk.
 
 mod io;
 mod paths;

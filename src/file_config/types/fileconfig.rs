@@ -1,11 +1,12 @@
-//! FIXME
+//! File configuration structures for the program, which can be deserialized
+//! from a configuration file on disk.
 
 use super::*;
 use serde::{Deserialize, Serialize};
 
 use crate::settings;
 
-/// Configuration file structure.
+/// Root configuration file structure.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct FileConfig {
@@ -20,7 +21,8 @@ pub struct FileConfig {
 }
 
 impl From<&settings::Settings> for FileConfig {
-    /// Converts the resolved settings into a FileConfig, which can be saved to disk.
+    /// Converts the resolved settings into a FileConfig, which can then be
+    /// saved to disk.
     fn from(s: &settings::Settings) -> Self {
         Self {
             monitor: MonitorConfig {

@@ -1,4 +1,9 @@
-//! Slack backend for sending notifications to a Slack channel.
+//! Slack backend for sending notifications to a Slack channel via webhooks.
+//!
+//! This module defines the `SlackBackend` struct, which implements the `Backend` trait
+//! for sending notifications to Slack. It includes methods for building messages and
+//! reminders based on the notification context and delta, as well as sending the
+//! notifications via HTTP POST requests to the Slack API.
 
 use reqwest::blocking;
 use std::sync;
@@ -8,7 +13,8 @@ use crate::settings;
 
 /// Defines the Slack backend for sending notifications to a Slack channel.
 pub struct SlackBackend {
-    /// Unique identifier for the Slack backend instance, used for logging and identification purposes.
+    /// Unique identifier for the Slack backend instance, used for logging and
+    /// identification purposes.
     id: usize,
 
     /// HTTP client used to send requests to the Slack API.
@@ -44,7 +50,8 @@ impl SlackBackend {
 }
 
 impl super::Backend for SlackBackend {
-    /// Returns the name of the backend, which is "slack" in this case.
+    /// Returns the name of this backend instance. It is in the format
+    /// "slack#{id}", where {id} is the unique numeric identifier of instance.
     fn name(&self) -> String {
         // This can be cached if it turns out to be a hotspot.
         format!("slack#{}", self.id)
@@ -70,7 +77,8 @@ impl super::Backend for SlackBackend {
     }
 
     /// Sends a notification via the Slack backend by making a POST request
-    /// to the specified URL with the message as a JSON payload.
+    /// to the specified webhook URL, with the passed message string as parsed
+    /// into a JSON payload.
     fn send(&mut self, message: &str) -> Result<(), String> {
         let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
 

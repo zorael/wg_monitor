@@ -5,8 +5,8 @@
 /// Terminal separator line used in logging output.
 const SEP: &str = "--------------------";
 
-/// Sends a notification via all notifiers, returning true if all notifications
-/// were sent successfully, or false if any failed.
+/// Sends a notification via all notifiers, returning `true` if all notifications
+/// were sent successfully, or `false` if any failed.
 pub fn send_notification(
     notifiers: &mut [Box<dyn super::NotificationSender>],
     ctx: &super::Context,
@@ -42,8 +42,8 @@ pub fn send_notification(
     success
 }
 
-/// Sends a reminder notification via all notifiers, returning true if all notifications
-/// were sent successfully, or false if any failed.
+/// Sends a reminder notification via all notifiers, returning `true` if all notifications
+/// were sent successfully, or `false` if any failed.
 pub fn send_reminder(
     notifiers: &mut [Box<dyn super::NotificationSender>],
     ctx: &super::Context,

@@ -1,5 +1,5 @@
-//! Settings management for the Wireguard Monitor application, including defaults,
-//! config file loading, CLI overrides, and sanity checks.
+//! Runtime settings management for the Wireguard Monitor application,
+//! including defaults, config file loading, CLI overrides, and sanity checks.
 
 mod types;
 

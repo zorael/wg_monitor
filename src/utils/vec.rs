@@ -1,6 +1,7 @@
-//! FIXME
+//! Vector functions.
 
-/// Trims whitespace from each string in the vector and removes any empty strings, returning a new vector.
+/// Trims whitespace from each string in the vector and removes any empty
+/// strings, returning a new vector.
 pub fn trim_vec_of_strings(vec: &[String]) -> Vec<String> {
     vec.iter()
         .map(|s| s.trim().to_string())
@@ -31,16 +32,18 @@ mod tests {
     }
 }
 
-/// Gets the difference between two vectors of strings, returning a tuple of two vectors:
-/// the first vector contains elements that are in the first input vector but not in the second,
-/// and the second vector contains elements that are in the second input vector but not in the first
+/// Computes the difference between two vectors of strings, returning a tuple
+/// of two vectors: the first vector contains elements that are in the first
+/// input vector but not in the second, and the second vector contains elements
+/// that are in the second input vector but not in the first
 pub fn get_vec_difference(one: &[String], other: &[String]) -> (Vec<String>, Vec<String>) {
     let only_one = get_elements_not_in_other_vec(one, other);
     let only_other = get_elements_not_in_other_vec(other, one);
     (only_one, only_other)
 }
 
-/// Gets the elements that are in the first vector but not in the second vector, returning a new vector.
+/// Computes the elements that are in the first vector but not in the second
+/// vector, returning a new vector.
 pub fn get_elements_not_in_other_vec(one: &[String], other: &[String]) -> Vec<String> {
     one.iter().filter(|k| !other.contains(k)).cloned().collect()
 }
@@ -49,8 +52,6 @@ pub fn get_elements_not_in_other_vec(one: &[String], other: &[String]) -> Vec<St
 /// the first destination vector will receive elements that are in the first
 /// source vector but not in the second, and the second destination vector will
 /// receive elements that are in the second source vector but not in the first
-/// This is used to efficiently compute differences without needing to create
-/// intermediate vectors.
 pub fn append_vec_difference(
     source_one: &[String],
     source_other: &[String],
@@ -65,11 +66,11 @@ pub fn append_vec_difference(
 /// vector into the provided destination vector.
 pub fn append_difference_into(vec: &mut Vec<String>, one: &[String], other: &[String]) {
     let elements = one.iter().filter(|k| !other.contains(k));
-
     vec.extend(elements.cloned());
 }
 
 mod tests_vec {
+    /// Tests for the `get_vec_difference` function.
     #[test]
     fn test_get_vec_difference() {
         let vec1 = vec![
@@ -88,6 +89,7 @@ mod tests_vec {
         assert_eq!(diff.1, vec!["peer4".to_string()]);
     }
 
+    /// Tests for the `append_vec_difference` function.
     #[test]
     fn test_append_vec_difference() {
         let vec1 = vec![

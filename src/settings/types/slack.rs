@@ -16,7 +16,7 @@ pub struct SlackSettings {
     /// Whether Slack notifications are enabled.
     pub enabled: bool,
 
-    /// Optional Slack webhook URL for sending notifications to Slack.
+    /// Slack webhook URLs for sending notifications to Slack.
     pub urls: Vec<String>,
 }
 
@@ -33,7 +33,8 @@ impl Default for SlackSettings {
 }
 
 impl SlackSettings {
-    /// Applies Slack settings from the config file, overriding the default settings where specified.
+    /// Applies Slack settings from the config file, overriding the default
+    /// settings where values are available.
     pub fn apply_file(&mut self, slack_config: &file_config::SlackConfig) {
         self.strings.apply_file(&slack_config.strings);
         self.reminder_strings
@@ -48,14 +49,13 @@ impl SlackSettings {
         }
     }
 
-    /// Trims whitespace from the Slack webhook URLs and removes any empty URLs.
+    /// Trims whitespace from the Slack webhook URLs and removes any empty ones.
     pub fn trim_urls(&mut self) {
         self.urls = utils::trim_vec_of_strings(&self.urls);
     }
 
-    /// Sanity check the Slack settings, returning true if they are valid
-    /// and false if any issues are found. This is used to validate the settings
-    /// before starting the monitoring loop.
+    /// Sanity check the Slack settings, appending any errors as strings to
+    /// the passed vec.
     pub fn sanity_check(&self, vec: &mut Vec<String>) {
         if !self.enabled {
             return;

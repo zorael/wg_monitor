@@ -4,7 +4,6 @@ use std::time;
 
 /// Represents a Wireguard peer, including its public key, human-readable name,
 /// and last seen timestamp.
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct WireguardPeer {
     /// The public key of the Wireguard peer, which serves as its unique identifier.
@@ -20,14 +19,15 @@ pub struct WireguardPeer {
     /// the configured timeout.
     pub last_seen: Option<time::SystemTime>,
 
-    //// The timestamp of the last handshake with the peer, represented as an optional
-    /// `u64` Unix timestamp.
+    /// The timestamp of the last handshake with the peer, represented as an
+    /// optional `u64` UNIX timestamp.
     pub timestamp: Option<u64>,
 }
 
 impl WireguardPeer {
-    /// Shortens a Wireguard public key for display purposes, returning the first 7
-    /// characters, or the substring before a '/' or '+' if present in the first 7 characters.
+    /// Shortens a Wireguard public key for display purposes, returning the
+    /// first 7 characters, or the substring before a '/' or '+' if present in
+    /// the first 7 characters.
     pub fn shorten_key(public_key: &str) -> String {
         if public_key.len() < 7 {
             return public_key.to_owned();
@@ -48,7 +48,8 @@ impl WireguardPeer {
         key.to_owned()
     }
 
-    /// Validates a Wireguard public key, returning true if it does not seem obviously invalid.
+    /// Validates a Wireguard public key, returning true if it does not seem
+    /// obviously invalid. Does not perform an actual cryptographic validation.
     pub fn validate_public_key(public_key: &str) -> bool {
         if public_key.len() != 44 || !public_key.ends_with('=') {
             return false;

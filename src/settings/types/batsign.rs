@@ -4,7 +4,7 @@ use crate::file_config;
 use crate::settings;
 use crate::utils;
 
-/// Batsign settings.
+/// Batsign runtime settings.
 #[derive(Debug)]
 pub struct BatsignSettings {
     /// Message strings for Batsign notifications.
@@ -33,7 +33,8 @@ impl Default for BatsignSettings {
 }
 
 impl BatsignSettings {
-    /// Applies Batsign settings from the config file, overriding the default settings where specified.
+    /// Applies Batsign settings from the config file, overriding the default
+    /// settings where values are available.
     pub fn apply_file(&mut self, batsign_config: &file_config::BatsignConfig) {
         self.strings.apply_file(&batsign_config.strings);
         self.reminder_strings
@@ -48,14 +49,13 @@ impl BatsignSettings {
         }
     }
 
-    /// Trims whitespace from the Batsign URLs and removes any empty URLs.
+    /// Trims whitespace from the Batsign URLs and removes any empty ones.
     pub fn trim_urls(&mut self) {
         self.urls = utils::trim_vec_of_strings(&self.urls);
     }
 
-    /// Sanity check the Batsign settings, returning true if they are valid
-    /// and false if any issues are found. This is used to validate the settings
-    /// before starting the monitoring loop.
+    /// Sanity check the Batsign settings, appending any errors as strings to
+    /// the passed vec.
     pub fn sanity_check(&self, vec: &mut Vec<String>) {
         if !self.enabled {
             return;

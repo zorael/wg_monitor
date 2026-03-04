@@ -8,7 +8,7 @@ use crate::file_config;
 /// Settings for monitoring the Wireguard interface and connection status.
 #[derive(Debug)]
 pub struct MonitorSettings {
-    /// Wireguard interface name to monitor. If not specified, the program will attempt to auto-detect the interface.
+    /// Wireguard interface name to monitor.
     pub interface: String,
 
     /// Interval between checks of the Wireguard interface and connection status.
@@ -34,7 +34,8 @@ impl Default for MonitorSettings {
 }
 
 impl MonitorSettings {
-    /// Apply settings from the file configuration, overriding defaults where specified.
+    /// Apply settings from the file configuration, overriding defaults where
+    /// values are available.
     pub fn apply_file(&mut self, monitor_config: &file_config::MonitorConfig) {
         if let Some(interface) = monitor_config.interface.clone() {
             self.interface = interface;
@@ -53,7 +54,8 @@ impl MonitorSettings {
         }
     }
 
-    /// Perform sanity checks on the monitor settings and collect any issues in the provided vector.
+    /// Sanity check the monitor settings, appending any errors as strings to
+    /// the passed vec.
     pub fn sanity_check(&self, vec: &mut Vec<String>) {
         if self.interface.is_empty() {
             vec.push("Monitor interface is not configured.".to_string());

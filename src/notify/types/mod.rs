@@ -1,4 +1,4 @@
-//! FIXME
+//! Module containing types used in the notification system.
 
 mod context;
 mod delta;

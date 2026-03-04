@@ -1,4 +1,4 @@
-//! FIXME
+//! Miscellaneous utility functions.
 
 mod vec;
 

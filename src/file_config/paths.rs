@@ -1,12 +1,14 @@
-//! FIXME
+//! Module for handling the file-based configuration of the application.
 
 use std::env;
 use std::path;
 
 use crate::defaults;
 
-/// Resolves the configuration directory path, returning the directory as a string and an optional PathBuf.
-pub fn resolve_default_config_directory_from_env() -> Result<path::PathBuf, String> {
+/// Resolves the configuration directory path, returning the directory as a
+/// `Result<PathBuf, ()>`, where the unit type `()` indicates an error if the
+/// directory could not be resolved.
+pub fn resolve_default_config_directory_from_env() -> Result<path::PathBuf, ()> {
     if let Some(path) = env::var_os("WG_MONITOR_CONFIG_DIR").map(path::PathBuf::from) {
         return Ok(path);
     }
@@ -25,5 +27,5 @@ pub fn resolve_default_config_directory_from_env() -> Result<path::PathBuf, Stri
             .join(defaults::program_metadata::PROGRAM_ARG0));
     }
 
-    Err("could not resolve default configuration directory from environment variables".to_string())
+    Err(())
 }

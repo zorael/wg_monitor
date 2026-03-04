@@ -1,8 +1,8 @@
-//! FIXME
+//! Functions for reading and writing the configuration file to disk.
 
 use std::path;
 
-/// Deserializes the configuration file from disk, returning an optional FileConfig.
+/// Deserializes the configuration file from disk, returning an optional `FileConfig``.
 pub fn deserialize_config_file(
     config_file: &path::Path,
 ) -> Result<Option<super::FileConfig>, confy::ConfyError> {
