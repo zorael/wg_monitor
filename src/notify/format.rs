@@ -76,7 +76,7 @@ pub fn format_generic_message(
     add_section(&missing_sans_new_missing_keys, &strings.still_missing);
 
     if !strings.footer.is_empty() {
-        message.push('\n');
+        //message.push('\n'); // append_message_section leaves an extra newline
         message.push_str(&strings.footer);
     }
 
@@ -107,7 +107,7 @@ pub fn format_generic_reminder(
     add_section(&ctx.missing_keys, &strings.still_missing);
 
     if !strings.footer.is_empty() {
-        message.push('\n');
+        //message.push('\n'); // append_message_section leaves an extra newline
         message.push_str(&strings.footer);
     }
 
