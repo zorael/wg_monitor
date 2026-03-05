@@ -250,239 +250,6 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Notific
     notifiers
 }
 
-fn retry_stored_notifications(
-    notifiers: &mut [Box<dyn notify::NotificationSender>],
-    settings: &Settings,
-) -> notify::DispatchReport {
-    let mut report = notify::DispatchReport {
-        total: notifiers.len() as u32,
-        ..Default::default()
-    };
-
-    fn verbose_print(message: &Option<String>, settings: &Settings) {
-        const SEP: &str = "--------------------";
-
-        if settings.verbose
-            && let Some(msg) = message
-        {
-            println!("{SEP}\n{msg}\n{SEP}");
-        }
-    }
-
-    for n in notifiers.iter_mut() {
-        let (result, message) = retry_single_notification(n, settings);
-
-        match result {
-            notify::NotificationResult::DryRun => {
-                verbose_print(&message, settings);
-                report.successful += 1;
-            }
-            notify::NotificationResult::Success => {
-                verbose_print(&message, settings);
-                report.successful += 1;
-            }
-            notify::NotificationResult::Failure(_) => {
-                verbose_print(&message, settings);
-                report.failed += 1;
-            }
-            notify::NotificationResult::Skipped => {
-                verbose_print(&message, settings);
-                report.skipped += 1;
-            }
-        }
-    }
-
-    report
-}
-
-fn retry_single_notification(
-    n: &mut Box<dyn notify::NotificationSender>,
-    settings: &Settings,
-) -> (notify::NotificationResult, Option<String>) {
-    fn verbose_print(message: &str, settings: &Settings) {
-        if settings.verbose {
-            const SEP: &str = "--------------------";
-            println!("{SEP}\n{message}\n{SEP}");
-        }
-    }
-
-    match n.get_stored_notification() {
-        // If it has a Context and a Delta, it is a notification
-        // If it only has a Context, it is a reminder
-        // If it has neither, it doesn't have a stored notification
-        (Some(ctx), Some(delta)) => {
-            match n.push_notification(&ctx, &delta) {
-                (notify::NotificationResult::DryRun, message) => {
-                    println!("[{}] DRY RUN", n.name());
-                    verbose_print(&message, settings);
-                    n.clear_stored_notification(); // Notification sent so discard it
-                    (notify::NotificationResult::DryRun, Some(message))
-                }
-                (notify::NotificationResult::Success, message) => {
-                    println!("[{}] Notification sent successfully", n.name());
-                    verbose_print(&message, settings);
-                    n.clear_stored_notification(); // As above, discard it
-                    (notify::NotificationResult::Success, Some(message))
-                }
-                (notify::NotificationResult::Failure(e), message) => {
-                    eprintln!("[{}] Failed to send notification: {e}", n.name());
-                    verbose_print(&message, settings);
-                    (notify::NotificationResult::Failure(e), Some(message))
-                }
-                _ => {
-                    // Should never happen.
-                    (notify::NotificationResult::Skipped, None)
-                }
-            }
-        }
-        (Some(ctx), None) => match n.push_reminder(&ctx) {
-            (notify::NotificationResult::DryRun, message) => {
-                println!("[{}] DRY RUN", n.name());
-                verbose_print(&message, settings);
-                n.clear_stored_notification(); // Reminder sent so discard it
-                n.increment_num_consecutive_reminders();
-                (notify::NotificationResult::DryRun, Some(message))
-            }
-            (notify::NotificationResult::Success, message) => {
-                println!("[{}] Reminder sent successfully", n.name());
-                verbose_print(&message, settings);
-                n.clear_stored_notification(); // As above
-                n.set_last_reminder_sent(Some(ctx.now));
-                n.increment_num_consecutive_reminders();
-                (notify::NotificationResult::Success, Some(message))
-            }
-            (notify::NotificationResult::Failure(e), message) => {
-                eprintln!("[{}] Failed to send reminder: {e}", n.name());
-                verbose_print(&message, settings);
-                (notify::NotificationResult::Failure(e), Some(message))
-            }
-            _ => {
-                // Should never happen.
-                (notify::NotificationResult::Skipped, None)
-            }
-        },
-        (None, _) => (notify::NotificationResult::Skipped, None),
-    }
-}
-
-fn send_notification(
-    ctx: &notify::Context,
-    delta: &notify::Delta,
-    notifiers: &mut [Box<dyn notify::NotificationSender>],
-    settings: &Settings,
-) -> notify::DispatchReport {
-    let mut report = notify::DispatchReport {
-        total: notifiers.len() as u32,
-        ..Default::default()
-    };
-
-    for n in notifiers.iter_mut() {
-        let (result, _) = send_single_notifier_notification(ctx, delta, n, settings);
-
-        match result {
-            notify::NotificationResult::DryRun => {
-                report.successful += 1;
-            }
-            notify::NotificationResult::Success => {
-                report.successful += 1;
-            }
-            notify::NotificationResult::Failure(_) => {
-                report.failed += 1;
-            }
-            notify::NotificationResult::Skipped => {
-                report.skipped += 1;
-            }
-        }
-    }
-
-    report
-}
-
-fn send_single_notifier_notification(
-    ctx: &notify::Context,
-    delta: &notify::Delta,
-    n: &mut Box<dyn notify::NotificationSender>,
-    settings: &Settings,
-) -> (notify::NotificationResult, Option<String>) {
-    fn verbose_print(message: &str, settings: &Settings) {
-        if settings.verbose {
-            const SEP: &str = "--------------------";
-            println!("{SEP}\n{message}\n{SEP}");
-        }
-    }
-
-    // Time to send a new notification, so discard any stored ones
-    n.clear_stored_notification();
-    n.reset_num_consecutive_reminders();
-    n.clear_last_reminder_sent();
-
-    match n.push_notification(ctx, delta) {
-        (notify::NotificationResult::DryRun, message) => {
-            println!("[{}] DRY RUN", n.name());
-            verbose_print(&message, settings);
-            (notify::NotificationResult::DryRun, Some(message))
-        }
-        (notify::NotificationResult::Success, message) => {
-            println!("[{}] Notification sent successfully", n.name());
-            verbose_print(&message, settings);
-            (notify::NotificationResult::Success, Some(message))
-        }
-        (notify::NotificationResult::Failure(e), message) => {
-            eprintln!("[{}] Failed to send notification: {e}", n.name());
-            verbose_print(&message, settings);
-            n.store_notification(ctx, Some(delta)); // Store the failure for retrying
-            (notify::NotificationResult::Failure(e), Some(message))
-        }
-        _ => {
-            // Should never happen.
-            (notify::NotificationResult::Skipped, None)
-        }
-    }
-}
-
-fn send_single_notifier_reminder(
-    ctx: &notify::Context,
-    n: &mut Box<dyn notify::NotificationSender>,
-    settings: &Settings,
-) -> (notify::NotificationResult, Option<String>) {
-    fn verbose_print(message: &str, settings: &Settings) {
-        if settings.verbose {
-            const SEP: &str = "--------------------";
-            println!("{SEP}\n{message}\n{SEP}");
-        }
-    }
-
-    // Time to send a new reminder, so discard any stored ones
-    n.clear_stored_notification();
-
-    match n.push_reminder(ctx) {
-        (notify::NotificationResult::DryRun, message) => {
-            println!("[{}] DRY RUN", n.name());
-            verbose_print(&message, settings);
-            n.set_last_reminder_sent(Some(ctx.now));
-            n.increment_num_consecutive_reminders();
-            (notify::NotificationResult::DryRun, Some(message))
-        }
-        (notify::NotificationResult::Success, message) => {
-            println!("[{}] Reminder sent successfully", n.name());
-            verbose_print(&message, settings);
-            n.set_last_reminder_sent(Some(ctx.now));
-            n.increment_num_consecutive_reminders();
-            (notify::NotificationResult::Success, Some(message))
-        }
-        (notify::NotificationResult::Failure(e), message) => {
-            eprintln!("[{}] Failed to send reminder: {e}", n.name());
-            verbose_print(&message, settings);
-            n.store_notification(ctx, None);
-            (notify::NotificationResult::Failure(e), Some(message))
-        }
-        _ => {
-            // Should never happen.
-            (notify::NotificationResult::Skipped, None)
-        }
-    }
-}
-
 /// Main loop of the program.
 fn run_loop(
     ctx: &mut notify::Context,
@@ -576,7 +343,7 @@ fn run_loop(
         if delta.is_empty() {
             if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
                 // End of the line but there may be stored notifications
-                let report = retry_stored_notifications(notifiers, &settings);
+                let report = notify::retry_stored_notification(notifiers, &settings);
 
                 if settings.debug && report.total != report.skipped {
                     println!("{:#?}", report);
@@ -608,7 +375,7 @@ fn run_loop(
                         .unwrap_or(time::Duration::ZERO)
                         > next_report_interval
                     {
-                        let (result, _) = send_single_notifier_reminder(ctx, n, &settings);
+                        let (result, _) = notify::send_single_notifier_reminder(ctx, n, &settings);
 
                         if settings.debug {
                             println!("{:#?}", result);
@@ -625,8 +392,7 @@ fn run_loop(
             delta.print_nonempty_prefixed("... ");
         }
 
-        //let report = notify::send_notification(notifiers, ctx, &delta, settings.verbose);
-        let report = send_notification(ctx, &delta, notifiers, &settings);
+        let report = notify::send_notification(ctx, &delta, notifiers, &settings);
 
         if settings.debug && report.total != report.skipped {
             println!("{:#?}\n", report);
