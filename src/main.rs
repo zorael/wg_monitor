@@ -41,8 +41,6 @@ use std::sync::Arc;
 use std::thread;
 use std::time;
 
-use crate::settings::Settings;
-
 /// Prints a small banner with program metadata.
 fn print_banner() {
     println!(
@@ -173,7 +171,7 @@ fn main() -> process::ExitCode {
 
 /// Construct notifiers based on the passed settings, returning a vector of
 /// boxed trait objects.
-fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSender>> {
+fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::NotificationSender>> {
     let mut notifiers: Vec<Box<dyn notify::NotificationSender>> = Vec::new();
     let client = Arc::new(blocking::Client::new());
 
@@ -489,7 +487,7 @@ fn send_single_notifier_reminder(
 fn run_loop(
     ctx: &mut notify::Context,
     notifiers: &mut [Box<dyn notify::NotificationSender>],
-    settings: Settings,
+    settings: settings::Settings,
 ) -> process::ExitCode {
     /// Perform some cleanup and sleep at the end of each loop duration.
     fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
@@ -639,8 +637,8 @@ fn run_loop(
 }
 
 /// Initializes all settings, except for CLI parsing, which must already have been done.
-fn init_settings(cli: &cli::Cli) -> Result<Settings, process::ExitCode> {
-    let mut settings = Settings::default();
+fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode> {
+    let mut settings = settings::Settings::default();
 
     if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
         eprintln!("[X] Error resolving default configuration directory: {}", e);
