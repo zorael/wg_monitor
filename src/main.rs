@@ -257,11 +257,12 @@ fn retry_stored_notifications(
     };
 
     fn verbose_print(message: &Option<String>, settings: &Settings) {
-        if settings.verbose {
-            const SEP: &str = "--------------------";
-            if let Some(msg) = message {
-                println!("{SEP}\n{msg}\n{SEP}");
-            }
+        const SEP: &str = "--------------------";
+
+        if settings.verbose
+            && let Some(msg) = message
+        {
+            println!("{SEP}\n{msg}\n{SEP}");
         }
     }
 
@@ -351,15 +352,13 @@ fn retry_single_notification(
                 eprintln!("[{}] Failed to send reminder: {e}", n.name());
                 verbose_print(&message, settings);
                 (notify::NotificationResult::Failure(e), Some(message))
-            },
+            }
             _ => {
                 // Should never happen.
                 (notify::NotificationResult::Skipped, None)
             }
         },
-        (None, _) => {
-            (notify::NotificationResult::Skipped, None)
-        }
+        (None, _) => (notify::NotificationResult::Skipped, None),
     }
 }
 
@@ -430,7 +429,7 @@ fn send_single_notifier_notification(
             verbose_print(&message, settings);
             n.store_notification(ctx, Some(delta)); // Store the failure for retrying
             (notify::NotificationResult::Failure(e), Some(message))
-        },
+        }
         _ => {
             // Should never happen.
             (notify::NotificationResult::Skipped, None)
