@@ -21,7 +21,7 @@ pub struct BatsignBackend {
     /// Message strings for Batsign notifications.
     strings: settings::MessageStrings,
 
-    /// Message strings for Batsign reminder notifications.S
+    /// Message strings for Batsign reminder notifications.
     reminder_strings: settings::ReminderStrings,
 }
 

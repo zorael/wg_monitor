@@ -9,6 +9,7 @@ use crate::notify;
 use crate::utils;
 
 /// Structure representing the changes in peer status between two checks.
+#[derive(Clone)]
 pub struct Delta {
     /// Public keys of peers that were lost (time since last seen exceeds the
     /// timeout threshold) since the last check.

@@ -4,7 +4,7 @@ use std::time;
 
 /// Represents a Wireguard peer, including its public key, human-readable name,
 /// and last seen timestamp.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct WireguardPeer {
     /// The public key of the Wireguard peer, which serves as its unique identifier.
     pub public_key: String,

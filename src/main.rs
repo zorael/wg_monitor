@@ -247,6 +247,240 @@ fn build_notifiers(settings: &Settings) -> Vec<Box<dyn notify::NotificationSende
     notifiers
 }
 
+fn retry_stored_notifications(
+    notifiers: &mut [Box<dyn notify::NotificationSender>],
+    settings: &Settings,
+) -> notify::DispatchReport {
+    let mut report = notify::DispatchReport {
+        total: notifiers.len() as u32,
+        ..Default::default()
+    };
+
+    fn verbose_print(message: &Option<String>, settings: &Settings) {
+        if settings.verbose {
+            const SEP: &str = "--------------------";
+            if let Some(msg) = message {
+                println!("{SEP}\n{msg}\n{SEP}");
+            }
+        }
+    }
+
+    for n in notifiers.iter_mut() {
+        let (result, message) = retry_single_notification(n, settings);
+
+        match result {
+            notify::NotificationResult::DryRun => {
+                verbose_print(&message, settings);
+                report.successful += 1;
+            }
+            notify::NotificationResult::Success => {
+                verbose_print(&message, settings);
+                report.successful += 1;
+            }
+            notify::NotificationResult::Failure(_) => {
+                verbose_print(&message, settings);
+                report.failed += 1;
+            }
+            notify::NotificationResult::Skipped => {
+                verbose_print(&message, settings);
+                report.skipped += 1;
+            }
+        }
+    }
+
+    report
+}
+
+fn retry_single_notification(
+    n: &mut Box<dyn notify::NotificationSender>,
+    settings: &Settings,
+) -> (notify::NotificationResult, Option<String>) {
+    fn verbose_print(message: &str, settings: &Settings) {
+        if settings.verbose {
+            const SEP: &str = "--------------------";
+            println!("{SEP}\n{message}\n{SEP}");
+        }
+    }
+
+    match n.get_stored_notification() {
+        // If it has a Context and a Delta, it is a notification
+        // If it only has a Context, it is a reminder
+        // If it has neither, it doesn't have a stored notification
+        (Some(ctx), Some(delta)) => {
+            match n.push_notification(&ctx, &delta) {
+                (notify::NotificationResult::DryRun, message) => {
+                    println!("[{}] DRY RUN", n.name());
+                    verbose_print(&message, settings);
+                    n.clear_stored_notification(); // Notification sent so discard it
+                    (notify::NotificationResult::DryRun, Some(message))
+                }
+                (notify::NotificationResult::Success, message) => {
+                    println!("[{}] Notification sent successfully", n.name());
+                    verbose_print(&message, settings);
+                    n.clear_stored_notification(); // As above, discard it
+                    (notify::NotificationResult::Success, Some(message))
+                }
+                (notify::NotificationResult::Failure(e), message) => {
+                    eprintln!("[{}] Failed to send notification: {e}", n.name());
+                    verbose_print(&message, settings);
+                    (notify::NotificationResult::Failure(e), Some(message))
+                }
+                _ => {
+                    // Should never happen.
+                    (notify::NotificationResult::Skipped, None)
+                }
+            }
+        }
+        (Some(ctx), None) => match n.push_reminder(&ctx) {
+            (notify::NotificationResult::DryRun, message) => {
+                println!("[{}] DRY RUN", n.name());
+                verbose_print(&message, settings);
+                n.clear_stored_notification(); // Reminder sent so discard it
+                n.increment_num_consecutive_reminders();
+                (notify::NotificationResult::DryRun, Some(message))
+            }
+            (notify::NotificationResult::Success, message) => {
+                println!("[{}] Reminder sent successfully", n.name());
+                verbose_print(&message, settings);
+                n.clear_stored_notification(); // As above
+                n.set_last_reminder_sent(Some(ctx.now));
+                n.increment_num_consecutive_reminders();
+                (notify::NotificationResult::Success, Some(message))
+            }
+            (notify::NotificationResult::Failure(e), message) => {
+                eprintln!("[{}] Failed to send reminder: {e}", n.name());
+                verbose_print(&message, settings);
+                (notify::NotificationResult::Failure(e), Some(message))
+            },
+            _ => {
+                // Should never happen.
+                (notify::NotificationResult::Skipped, None)
+            }
+        },
+        (None, _) => {
+            (notify::NotificationResult::Skipped, None)
+        }
+    }
+}
+
+fn send_notification(
+    ctx: &notify::Context,
+    delta: &notify::Delta,
+    notifiers: &mut [Box<dyn notify::NotificationSender>],
+    settings: &Settings,
+) -> notify::DispatchReport {
+    let mut report = notify::DispatchReport {
+        total: notifiers.len() as u32,
+        ..Default::default()
+    };
+
+    for n in notifiers.iter_mut() {
+        let (result, _) = send_single_notifier_notification(ctx, delta, n, settings);
+
+        match result {
+            notify::NotificationResult::DryRun => {
+                report.successful += 1;
+            }
+            notify::NotificationResult::Success => {
+                report.successful += 1;
+            }
+            notify::NotificationResult::Failure(_) => {
+                report.failed += 1;
+            }
+            notify::NotificationResult::Skipped => {
+                report.skipped += 1;
+            }
+        }
+    }
+
+    report
+}
+
+fn send_single_notifier_notification(
+    ctx: &notify::Context,
+    delta: &notify::Delta,
+    n: &mut Box<dyn notify::NotificationSender>,
+    settings: &Settings,
+) -> (notify::NotificationResult, Option<String>) {
+    fn verbose_print(message: &str, settings: &Settings) {
+        if settings.verbose {
+            const SEP: &str = "--------------------";
+            println!("{SEP}\n{message}\n{SEP}");
+        }
+    }
+
+    // Time to send a new notification, so discard any stored ones
+    n.clear_stored_notification();
+    n.reset_num_consecutive_reminders();
+    n.clear_last_reminder_sent();
+
+    match n.push_notification(ctx, delta) {
+        (notify::NotificationResult::DryRun, message) => {
+            println!("[{}] DRY RUN", n.name());
+            verbose_print(&message, settings);
+            (notify::NotificationResult::DryRun, Some(message))
+        }
+        (notify::NotificationResult::Success, message) => {
+            println!("[{}] Notification sent successfully", n.name());
+            verbose_print(&message, settings);
+            (notify::NotificationResult::Success, Some(message))
+        }
+        (notify::NotificationResult::Failure(e), message) => {
+            eprintln!("[{}] Failed to send notification: {e}", n.name());
+            verbose_print(&message, settings);
+            n.store_notification(ctx, Some(delta)); // Store the failure for retrying
+            (notify::NotificationResult::Failure(e), Some(message))
+        },
+        _ => {
+            // Should never happen.
+            (notify::NotificationResult::Skipped, None)
+        }
+    }
+}
+
+fn send_single_notifier_reminder(
+    ctx: &notify::Context,
+    n: &mut Box<dyn notify::NotificationSender>,
+    settings: &Settings,
+) -> (notify::NotificationResult, Option<String>) {
+    fn verbose_print(message: &str, settings: &Settings) {
+        if settings.verbose {
+            const SEP: &str = "--------------------";
+            println!("{SEP}\n{message}\n{SEP}");
+        }
+    }
+
+    // Time to send a new reminder, so discard any stored ones
+    n.clear_stored_notification();
+
+    match n.push_reminder(ctx) {
+        (notify::NotificationResult::DryRun, message) => {
+            println!("[{}] DRY RUN", n.name());
+            verbose_print(&message, settings);
+            n.set_last_reminder_sent(Some(ctx.now));
+            n.increment_num_consecutive_reminders();
+            (notify::NotificationResult::DryRun, Some(message))
+        }
+        (notify::NotificationResult::Success, message) => {
+            println!("[{}] Reminder sent successfully", n.name());
+            verbose_print(&message, settings);
+            n.set_last_reminder_sent(Some(ctx.now));
+            n.increment_num_consecutive_reminders();
+            (notify::NotificationResult::Success, Some(message))
+        }
+        (notify::NotificationResult::Failure(e), message) => {
+            eprintln!("[{}] Failed to send reminder: {e}", n.name());
+            verbose_print(&message, settings);
+            n.store_notification(ctx, None);
+            (notify::NotificationResult::Failure(e), Some(message))
+        }
+        _ => {
+            // Should never happen.
+            (notify::NotificationResult::Skipped, None)
+        }
+    }
+}
+
 /// Main loop of the program.
 fn run_loop(
     ctx: &mut notify::Context,
@@ -339,40 +573,38 @@ fn run_loop(
 
         if delta.is_empty() {
             if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
-                // All is well
+                // End of the line but there may be stored notifications
+                let report = retry_stored_notifications(notifiers, &settings);
+                println!("{:#?}", report);
                 end_loop(ctx, settings.monitor.check_interval);
                 continue;
             }
 
-            if let Some(last_report_timestamp) = ctx.last_report {
-                // Grow the reminder interval over time but cap it at 48h
-                let growth_multiplier = match ctx.num_consecutive_reminders {
-                    0 => 1, // 6h (assuming default reminder interval)
-                    1 => 2, // 12h
-                    2 => 2, // 12h
-                    3 => 4, // 24h
-                    4 => 4, // 24h
-                    _ => 8, // 48h
-                };
+            // No changes but there are missing/late peers, so we may need to send reminders
+            for n in notifiers.iter_mut() {
+                if let Some(last_reminder_sent) = n.get_last_reminder_sent() {
+                    // Grow the reminder interval over time but cap it at 48h
+                    let growth_multiplier = match n.get_num_consecutive_reminders() {
+                        0 => 1, // 6h (assuming default reminder interval)
+                        1 => 2, // 12h
+                        2 => 2, // 12h
+                        3 => 4, // 24h
+                        4 => 4, // 24h
+                        _ => 8, // 48h
+                    };
 
-                let next_report_interval = growth_multiplier * settings.monitor.reminder_interval;
+                    let next_report_interval =
+                        growth_multiplier * settings.monitor.reminder_interval;
 
-                if ctx
-                    .now
-                    .duration_since(last_report_timestamp)
-                    .unwrap_or(time::Duration::ZERO)
-                    > next_report_interval
-                {
-                    match notify::send_reminder(notifiers, ctx, settings.verbose) {
-                        true => {
-                            println!("[O] Repeat reminders sent successfully");
-                            ctx.last_report = Some(ctx.now);
-                            ctx.num_consecutive_reminders += 1;
-                        }
-                        false => eprintln!("[!] Failed to send some repeat reminders"),
+                    if ctx
+                        .now
+                        .duration_since(last_reminder_sent)
+                        .unwrap_or(time::Duration::ZERO)
+                        > next_report_interval
+                    {
+                        let (result, _) = send_single_notifier_reminder(ctx, n, &settings);
+                        println!("{:#?}", result);
                     }
-
-                    println!();
                 }
             }
 
@@ -384,25 +616,9 @@ fn run_loop(
             delta.print_nonempty_prefixed("... ");
         }
 
-        match notify::send_notification(notifiers, ctx, &delta, settings.verbose) {
-            true => {
-                println!("[O] Notifications sent successfully");
-            }
-            false => {
-                // We can either drop down here and invoke end_loop
-                // so as to force a retry of the same notification after sleeping,
-                // or we can just log the failure and move on.
-                // For now, just log. Failed notifications will be lost.
-                eprintln!("[!] Failed to send some notifications");
-                /*end_loop(ctx, settings.monitor.check_interval);
-                continue;*/
-            }
-        }
-
-        println!();
-
-        ctx.num_consecutive_reminders = 0;
-        ctx.last_report = Some(ctx.now);
+        //let report = notify::send_notification(notifiers, ctx, &delta, settings.verbose);
+        let report = send_notification(ctx, &delta, notifiers, &settings);
+        println!("{:#?}\n", report);
         end_loop(ctx, settings.monitor.check_interval);
     }
 }

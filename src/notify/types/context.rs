@@ -7,6 +7,7 @@ use std::time;
 
 use crate::peer;
 
+#[derive(Clone, Debug)]
 /// Context for building notification messages, containing the current and previous
 /// state of peers, as well as timing information.
 pub struct Context {
@@ -28,12 +29,6 @@ pub struct Context {
     /// Current time.
     pub now: time::SystemTime,
 
-    /// Time of the last report sent, used for scheduling reminder notifications.
-    pub last_report: Option<time::SystemTime>,
-
-    /// Number of consecutive reminder notifications sent.
-    pub num_consecutive_reminders: u32,
-
     /// Indicates whether this is the first run of the notifier, which can be used
     /// to adjust the messaging (e.g., to indicate that the initial state is being reported).
     pub first_run: bool,
@@ -53,8 +48,6 @@ impl Context {
             previous_late_keys: Vec::with_capacity(capacity),
             previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
-            last_report: None,
-            num_consecutive_reminders: 0,
             first_run: false,
             resume: false,
         }

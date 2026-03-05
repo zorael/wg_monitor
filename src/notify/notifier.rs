@@ -2,6 +2,8 @@
 //! which implements the trait using a specific backend to send notifications
 //! about Wireguard peer status changes.
 
+use std::time;
+
 use crate::backend;
 
 /// Defines the `NotificationSender` trait, implemented by types that can send
@@ -21,6 +23,24 @@ pub trait NotificationSender {
 
     /// Sends a reminder notification.
     fn push_reminder(&mut self, ctx: &super::Context) -> (super::NotificationResult, String);
+
+    fn store_notification(&mut self, ctx: &super::Context, delta: Option<&super::Delta>);
+
+    fn get_stored_notification(&mut self) -> (Option<super::Context>, Option<super::Delta>);
+
+    fn clear_stored_notification(&mut self);
+
+    fn set_last_reminder_sent(&mut self, when: Option<time::SystemTime>);
+
+    fn get_last_reminder_sent(&self) -> Option<time::SystemTime>;
+
+    fn clear_last_reminder_sent(&mut self);
+
+    fn get_num_consecutive_reminders(&self) -> u32;
+
+    fn increment_num_consecutive_reminders(&mut self);
+
+    fn reset_num_consecutive_reminders(&mut self);
 }
 
 /// A `Notifier` that uses a specific backend to send notifications about
@@ -32,6 +52,14 @@ pub struct Notifier<B: backend::Backend> {
     /// Indicates whether the notifier is in dry run mode, in which no
     /// notifications actually will be sent.
     dry_run: bool,
+
+    stored_context: Option<super::Context>,
+
+    stored_delta: Option<super::Delta>,
+
+    last_reminder_sent: Option<time::SystemTime>,
+
+    num_consecutive_reminders: u32,
 }
 
 impl<B: backend::Backend> NotificationSender for Notifier<B> {
@@ -73,11 +101,56 @@ impl<B: backend::Backend> NotificationSender for Notifier<B> {
             Err(e) => (super::NotificationResult::Failure(e), reminder),
         }
     }
+
+    fn store_notification(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
+        self.stored_context = Some(ctx.clone());
+        self.stored_delta = delta.cloned();
+    }
+
+    fn get_stored_notification(&mut self) -> (Option<super::Context>, Option<super::Delta>) {
+        (self.stored_context.take(), self.stored_delta.take())
+    }
+
+    fn clear_stored_notification(&mut self) {
+        self.stored_context = None;
+        self.stored_delta = None;
+    }
+
+    fn set_last_reminder_sent(&mut self, when: Option<time::SystemTime>) {
+        self.last_reminder_sent = when;
+    }
+
+    fn get_last_reminder_sent(&self) -> Option<time::SystemTime> {
+        self.last_reminder_sent
+    }
+
+    fn clear_last_reminder_sent(&mut self) {
+        self.last_reminder_sent = None;
+    }
+
+    fn get_num_consecutive_reminders(&self) -> u32 {
+        self.num_consecutive_reminders
+    }
+
+    fn increment_num_consecutive_reminders(&mut self) {
+        self.num_consecutive_reminders += 1;
+    }
+
+    fn reset_num_consecutive_reminders(&mut self) {
+        self.num_consecutive_reminders = 0;
+    }
 }
 
 impl<B: backend::Backend> Notifier<B> {
     /// Creates a new `Notifier`.
     pub fn new(backend: B, dry_run: bool) -> Self {
-        Self { backend, dry_run }
+        Self {
+            backend,
+            dry_run,
+            stored_context: None,
+            stored_delta: None,
+            last_reminder_sent: None,
+            num_consecutive_reminders: 0,
+        }
     }
 }

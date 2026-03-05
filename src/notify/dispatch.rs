@@ -5,15 +5,15 @@
 /// Terminal separator line used in logging output.
 const SEP: &str = "--------------------";
 
-/// Sends a notification via all notifiers, returning `true` if all notifications
-/// were sent successfully, or `false` if any failed.
+/// Sends a notification via all notifiers.
 pub fn send_notification(
     notifiers: &mut [Box<dyn super::NotificationSender>],
     ctx: &super::Context,
     delta: &super::Delta,
     verbose: bool,
-) -> bool {
-    let mut success = true;
+) -> super::DispatchReport {
+    let mut report = super::DispatchReport::default();
+    report.total = notifiers.len() as u32;
 
     let verbose_print = |message: &str| {
         if verbose {
@@ -26,30 +26,32 @@ pub fn send_notification(
             (super::NotificationResult::DryRun, message) => {
                 println!("[{}] DRY RUN", n.name());
                 verbose_print(&message);
+                report.skipped += 1;
             }
             (super::NotificationResult::Success, message) => {
                 println!("[{}] Notification sent successfully", n.name());
                 verbose_print(&message);
+                report.successful += 1;
             }
             (super::NotificationResult::Failure(e), message) => {
                 eprintln!("[{}] Failed to send notification: {e}", n.name());
                 verbose_print(&message);
-                success = false;
+                report.failed += 1;
             }
         }
     }
 
-    success
+    report
 }
 
-/// Sends a reminder notification via all notifiers, returning `true` if all notifications
-/// were sent successfully, or `false` if any failed.
+/// Sends a reminder notification via all notifiers.
 pub fn send_reminder(
     notifiers: &mut [Box<dyn super::NotificationSender>],
     ctx: &super::Context,
     verbose: bool,
-) -> bool {
-    let mut success = true;
+) -> super::DispatchReport {
+    let mut report = super::DispatchReport::default();
+    report.total = notifiers.len() as u32;
 
     let verbose_print = |message: &str| {
         if verbose {
@@ -62,18 +64,20 @@ pub fn send_reminder(
             (super::NotificationResult::DryRun, message) => {
                 println!("[{}] DRY RUN", n.name());
                 verbose_print(&message);
+                report.skipped += 1;
             }
             (super::NotificationResult::Success, message) => {
                 println!("[{}] Reminder sent successfully", n.name());
                 verbose_print(&message);
+                report.successful += 1;
             }
             (super::NotificationResult::Failure(e), message) => {
                 eprintln!("[{}] Failed to send reminder: {e}", n.name());
                 verbose_print(&message);
-                success = false;
+                report.failed += 1;
             }
         }
     }
 
-    success
+    report
 }
