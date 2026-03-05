@@ -574,7 +574,11 @@ fn run_loop(
             if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
                 // End of the line but there may be stored notifications
                 let report = retry_stored_notifications(notifiers, &settings);
-                println!("{:#?}", report);
+
+                if settings.debug && report.total != report.skipped {
+                    println!("{:#?}", report);
+                }
+
                 end_loop(ctx, settings.monitor.check_interval);
                 continue;
             }
@@ -602,7 +606,10 @@ fn run_loop(
                         > next_report_interval
                     {
                         let (result, _) = send_single_notifier_reminder(ctx, n, &settings);
-                        println!("{:#?}", result);
+
+                        if settings.debug {
+                            println!("{:#?}", result);
+                        }
                     }
                 }
             }
@@ -617,7 +624,11 @@ fn run_loop(
 
         //let report = notify::send_notification(notifiers, ctx, &delta, settings.verbose);
         let report = send_notification(ctx, &delta, notifiers, &settings);
-        println!("{:#?}\n", report);
+
+        if settings.debug && report.total != report.skipped {
+            println!("{:#?}\n", report);
+        }
+
         end_loop(ctx, settings.monitor.check_interval);
     }
 }
