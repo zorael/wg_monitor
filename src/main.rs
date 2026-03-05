@@ -106,6 +106,11 @@ fn main() -> process::ExitCode {
         }
     };
 
+    if peers.is_empty() {
+        eprintln!("[X] Peer list file {} is empty.", settings.paths.peer_list.display());
+        return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
+    }
+
     // Print resolved settings as part of program startup.
     settings.print();
     println!();

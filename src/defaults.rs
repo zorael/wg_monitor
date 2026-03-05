@@ -71,6 +71,7 @@ pub mod exit_codes {
     pub const ERROR_READING_PEERS_FILE: u8 = 30;
     pub const FAILED_TO_EXECUTE_HANDSHAKES_COMMAND: u8 = 31;
     pub const FAILED_TO_PARSE_HANDSHAKES_OUTPUT: u8 = 32;
+    pub const EMPTY_PEER_LIST: u8 = 33;
     pub const FAILED_TO_RESOLVE_CONFIG_DIR: u8 = 40;
     pub const CONFIG_DIR_DOES_NOT_EXIST: u8 = 41;
     //pub const FAILED_TO_LOAD_RESOURCES: u8 = 42;
