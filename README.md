@@ -16,11 +16,16 @@ Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/me
 wg_monitor x.y.z | copyright 2026 jr
 $ git clone https://github.com/zorael/wg_monitor
 
+Monitors other peers in a Wireguard VPN and sends notifications if contact with a peer is lost
+
 Usage: wg_monitor [OPTIONS]
 
 Options:
   -c, --config-dir <path>  Specify an alternate configuration directory
+      --resume             Skip notifications about program startup
+      --skip-first         Skip the first run and thus the first notification
       --show               Show the resolved configuration and exit
+  -v, --verbose            Print some additional information
   -d, --debug              Print additional debug information
       --dry-run            Perform a dry run without sending any notifications
       --save               Write configuration to disk
