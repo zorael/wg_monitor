@@ -27,25 +27,37 @@ pub struct WireguardPeer {
 impl WireguardPeer {
     /// Shortens a Wireguard public key for display purposes, returning the
     /// first 7 characters, or the substring before a '/' or '+' if present in
-    /// the first 7 characters.
+    /// the first 7 characters. If the very first letter (index 0) is a
+    /// '/' or '+', the match is ignored and the first 7 characters are returned.
     pub fn shorten_key(public_key: &str) -> String {
+        fn check_for_delimiter(key: &str, delimiter: char) -> Option<String> {
+            if let Some(pos) = key.find(delimiter)
+                && pos > 0
+            {
+                let pre_delimiter = &key[..pos];
+                return Some(pre_delimiter.to_owned());
+            }
+
+            None
+        }
+
+        // We should not need this; validate_public_key ensures the key is 44
+        // characters long. Keep it just in case.
         if public_key.len() < 7 {
             return public_key.to_owned();
         }
 
-        let key = &public_key[..7];
+        let first_seven = &public_key[..7];
 
-        if let Some(pos) = key.find('/') {
-            let until_slash = &key[..pos];
-            return until_slash.to_owned();
+        if let Some(shortened) = check_for_delimiter(first_seven, '/') {
+            return shortened;
         }
 
-        if let Some(pos) = key.find('+') {
-            let until_plus = &key[..pos];
-            return until_plus.to_owned();
+        if let Some(shortened) = check_for_delimiter(first_seven, '+') {
+            return shortened;
         }
 
-        key.to_owned()
+        first_seven.to_owned()
     }
 
     /// Validates a Wireguard public key, returning true if it does not seem
