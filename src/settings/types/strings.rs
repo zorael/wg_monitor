@@ -68,7 +68,7 @@ impl Default for MessageStrings {
             still_lost: "Still lost:\\n".to_string(),
             still_missing: "Still have yet to see (since last restart):\\n".to_string(),
             footer: String::new(),
-            bullet_point: "- ".to_string(),
+            bullet_point: "* ".to_string(),
             peer_with_timestamp: "{peer} (last seen {when})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
         }
@@ -172,7 +172,7 @@ impl Default for ReminderStrings {
             still_lost: "Still lost:\\n".to_string(),
             still_missing: "Still has yet to see (since last restart):\\n".to_string(),
             footer: String::new(),
-            bullet_point: "- ".to_string(),
+            bullet_point: "* ".to_string(),
             peer_with_timestamp: "{peer} (last seen {when})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
         }
