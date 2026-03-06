@@ -63,12 +63,14 @@ impl WireguardPeer {
     /// Validates a Wireguard public key, returning true if it does not seem
     /// obviously invalid. Does not perform an actual cryptographic validation.
     pub fn validate_public_key(public_key: &str) -> bool {
-        if public_key.len() != 44 || !public_key.ends_with('=') {
+        const EXPECTED_LENGTH: usize = 44;
+
+        if public_key.len() != EXPECTED_LENGTH || !public_key.ends_with('=') {
             return false;
         }
 
-        public_key
+        public_key[..EXPECTED_LENGTH - 1] // skip trailing '=', already established above
             .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=')
+            .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '/')
     }
 }
