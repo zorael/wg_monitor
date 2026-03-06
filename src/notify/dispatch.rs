@@ -3,6 +3,7 @@
 //! reminder notifications.
 
 use crate::settings;
+use crate::utils;
 
 /// Terminal separator line used in logging output.
 const SEP: &str = "--------------------";
@@ -73,19 +74,27 @@ pub fn retry_single_notification(
         (Some(ctx), Some(delta)) => {
             match n.push_notification(&ctx, &delta) {
                 (super::NotificationResult::DryRun, message) => {
-                    println!("[{}] DRY RUN", n.name());
+                    println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
                     verbose_print(&message, settings);
                     n.clear_stored_notification(); // Notification sent so discard it
                     (super::NotificationResult::DryRun, Some(message))
                 }
                 (super::NotificationResult::Success, message) => {
-                    println!("[{}] Notification sent successfully", n.name());
+                    println!(
+                        "[{}] [{}] Notification sent successfully",
+                        utils::timestamp_now(),
+                        n.name()
+                    );
                     verbose_print(&message, settings);
                     n.clear_stored_notification(); // As above, discard it
                     (super::NotificationResult::Success, Some(message))
                 }
                 (super::NotificationResult::Failure(e), message) => {
-                    eprintln!("[{}] Failed to send notification: {e}", n.name());
+                    eprintln!(
+                        "[{}] [{}] Failed to send notification: {e}",
+                        utils::timestamp_now(),
+                        n.name()
+                    );
                     verbose_print(&message, settings);
                     (super::NotificationResult::Failure(e), Some(message))
                 }
@@ -97,14 +106,18 @@ pub fn retry_single_notification(
         }
         (Some(ctx), None) => match n.push_reminder(&ctx) {
             (super::NotificationResult::DryRun, message) => {
-                println!("[{}] DRY RUN", n.name());
+                println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
                 verbose_print(&message, settings);
                 n.clear_stored_notification(); // Reminder sent so discard it
                 n.increment_num_consecutive_reminders();
                 (super::NotificationResult::DryRun, Some(message))
             }
             (super::NotificationResult::Success, message) => {
-                println!("[{}] Reminder sent successfully", n.name());
+                println!(
+                    "[{}] [{}] Reminder sent successfully",
+                    utils::timestamp_now(),
+                    n.name()
+                );
                 verbose_print(&message, settings);
                 n.clear_stored_notification(); // As above
                 n.set_last_reminder_sent(Some(ctx.now));
@@ -112,7 +125,11 @@ pub fn retry_single_notification(
                 (super::NotificationResult::Success, Some(message))
             }
             (super::NotificationResult::Failure(e), message) => {
-                eprintln!("[{}] Failed to send reminder: {e}", n.name());
+                eprintln!(
+                    "[{}] [{}] Failed to send reminder: {e}",
+                    utils::timestamp_now(),
+                    n.name()
+                );
                 verbose_print(&message, settings);
                 (super::NotificationResult::Failure(e), Some(message))
             }
@@ -173,17 +190,25 @@ fn send_single_notifier_notification(
 
     match n.push_notification(ctx, delta) {
         (super::NotificationResult::DryRun, message) => {
-            println!("[{}] DRY RUN", n.name());
+            println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
             verbose_print(&message, settings);
             (super::NotificationResult::DryRun, Some(message))
         }
         (super::NotificationResult::Success, message) => {
-            println!("[{}] Notification sent successfully", n.name());
+            println!(
+                "[{}] [{}] Notification sent successfully",
+                utils::timestamp_now(),
+                n.name()
+            );
             verbose_print(&message, settings);
             (super::NotificationResult::Success, Some(message))
         }
         (super::NotificationResult::Failure(e), message) => {
-            eprintln!("[{}] Failed to send notification: {e}", n.name());
+            eprintln!(
+                "[{}] [{}] Failed to send notification: {e}",
+                utils::timestamp_now(),
+                n.name()
+            );
             verbose_print(&message, settings);
             n.store_notification(ctx, Some(delta)); // Store the failure for retrying
             (super::NotificationResult::Failure(e), Some(message))
@@ -206,21 +231,29 @@ pub fn send_single_notifier_reminder(
 
     match n.push_reminder(ctx) {
         (super::NotificationResult::DryRun, message) => {
-            println!("[{}] DRY RUN", n.name());
+            println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
             verbose_print(&message, settings);
             n.set_last_reminder_sent(Some(ctx.now));
             n.increment_num_consecutive_reminders();
             (super::NotificationResult::DryRun, Some(message))
         }
         (super::NotificationResult::Success, message) => {
-            println!("[{}] Reminder sent successfully", n.name());
+            println!(
+                "[{}] [{}] Reminder sent successfully",
+                utils::timestamp_now(),
+                n.name()
+            );
             verbose_print(&message, settings);
             n.set_last_reminder_sent(Some(ctx.now));
             n.increment_num_consecutive_reminders();
             (super::NotificationResult::Success, Some(message))
         }
         (super::NotificationResult::Failure(e), message) => {
-            eprintln!("[{}] Failed to send reminder: {e}", n.name());
+            eprintln!(
+                "[{}] [{}] Failed to send reminder: {e}",
+                utils::timestamp_now(),
+                n.name()
+            );
             verbose_print(&message, settings);
             n.store_notification(ctx, None);
             (super::NotificationResult::Failure(e), Some(message))
