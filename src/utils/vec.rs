@@ -1,5 +1,7 @@
 //! Vector functions.
 
+#![allow(dead_code)]
+
 /// Trims whitespace from each string in the vector and removes any empty
 /// strings, returning a new vector.
 pub fn trim_vec_of_strings(vec: &[String]) -> Vec<String> {
