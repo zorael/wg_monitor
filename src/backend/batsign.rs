@@ -38,13 +38,19 @@ impl BatsignBackend {
         strings: &settings::MessageStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
+        let cached_name = format!(
+            "batsign#{}:{}",
+            id,
+            get_email_from_batsign_url(&url).unwrap_or("(?)")
+        );
+
         Self {
             id,
             client,
             url: url.to_owned(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
-            cached_name: String::new(),
+            cached_name,
         }
     }
 }
@@ -53,15 +59,7 @@ impl backend::Backend for BatsignBackend {
     /// Returns the name of this backend instance. It is in the format
     /// "batsign#{id}:{email}", where {id} is the unique numeric identifier of
     /// the instance, and {email} is extracted from the Batsign URL.
-    fn name(&mut self) -> &str {
-        if self.cached_name.is_empty() {
-            self.cached_name = format!(
-                "batsign#{}:{}",
-                self.id,
-                get_email_from_batsign_url(&self.url).unwrap_or("(?)")
-            );
-        }
-
+    fn name(&self) -> &str {
         &self.cached_name
     }
 

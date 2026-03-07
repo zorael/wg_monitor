@@ -43,13 +43,15 @@ impl SlackBackend {
         strings: &settings::MessageStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
+        let cached_name = format!("slack#{}", id);
+
         Self {
             id,
             client,
             url: url.to_owned(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
-            cached_name: String::new(),
+            cached_name,
         }
     }
 }
@@ -57,12 +59,7 @@ impl SlackBackend {
 impl super::Backend for SlackBackend {
     /// Returns the name of this backend instance. It is in the format
     /// "slack#{id}", where {id} is the unique numeric identifier of instance.
-    fn name(&mut self) -> &str {
-        // This can be cached if it turns out to be a hotspot.
-        if self.cached_name.is_empty() {
-            self.cached_name = format!("slack#{}", self.id);
-        }
-
+    fn name(&self) -> &str {
         &self.cached_name
     }
 
