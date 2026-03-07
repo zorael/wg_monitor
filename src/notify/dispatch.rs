@@ -95,6 +95,7 @@ pub fn retry_single_notification(
             super::NotificationResult::DryRun(message) => {
                 println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
                 verbose_print(&message, settings);
+                n.state_mut().set_last_reminder_sent(Some(ctx.now));
                 n.state_mut().increment_num_consecutive_reminders();
                 super::NotificationResult::DryRun(message)
             }
