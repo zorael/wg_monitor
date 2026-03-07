@@ -358,32 +358,15 @@ fn run_loop(
 
             // No changes but there are missing/late peers, so we may need to send reminders
             for n in notifiers.iter_mut() {
-                if let Some(last_reminder_sent) = n.state().get_last_reminder_sent() {
-                    // Grow the reminder interval over time but cap it at 48h
-                    let growth_multiplier = match n.state().get_num_consecutive_reminders() {
-                        0 => 1, // 6h (assuming default reminder interval)
-                        1 => 2, // 12h
-                        2 => 2, // 12h
-                        3 => 4, // 24h
-                        4 => 4, // 24h
-                        _ => 8, // 48h
-                    };
+                // next_reminder_is_due checks whether there is a last reminder internally
+                if !n.state().next_reminder_is_due(&ctx.now) {
+                    continue;
+                }
 
-                    let next_report_interval =
-                        growth_multiplier * settings.monitor.reminder_interval;
+                let result = notify::send_single_notifier_reminder(ctx, n, &settings);
 
-                    if ctx
-                        .now
-                        .duration_since(last_reminder_sent)
-                        .unwrap_or(time::Duration::ZERO)
-                        > next_report_interval
-                    {
-                        let result = notify::send_single_notifier_reminder(ctx, n, &settings);
-
-                        if settings.debug {
-                            println!("{:#?}", result);
-                        }
-                    }
+                if settings.debug {
+                    println!("{:#?}", result);
                 }
             }
 

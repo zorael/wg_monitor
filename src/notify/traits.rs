@@ -5,6 +5,7 @@
 use std::time;
 
 use crate::backend;
+use crate::defaults;
 
 /// Defines the `NotificationSender` trait, implemented by types that can send
 /// notifications about Wireguard peer status changes.
@@ -130,7 +131,7 @@ impl NotifierState {
     }
 
     #[allow(dead_code)]
-    pub fn peek_stored_notification(&mut self) -> Option<&super::StoredNotification> {
+    pub fn peek_stored_notification(&self) -> Option<&super::StoredNotification> {
         self.stored_notification.as_ref()
     }
 
@@ -146,7 +147,7 @@ impl NotifierState {
         self.last_reminder_sent = when;
     }
 
-    pub fn get_last_reminder_sent(&self) -> Option<time::SystemTime> {
+    pub fn peek_last_reminder_sent(&self) -> Option<time::SystemTime> {
         self.last_reminder_sent
     }
 
@@ -164,5 +165,29 @@ impl NotifierState {
 
     pub fn reset_num_consecutive_reminders(&mut self) {
         self.num_consecutive_reminders = 0;
+    }
+
+    pub fn next_reminder_is_due(&self, now: &time::SystemTime) -> bool {
+        let Some(last_sent) = self.peek_last_reminder_sent() else {
+            // No reminder has been sent yet, meaning we're not in a reminder context
+            return false;
+        };
+
+        // Grow the reminder interval over time but cap it at 48h
+        let growth_multiplier = match self.get_num_consecutive_reminders() {
+            0 => 1, // 6h (base interval)
+            1 => 2, // 12h
+            2 => 2, // 12h
+            3 => 4, // 24h
+            4 => 4, // 24h
+            _ => 8, // 48h
+        };
+
+        let next_report_interval = growth_multiplier * defaults::BASE_RETRY_INTERVAL;
+
+        match now.duration_since(last_sent) {
+            Ok(duration) => duration > next_report_interval,
+            Err(_) => true, // Time went backwards?
+        }
     }
 }

@@ -2,6 +2,8 @@
 //! including sending notifications about peer status changes and sending
 //! reminder notifications.
 
+use std::time;
+
 use crate::settings;
 use crate::utils;
 
@@ -63,13 +65,14 @@ pub fn retry_single_notification(
             // been cleared when the new notification was sent, so there should
             // never be a stored reminder at this point.
             if n.state_mut().get_num_consecutive_reminders() > 0
-                || n.state_mut().get_last_reminder_sent().is_some()
+                || n.state_mut().peek_last_reminder_sent().is_some()
             {
                 eprintln!(
                     "[{}] [{}] Unexpectd previous reminder state",
                     utils::timestamp_now(),
                     n.name()
                 );
+
                 n.state_mut().reset_num_consecutive_reminders();
                 n.state_mut().clear_last_reminder_sent();
             }
@@ -106,41 +109,51 @@ pub fn retry_single_notification(
                 }
             }
         }
-        Some(super::StoredNotification::Reminder(ctx)) => match n.push_reminder(&ctx) {
-            super::NotificationResult::DryRun(message) => {
-                println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
-                verbose_print(&message, settings);
-                n.state_mut().set_last_reminder_sent(Some(ctx.now));
-                n.state_mut().increment_num_consecutive_reminders();
-                super::NotificationResult::DryRun(message)
-            }
-            super::NotificationResult::Success(message) => {
-                println!(
-                    "[{}] [{}] Reminder sent successfully",
-                    utils::timestamp_now(),
-                    n.name()
-                );
-                verbose_print(&message, settings);
-                n.state_mut().set_last_reminder_sent(Some(ctx.now));
-                n.state_mut().increment_num_consecutive_reminders();
-                super::NotificationResult::Success(message)
-            }
-            super::NotificationResult::Failure(e, message) => {
-                eprintln!(
-                    "[{}] [{}] Failed to send reminder: {e}",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+        Some(super::StoredNotification::Reminder(ctx)) => {
+            let now = time::SystemTime::now();
 
-                // Put the notification back for later retries
-                n.state_mut().store_notification(&ctx, None);
-                super::NotificationResult::Failure(e, message)
+            if !n.state().next_reminder_is_due(&now) {
+                // Not yet time to send the next reminder
+                return super::NotificationResult::Skipped;
             }
-            super::NotificationResult::Skipped => {
-                // push_reminder does not return Skipped, so this can never happen.
-                super::NotificationResult::Skipped
+
+            match n.push_reminder(&ctx) {
+                super::NotificationResult::DryRun(message) => {
+                    println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
+                    verbose_print(&message, settings);
+                    n.state_mut().set_last_reminder_sent(Some(ctx.now));
+                    n.state_mut().increment_num_consecutive_reminders();
+                    super::NotificationResult::DryRun(message)
+                }
+                super::NotificationResult::Success(message) => {
+                    println!(
+                        "[{}] [{}] Reminder sent successfully",
+                        utils::timestamp_now(),
+                        n.name()
+                    );
+
+                    verbose_print(&message, settings);
+                    n.state_mut().set_last_reminder_sent(Some(ctx.now));
+                    n.state_mut().increment_num_consecutive_reminders();
+                    super::NotificationResult::Success(message)
+                }
+                super::NotificationResult::Failure(e, message) => {
+                    eprintln!(
+                        "[{}] [{}] Failed to send reminder: {e}",
+                        utils::timestamp_now(),
+                        n.name()
+                    );
+
+                    // Put the notification back for later retries
+                    n.state_mut().store_notification(&ctx, None);
+                    super::NotificationResult::Failure(e, message)
+                }
+                super::NotificationResult::Skipped => {
+                    // push_reminder does not return Skipped, so this can never happen.
+                    super::NotificationResult::Skipped
+                }
             }
-        },
+        }
         None => {
             // No notification stored
             super::NotificationResult::Skipped
