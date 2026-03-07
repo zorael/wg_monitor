@@ -59,6 +59,16 @@ pub fn retry_single_notification(
     match n.state_mut().take_stored_notification() {
         // Taken; stored notification is now None
         Some(super::StoredNotification::Notification(ctx, delta)) => {
+            // Is this ever necessary? Any stored reminders would already have
+            // been cleared when the new notification was sent, so there should
+            // never be a stored reminder at this point.
+            if n.state_mut().get_num_consecutive_reminders() > 0 ||
+               n.state_mut().get_last_reminder_sent().is_some() {
+                eprintln!("[{}] [{}] Unexpectd previous reminder state", utils::timestamp_now(), n.name());
+                n.state_mut().reset_num_consecutive_reminders();
+                n.state_mut().clear_last_reminder_sent();
+            }
+
             match n.push_notification(&ctx, &delta) {
                 super::NotificationResult::DryRun(message) => {
                     println!("[{}] [{}] DRY RUN", utils::timestamp_now(), n.name());
