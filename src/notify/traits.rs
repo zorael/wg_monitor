@@ -58,7 +58,7 @@ impl<B: backend::Backend> NotificationSender for Notifier<B> {
 
         match self.backend.send(&message) {
             Ok(_) => super::NotificationResult::Success(message),
-            Err(e) => super::NotificationResult::Failure(e),
+            Err(e) => super::NotificationResult::Failure(e, message),
         }
     }
 
@@ -72,7 +72,7 @@ impl<B: backend::Backend> NotificationSender for Notifier<B> {
 
         match self.backend.send(&reminder) {
             Ok(_) => super::NotificationResult::Success(reminder),
-            Err(e) => super::NotificationResult::Failure(e),
+            Err(e) => super::NotificationResult::Failure(e, reminder),
         }
     }
 }

@@ -12,7 +12,7 @@ pub enum NotificationResult {
     Success(String),
 
     /// Indicates that the notification failed.
-    Failure(String),
+    Failure(String, String),
 
     /// Indicates that a stored notification was skipped.
     Skipped,
