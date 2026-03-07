@@ -10,6 +10,7 @@ use crate::settings;
 /// Batsign backend for sending notifications via the free Batsign service.
 pub struct BatsignBackend {
     /// Unique identifier for the Batsign backend instance, used for logging and identification purposes.
+    #[allow(dead_code)]
     id: usize,
 
     /// HTTP client used to send requests to the Batsign service.
@@ -41,7 +42,7 @@ impl BatsignBackend {
         let cached_name = format!(
             "batsign#{}:{}",
             id,
-            get_email_from_batsign_url(&url).unwrap_or("(?)")
+            get_email_from_batsign_url(url).unwrap_or("(?)")
         );
 
         Self {
