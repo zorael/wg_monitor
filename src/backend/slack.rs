@@ -59,6 +59,12 @@ impl SlackBackend {
 }
 
 impl super::Backend for SlackBackend {
+    /// Returns the unique identifier of the backend instance.
+    #[allow(dead_code)]
+    fn id(&self) -> usize {
+        self.id
+    }
+
     /// Returns the name of this backend instance. It is in the format
     /// "slack#{id}", where {id} is the unique numeric identifier of instance.
     fn name(&self) -> &str {

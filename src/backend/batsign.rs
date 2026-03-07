@@ -10,7 +10,6 @@ use crate::settings;
 /// Batsign backend for sending notifications via the free Batsign service.
 pub struct BatsignBackend {
     /// Unique identifier for the Batsign backend instance, used for logging and identification purposes.
-    #[allow(dead_code)]
     id: usize,
 
     /// HTTP client used to send requests to the Batsign service.
@@ -57,6 +56,12 @@ impl BatsignBackend {
 }
 
 impl backend::Backend for BatsignBackend {
+    /// Returns the unique identifier of the backend instance.
+    #[allow(dead_code)]
+    fn id(&self) -> usize {
+        self.id
+    }
+
     /// Returns the name of this backend instance. It is in the format
     /// "batsign#{id}:{email}", where {id} is the unique numeric identifier of
     /// the instance, and {email} is extracted from the Batsign URL.

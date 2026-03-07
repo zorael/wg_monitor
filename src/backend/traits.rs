@@ -5,6 +5,10 @@ use crate::notify;
 /// The `Backend` trait, which is implemented by all notification backends
 /// (e.g., Slack, Batsign).
 pub trait Backend {
+    /// Returns the unique identifier of the backend instance.
+    #[allow(dead_code)]
+    fn id(&self) -> usize;
+
     /// Returns the name of the instance of the backend, which is used for
     /// logging and identification purposes.
     fn name(&self) -> &str;
