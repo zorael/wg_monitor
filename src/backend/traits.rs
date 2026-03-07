@@ -7,7 +7,7 @@ use crate::notify;
 pub trait Backend {
     /// Returns the name of the instance of the backend, which is used for
     /// logging and identification purposes.
-    fn name(&self) -> String;
+    fn name(&mut self) -> &str;
 
     /// Builds the message to be sent based on the notification context and the
     /// delta expressing the changes since the last notification.

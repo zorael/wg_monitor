@@ -6,10 +6,10 @@
 pub enum NotificationResult {
     /// Indicates that the notification was processed as a dry run, meaning
     /// no notification was sent.
-    DryRun,
+    DryRun(String),
 
     /// Indicates that the notification was successful.
-    Success,
+    Success(String),
 
     /// Indicates that the notification failed.
     Failure(String),

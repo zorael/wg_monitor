@@ -174,13 +174,13 @@ fn main() -> process::ExitCode {
 
 /// Construct notifiers based on the passed settings, returning a vector of
 /// boxed trait objects.
-fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::NotificationSender>> {
-    let mut notifiers: Vec<Box<dyn notify::NotificationSender>> = Vec::new();
+fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::StatefulNotifier>> {
+    let mut notifiers: Vec<Box<dyn notify::StatefulNotifier>> = Vec::new();
     let client = Arc::new(blocking::Client::new());
 
     /// Helper function to build and push notifiers for a passed backend type.
     fn build_and_push_notifiers<B, F>(
-        vec: &mut Vec<Box<dyn notify::NotificationSender>>,
+        vec: &mut Vec<Box<dyn notify::StatefulNotifier>>,
         urls: &[String],
         mut make_backend_fn: F,
         dry_run: bool,
@@ -256,7 +256,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Notific
 /// Main loop of the program.
 fn run_loop(
     ctx: &mut notify::Context,
-    notifiers: &mut [Box<dyn notify::NotificationSender>],
+    notifiers: &mut [Box<dyn notify::StatefulNotifier>],
     settings: settings::Settings,
 ) -> process::ExitCode {
     /// Perform some cleanup and sleep at the end of each loop duration.
@@ -358,9 +358,9 @@ fn run_loop(
 
             // No changes but there are missing/late peers, so we may need to send reminders
             for n in notifiers.iter_mut() {
-                if let Some(last_reminder_sent) = n.get_last_reminder_sent() {
+                if let Some(last_reminder_sent) = n.state().get_last_reminder_sent() {
                     // Grow the reminder interval over time but cap it at 48h
-                    let growth_multiplier = match n.get_num_consecutive_reminders() {
+                    let growth_multiplier = match n.state().get_num_consecutive_reminders() {
                         0 => 1, // 6h (assuming default reminder interval)
                         1 => 2, // 12h
                         2 => 2, // 12h
@@ -378,7 +378,7 @@ fn run_loop(
                         .unwrap_or(time::Duration::ZERO)
                         > next_report_interval
                     {
-                        let (result, _) = notify::send_single_notifier_reminder(ctx, n, &settings);
+                        let result = notify::send_single_notifier_reminder(ctx, n, &settings);
 
                         if settings.debug {
                             println!("{:#?}", result);

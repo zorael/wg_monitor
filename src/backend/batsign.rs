@@ -23,6 +23,10 @@ pub struct BatsignBackend {
 
     /// Message strings for Batsign reminder notifications.
     reminder_strings: settings::ReminderStrings,
+
+    /// Cached name of the backend instance, which can be used to avoid
+    /// recomputing the name on every call to `name()`.
+    cached_name: String,
 }
 
 impl BatsignBackend {
@@ -40,6 +44,7 @@ impl BatsignBackend {
             url: url.to_owned(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
+            cached_name: String::new(),
         }
     }
 }
@@ -48,13 +53,16 @@ impl backend::Backend for BatsignBackend {
     /// Returns the name of this backend instance. It is in the format
     /// "batsign#{id}:{email}", where {id} is the unique numeric identifier of
     /// the instance, and {email} is extracted from the Batsign URL.
-    fn name(&self) -> String {
-        // This can be cached if it turns out to be a hotspot.
-        format!(
-            "batsign#{}:{}",
-            self.id,
-            get_email_from_batsign_url(&self.url).unwrap_or("(?)")
-        )
+    fn name(&mut self) -> &str {
+        if self.cached_name.is_empty() {
+            self.cached_name = format!(
+                "batsign#{}:{}",
+                self.id,
+                get_email_from_batsign_url(&self.url).unwrap_or("(?)")
+            );
+        }
+
+        &self.cached_name
     }
 
     /// Builds the message to be sent to Batsign based on the notification context and delta.

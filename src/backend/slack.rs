@@ -28,6 +28,10 @@ pub struct SlackBackend {
 
     /// Message strings for Slack reminder notifications.
     reminder_strings: settings::ReminderStrings,
+
+    /// Cached name of the backend instance, which can be used to avoid
+    /// recomputing the name on every call to `name()`.
+    cached_name: String,
 }
 
 impl SlackBackend {
@@ -45,6 +49,7 @@ impl SlackBackend {
             url: url.to_owned(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
+            cached_name: String::new(),
         }
     }
 }
@@ -52,9 +57,13 @@ impl SlackBackend {
 impl super::Backend for SlackBackend {
     /// Returns the name of this backend instance. It is in the format
     /// "slack#{id}", where {id} is the unique numeric identifier of instance.
-    fn name(&self) -> String {
+    fn name(&mut self) -> &str {
         // This can be cached if it turns out to be a hotspot.
-        format!("slack#{}", self.id)
+        if self.cached_name.is_empty() {
+            self.cached_name = format!("slack#{}", self.id);
+        }
+
+        &self.cached_name
     }
 
     /// Builds the message to be sent to Slack based on the notification context and delta.
