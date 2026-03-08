@@ -243,7 +243,8 @@ impl NotifierState {
             _ => 8, // 48h
         };
 
-        let next_reminder_interval = growth_multiplier * defaults::BASE_REMIND_INTERVAL;
+        let next_reminder_interval =
+            defaults::BASE_REMINDER_INTERVAL.saturating_mul(growth_multiplier);
 
         match now.duration_since(last_sent) {
             Ok(duration) => duration >= next_reminder_interval,
@@ -281,7 +282,7 @@ impl NotifierState {
             _ => 10, // 10m
         };
 
-        let next_retry_interval = growth_multiplier * defaults::BASE_RETRY_INTERVAL;
+        let next_retry_interval = defaults::BASE_RETRY_INTERVAL.saturating_mul(growth_multiplier);
 
         match now.duration_since(last_failed) {
             Ok(duration) => duration >= next_retry_interval,

@@ -33,7 +33,7 @@ pub const DUMMY_SLACK_URL: &str = "https://hooks.slack.com/services/DUMMY/HOOK/u
 pub const DUMMY_BATSIGN_URL: &str = "https://batsign.me/at/example@mail.tld/asdf1234";
 
 /// Base reminder interval. Will be grown as reminder attempts increase.
-pub const BASE_REMIND_INTERVAL: Duration = Duration::from_secs(6 * 3600); // 6h
+pub const BASE_REMINDER_INTERVAL: Duration = Duration::from_secs(6 * 3600); // 6h
 
 /// Base retry interval. Will be grown as retry attempts increase.
 pub const BASE_RETRY_INTERVAL: Duration = Duration::from_secs(60); // 1m
