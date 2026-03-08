@@ -133,21 +133,21 @@ impl<T: NotificationSender + StateCarrier> StatefulNotifier for T {}
 #[derive(Debug)]
 pub struct NotifierState {
     /// An optional stored notification that failed to send, so it can be retried later.
-    stored_notification: Option<super::StoredNotification>,
+    pub stored_notification: Option<super::StoredNotification>,
 
     /// The time when the last reminder was sent, used to determine when the
     /// next reminder is due.
-    last_reminder_sent: Option<time::SystemTime>,
+    pub last_reminder_sent: Option<time::SystemTime>,
 
     /// The time when the last failed send was recorded, used to determine when
     /// the next retry is due.
-    last_failed_send: Option<time::SystemTime>,
+    pub last_failed_send: Option<time::SystemTime>,
 
     /// The number of consecutive reminders sent for the current notification.
-    num_consecutive_reminders: u32,
+    pub num_consecutive_reminders: u32,
 
     /// The number of consecutive failures recorded for the current notification.
-    num_consecutive_failures: u32,
+    pub num_consecutive_failures: u32,
 }
 
 impl NotifierState {
@@ -163,81 +163,17 @@ impl NotifierState {
         }
     }
 
-    /// Peeks at the stored notification without taking it, allowing the caller to
-    /// see if there is a stored notification and what it is without modifying the state.
-    #[allow(dead_code)]
-    pub fn peek_stored_notification(&self) -> Option<&super::StoredNotification> {
-        self.stored_notification.as_ref()
-    }
-
-    /// Takes the stored notification, removing it from the state and returning it.
-    pub fn take_stored_notification(&mut self) -> Option<super::StoredNotification> {
-        self.stored_notification.take()
-    }
-
-    /// Clears the stored notification without returning it, effectively discarding it.
-    pub fn clear_stored_notification(&mut self) {
-        self.stored_notification = None;
-    }
-
-    /// Sets the time when the last reminder was sent.
-    pub fn set_last_reminder_sent(&mut self, when: Option<time::SystemTime>) {
-        self.last_reminder_sent = when;
-    }
-
-    /// Peeks at the time when the last reminder was sent without modifying it.
-    pub fn peek_last_reminder_sent(&self) -> Option<time::SystemTime> {
-        self.last_reminder_sent
-    }
-
-    /// Clears the time when the last reminder was sent, effectively resetting
-    /// the reminder timing.
-    pub fn clear_last_reminder_sent(&mut self) {
-        self.last_reminder_sent = None;
-    }
-
-    /// Sets the time when the last failed send was recorded.
-    pub fn set_last_failed_send(&mut self, when: Option<time::SystemTime>) {
-        self.last_failed_send = when;
-    }
-
-    /// Peeks at the time when the last failed send was recorded without modifying it.
-    pub fn peek_last_failed_send(&self) -> Option<time::SystemTime> {
-        self.last_failed_send
-    }
-
-    /// Clears the time when the last failed send was recorded, effectively resetting
-    /// the retry timing.
-    pub fn clear_last_failed_send(&mut self) {
-        self.last_failed_send = None;
-    }
-
-    /// Gets the number of consecutive reminders sent by the notifier.
-    pub fn get_num_consecutive_reminders(&self) -> u32 {
-        self.num_consecutive_reminders
-    }
-
-    /// Increments the number of consecutive reminders sent by the notifier.
-    pub fn increment_num_consecutive_reminders(&mut self) {
-        self.num_consecutive_reminders += 1;
-    }
-
-    /// Resets the number of consecutive reminders sent by the notifier.
-    pub fn reset_num_consecutive_reminders(&mut self) {
-        self.num_consecutive_reminders = 0;
-    }
-
     /// Checks if the next reminder is due based on the time since the last reminder
     /// was sent and the number of consecutive reminders already sent, using an
     /// exponentially growing interval.
     pub fn next_reminder_is_due(&self, now: &time::SystemTime) -> bool {
-        let Some(last_sent) = self.peek_last_reminder_sent() else {
+        let Some(last_sent) = self.last_reminder_sent else {
             // No reminder has been sent yet, meaning we're not in a reminder context
             return false;
         };
 
         // Grow the reminder interval over time but cap it at 48h
-        let growth_multiplier = match self.get_num_consecutive_reminders() {
+        let growth_multiplier = match self.num_consecutive_reminders {
             0 => 1, // 6h (base interval)
             1 => 2, // 12h
             2 => 2, // 12h
@@ -255,31 +191,16 @@ impl NotifierState {
         }
     }
 
-    /// Gets the number of consecutive failures recorded by the notifier.
-    pub fn get_num_consecutive_failures(&self) -> u32 {
-        self.num_consecutive_failures
-    }
-
-    /// Increments the number of consecutive failures recorded by the notifier.
-    pub fn increment_num_consecutive_failures(&mut self) {
-        self.num_consecutive_failures += 1;
-    }
-
-    /// Resets the number of consecutive failures recorded by the notifier.
-    pub fn reset_num_consecutive_failures(&mut self) {
-        self.num_consecutive_failures = 0;
-    }
-
     /// Checks if the next retry is due based on the time since the last failed
     /// send was recorded and the number of consecutive failures already recorded,
     /// using a growing interval.
     pub fn next_retry_is_due(&self, now: &time::SystemTime) -> bool {
-        let Some(last_failed) = self.peek_last_failed_send() else {
+        let Some(last_failed) = self.last_failed_send else {
             // No failed send has been recorded yet, meaning we're not in a retry context
             return false;
         };
 
-        let growth_multiplier = match self.get_num_consecutive_failures() {
+        let growth_multiplier = match self.num_consecutive_failures {
             0 => 1,  // 1m (base interval)
             1 => 5,  // 5m
             _ => 10, // 10m
@@ -296,10 +217,10 @@ impl NotifierState {
     /// Resets all state related to stored notifications, reminder timing,
     /// and failure tracking.
     pub fn reset(&mut self) {
-        self.clear_stored_notification();
-        self.clear_last_reminder_sent();
-        self.clear_last_failed_send();
-        self.reset_num_consecutive_reminders();
-        self.reset_num_consecutive_failures();
+        self.stored_notification = None;
+        self.last_reminder_sent = None;
+        self.last_failed_send = None;
+        self.num_consecutive_reminders = 0;
+        self.num_consecutive_failures = 0;
     }
 }
