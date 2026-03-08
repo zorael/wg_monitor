@@ -114,11 +114,12 @@ pub fn retry_single_notification(
                         utils::timestamp_now(),
                         n.name()
                     );
+
                     verbose_print(&message, settings);
                     n.state_mut().last_reminder_sent = Some(ctx.now);
                     n.state_mut().num_consecutive_reminders += 1;
-                    n.state_mut().num_consecutive_failures = 0;
                     n.state_mut().last_failed_send = None;
+                    n.state_mut().num_consecutive_failures = 0;
                     super::NotificationResult::DryRun(message)
                 }
                 super::NotificationResult::Success(message) => {
@@ -131,8 +132,8 @@ pub fn retry_single_notification(
                     verbose_print(&message, settings);
                     n.state_mut().last_reminder_sent = Some(ctx.now);
                     n.state_mut().num_consecutive_reminders += 1;
-                    n.state_mut().num_consecutive_failures = 0;
                     n.state_mut().last_failed_send = None;
+                    n.state_mut().num_consecutive_failures = 0;
                     super::NotificationResult::Success(message)
                 }
                 super::NotificationResult::Failure(e, message) => {
@@ -235,6 +236,7 @@ fn send_notification_via_notifier(
 
             verbose_print(&message, settings);
             n.state_mut().store_notification(ctx, Some(delta)); // Store the failure for retrying
+            n.state_mut().last_failed_send = Some(ctx.now);
             n.state_mut().num_consecutive_failures += 1;
             super::NotificationResult::Failure(e, message)
         }
@@ -324,6 +326,7 @@ pub fn send_reminder_via_notifier(
 
             verbose_print(&message, settings);
             n.state_mut().store_notification(ctx, None);
+            n.state_mut().last_failed_send = Some(ctx.now);
             n.state_mut().num_consecutive_failures += 1;
             super::NotificationResult::Failure(e, message)
         }
