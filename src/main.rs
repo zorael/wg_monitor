@@ -344,6 +344,14 @@ fn run_loop(
             continue;
         }
 
+        // delta.is_empty() means "no change since last loop", which is another
+        // way of saying "no new notifications to send", but we may still want
+        // to send reminders for existing notifications or retry pending ones.
+        //
+        // ctx_missing_keys.is_empty() && ctx.late_keys.is_empty() means
+        // "all peers are present and have phoned home in time", which makes the
+        // opposite mean "there is at least one peer missing or late".
+
         if delta.is_empty() {
             // No change since last loop, check if we should send reminders
             if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
@@ -351,15 +359,15 @@ fn run_loop(
                 let report = notify::send_reminders(ctx, notifiers, &settings);
 
                 if settings.debug && report.total != report.skipped {
-                    println!("{:#?}", report);
+                    println!("{:#?}\n", report);
                 }
             } else {
-                // All peers are present, but there may be stored notifications
-                // announcing some as having returned
-                let report = notify::retry_stored_notifications(notifiers, &settings);
+                // All peers are present, but there may yet be pending
+                // notifications announcing some peers as having returned
+                let report = notify::retry_pending_notifications(notifiers, &settings);
 
                 if settings.debug && report.total != report.skipped {
-                    println!("{:#?}", report);
+                    println!("{:#?}\n", report);
                 }
             }
 
@@ -367,11 +375,12 @@ fn run_loop(
             continue;
         }
 
+        // If we're here, there is a delta
+
         if settings.debug {
             delta.print_nonempty_prefixed("... ");
         }
 
-        // If we at any point are sending a new notification, all stored ones are invalidated
         let report = notify::send_notification(ctx, &delta, notifiers, &settings);
 
         if settings.debug && report.total != report.skipped {

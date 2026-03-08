@@ -29,7 +29,7 @@ pub trait NotificationSender {
 /// A `Notifier` that uses a specific backend to send notifications about
 /// Wireguard peer status changes.
 pub struct Notifier<B: backend::Backend> {
-    /// State related to stored notifications, reminder timing, and failure tracking.
+    /// State related to pending notifications, reminder timing, and failure tracking.
     pub state: NotifierState,
 
     /// The backend used to send notifications (e.g., Slack, Batsign).
@@ -88,7 +88,7 @@ impl<B: backend::Backend> Notifier<B> {
             backend,
             dry_run,
             state: NotifierState {
-                stored_notification: None,
+                pending: None,
                 last_reminder_sent: None,
                 last_failed_send: None,
                 num_consecutive_reminders: 0,
@@ -99,7 +99,7 @@ impl<B: backend::Backend> Notifier<B> {
 }
 
 /// Trait for types that carry a `NotifierState`, allowing access to the state
-/// for managing stored notifications, reminder timing, and failure tracking.
+/// for managing pending notifications, reminder timing, and failure tracking.
 pub trait StateCarrier {
     /// Returns a reference to the `NotifierState`.
     fn state(&self) -> &NotifierState;
@@ -121,19 +121,19 @@ impl<B: backend::Backend> StateCarrier for Notifier<B> {
 }
 
 /// A `StatefulNotifier` is a `NotificationSender` that also carries a `NotifierState`,
-/// allowing it to manage stored notifications, reminder timing, and failure tracking.
+/// allowing it to manage pending notifications, reminder timing, and failure tracking.
 pub trait StatefulNotifier: NotificationSender + StateCarrier {}
 
 /// Blanket implementation of `StatefulNotifier` for any type that implements both
 /// `NotificationSender` and `StateCarrier`.
 impl<T: NotificationSender + StateCarrier> StatefulNotifier for T {}
 
-/// State carried by notifiers to manage stored notifications, reminder timing,
+/// State carried by notifiers to manage pending notifications, reminder timing,
 /// and failure tracking.
 #[derive(Debug)]
 pub struct NotifierState {
-    /// An optional stored notification that failed to send, so it can be retried later.
-    pub stored_notification: Option<super::StoredNotification>,
+    /// An optional pending notification that failed to send, so it can be retried later.
+    pub pending: Option<super::StoredNotification>,
 
     /// The time when the last reminder was sent, used to determine when the
     /// next reminder is due.
@@ -154,7 +154,7 @@ impl NotifierState {
     /// Stores a notification for later retrying, which can be either a regular
     /// notification with a context and delta, or a reminder with just a context.
     pub fn store_notification(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
-        self.stored_notification = match delta {
+        self.pending = match delta {
             Some(d) => Some(super::StoredNotification::Notification(
                 ctx.clone(),
                 d.clone(),
@@ -214,10 +214,40 @@ impl NotifierState {
         }
     }
 
-    /// Resets all state related to stored notifications, reminder timing,
+    /// Handles the logic for when a send failure occurs, including storing the
+    /// notification for retrying and updating the failure tracking state.
+    pub fn on_failure(
+        &mut self,
+        ctx: &super::Context,
+        delta: Option<&super::Delta>,
+        now: &time::SystemTime,
+    ) {
+        self.store_notification(ctx, delta);
+        self.last_failed_send = Some(*now);
+        self.num_consecutive_failures += 1;
+    }
+
+    /// Handles the logic for when a reminder is successfully sent, including
+    /// updating the reminder timing and resetting failure tracking state.
+    pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
+        self.pending = None; // Not necessary if it was take()n in calling code
+        self.last_reminder_sent = Some(*now);
+        self.num_consecutive_reminders += 1;
+        self.last_failed_send = None;
+        self.num_consecutive_failures = 0;
+    }
+
+    /// Handles the logic for when a notification is successfully sent,
+    /// resetting all state related to pending notifications, reminder timing,
+    /// and failure tracking.
+    pub fn on_successful_notification(&mut self) {
+        self.reset()
+    }
+
+    /// Resets all state related to pending notifications, reminder timing,
     /// and failure tracking.
     pub fn reset(&mut self) {
-        self.stored_notification = None;
+        self.pending = None;
         self.last_reminder_sent = None;
         self.last_failed_send = None;
         self.num_consecutive_reminders = 0;
