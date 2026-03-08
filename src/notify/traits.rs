@@ -246,7 +246,7 @@ impl NotifierState {
         let next_reminder_interval = growth_multiplier * defaults::BASE_REMIND_INTERVAL;
 
         match now.duration_since(last_sent) {
-            Ok(duration) => duration > next_reminder_interval,
+            Ok(duration) => duration >= next_reminder_interval,
             Err(_) => true, // Time went backwards?
         }
     }
@@ -284,7 +284,7 @@ impl NotifierState {
         let next_retry_interval = growth_multiplier * defaults::BASE_RETRY_INTERVAL;
 
         match now.duration_since(last_failed) {
-            Ok(duration) => duration > next_retry_interval,
+            Ok(duration) => duration >= next_retry_interval,
             Err(_) => true, // Time went backwards?
         }
     }
