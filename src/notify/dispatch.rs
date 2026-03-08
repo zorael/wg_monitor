@@ -142,6 +142,8 @@ pub fn retry_single_notification(
                         n.name()
                     );
 
+                    verbose_print(&message, settings);
+
                     // Put the notification back for later retries
                     n.state_mut().store_notification(&ctx, None);
                     n.state_mut().last_failed_send = Some(now);
