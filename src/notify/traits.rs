@@ -13,7 +13,7 @@ pub trait NotificationSender {
     /// Returns the name of the notifier, which is typically the name of the
     /// backend it uses (e.g., "slack" or "batsign") plus potentially any other
     /// unique identifiers.
-    fn name(&mut self) -> &str;
+    fn name(&self) -> &str;
 
     /// Sends a notification.
     fn push_notification(
@@ -44,7 +44,7 @@ impl<B: backend::Backend> NotificationSender for Notifier<B> {
     /// Returns the name of the notifier, which is typically the name of the
     /// backend it uses (e.g., "slack" or "batsign") plus potentially any other
     /// unique identifiers.
-    fn name(&mut self) -> &str {
+    fn name(&self) -> &str {
         self.backend.name()
     }
 
