@@ -337,6 +337,7 @@ fn run_loop(
         delta.compute_from(ctx);
 
         // --skip-first logic is here
+        // Only skip after we've computed the delta
         if should_skip_next {
             should_skip_next = false;
             end_loop(ctx, settings.monitor.check_interval);
@@ -344,29 +345,18 @@ fn run_loop(
         }
 
         if delta.is_empty() {
-            if ctx.missing_keys.is_empty() && ctx.late_keys.is_empty() {
-                // End of the line but there may be stored notifications
-                let report = notify::retry_stored_notification(notifiers, &settings);
+            // No change since last loop, check if we should send reminders
+            if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
+                let report = notify::send_reminders(ctx, notifiers, &settings);
 
                 if settings.debug && report.total != report.skipped {
                     println!("{:#?}", report);
                 }
+            } else {
+                let report = notify::retry_stored_notifications(notifiers, &settings);
 
-                end_loop(ctx, settings.monitor.check_interval);
-                continue;
-            }
-
-            // No changes but there are missing/late peers, so we may need to send reminders
-            for n in notifiers.iter_mut() {
-                // next_reminder_is_due checks whether there is a last reminder internally
-                if !n.state().next_reminder_is_due(&ctx.now) {
-                    continue;
-                }
-
-                let result = notify::send_single_notifier_reminder(ctx, n, &settings);
-
-                if settings.debug {
-                    println!("{:#?}", result);
+                if settings.debug && report.total != report.skipped {
+                    println!("{:#?}", report);
                 }
             }
 
@@ -378,6 +368,7 @@ fn run_loop(
             delta.print_nonempty_prefixed("... ");
         }
 
+        // If we at any point are sending a new notification, all stored ones are invalidated
         let report = notify::send_notification(ctx, &delta, notifiers, &settings);
 
         if settings.debug && report.total != report.skipped {
