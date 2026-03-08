@@ -65,6 +65,7 @@ pub mod program_metadata {
     pub const SOURCE_REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
 }
 
+#[allow(dead_code)]
 pub mod exit_codes {
     //! Exit codes for the program, used to indicate different types of errors or exit conditions.
 
