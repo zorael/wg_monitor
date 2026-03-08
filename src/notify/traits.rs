@@ -29,11 +29,14 @@ pub trait NotificationSender {
 /// A `Notifier` that uses a specific backend to send notifications about
 /// Wireguard peer status changes.
 pub struct Notifier<B: backend::Backend> {
+    /// State related to stored notifications, reminder timing, and failure tracking.
     pub state: NotifierState,
 
     /// The backend used to send notifications (e.g., Slack, Batsign).
     backend: B,
 
+    /// Whether the notifier is in dry run mode, where it builds the messages
+    /// but does not actually send them, instead returning them as `DryRun` results.
     dry_run: bool,
 }
 
