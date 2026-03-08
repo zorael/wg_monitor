@@ -81,7 +81,7 @@ pub mod exit_codes {
     pub const EMPTY_PEER_LIST: u8 = 33;
     pub const FAILED_TO_RESOLVE_CONFIG_DIR: u8 = 40;
     pub const CONFIG_DIR_DOES_NOT_EXIST: u8 = 41;
-    //pub const FAILED_TO_LOAD_RESOURCES: u8 = 42;
+    pub const FAILED_TO_LOAD_RESOURCES: u8 = 42;
     pub const FAILED_TO_READ_CONFIG_FILE: u8 = 43;
     pub const CONFIG_FILE_DOES_NOT_EXIST: u8 = 44;
 }
