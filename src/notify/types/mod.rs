@@ -8,6 +8,6 @@ mod result;
 
 pub use context::Context;
 pub use delta::Delta;
-pub use enums::StoredNotification;
+pub use enums::PendingNotification;
 pub use report::DispatchReport;
 pub use result::NotificationResult;

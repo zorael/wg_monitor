@@ -36,10 +36,10 @@ pub fn retry_pending_notifications(
         }
 
         let (ctx, delta) = match &n.state().pending {
-            Some(super::StoredNotification::Notification(ctx, delta)) => {
+            Some(super::PendingNotification::Notification(ctx, delta)) => {
                 (ctx.clone(), Some(delta.clone()))
             }
-            Some(super::StoredNotification::Reminder(ctx)) => (ctx.clone(), None),
+            Some(super::PendingNotification::Reminder(ctx)) => (ctx.clone(), None),
             None => {
                 report.skipped += 1;
                 continue;

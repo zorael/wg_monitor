@@ -133,7 +133,7 @@ impl<T: NotificationSender + StateCarrier> StatefulNotifier for T {}
 #[derive(Debug)]
 pub struct NotifierState {
     /// An optional pending notification that failed to send, so it can be retried later.
-    pub pending: Option<super::StoredNotification>,
+    pub pending: Option<super::PendingNotification>,
 
     /// The time when the last reminder was sent, used to determine when the
     /// next reminder is due.
@@ -155,11 +155,11 @@ impl NotifierState {
     /// notification with a context and delta, or a reminder with just a context.
     pub fn store_notification(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
         self.pending = match delta {
-            Some(d) => Some(super::StoredNotification::Notification(
+            Some(d) => Some(super::PendingNotification::Notification(
                 ctx.clone(),
                 d.clone(),
             )),
-            None => Some(super::StoredNotification::Reminder(ctx.clone())),
+            None => Some(super::PendingNotification::Reminder(ctx.clone())),
         }
     }
 
