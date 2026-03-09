@@ -21,13 +21,32 @@ pub fn retry_pending_notifications(
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
 ) -> super::DispatchReport {
+    let now = time::SystemTime::now();
+
     let mut report = super::DispatchReport {
         total: notifiers.len() as u32,
         ..Default::default()
     };
 
     for n in notifiers.iter_mut() {
-        match retry_notifier(n) {
+        if !n.state().next_retry_is_due(&now) {
+            // Not yet time
+            report.skipped += 1;
+            continue;
+        }
+
+        let (ctx, delta) = match &n.state().pending {
+            Some(super::StoredNotification::Notification(ctx, delta)) => {
+                (ctx.clone(), Some(delta.clone()))
+            }
+            Some(super::StoredNotification::Reminder(ctx)) => (ctx.clone(), None),
+            None => {
+                report.skipped += 1;
+                continue;
+            }
+        };
+
+        match send_via_notifier(&ctx, delta.as_ref(), n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
                     "[{}] [{}] DRY RUN; not sent",
@@ -65,65 +84,6 @@ pub fn retry_pending_notifications(
     }
 
     report
-}
-
-/// Retries sending a single pending notification in one notifier.
-/// The notification may be a reminder.
-fn retry_notifier(n: &mut Box<dyn super::StatefulNotifier>) -> super::NotificationResult {
-    let now = time::SystemTime::now();
-
-    if !n.state().next_retry_is_due(&now) {
-        // Not yet time
-        return super::NotificationResult::Skipped;
-    }
-
-    match n.state_mut().pending.take() {
-        // Taken; pending notification is now None, so failure cases must put it back
-        Some(super::StoredNotification::Notification(ctx, delta)) => {
-            let result = n.push_notification(&ctx, &delta);
-
-            match &result {
-                super::NotificationResult::DryRun(_) => {
-                    n.state_mut().on_successful_notification();
-                }
-                super::NotificationResult::Success(_) => {
-                    n.state_mut().on_successful_notification();
-                }
-                super::NotificationResult::Failure(_, _) => {
-                    n.state_mut().on_failure(&ctx, Some(&delta), &now);
-                }
-                super::NotificationResult::Skipped => {
-                    // push_notification does not return Skipped, so this can never happen.
-                }
-            }
-
-            result
-        }
-        Some(super::StoredNotification::Reminder(ctx)) => {
-            let result = n.push_reminder(&ctx);
-
-            match &result {
-                super::NotificationResult::DryRun(_) => {
-                    n.state_mut().on_successful_reminder(&now);
-                }
-                super::NotificationResult::Success(_) => {
-                    n.state_mut().on_successful_reminder(&now);
-                }
-                super::NotificationResult::Failure(_, _) => {
-                    n.state_mut().on_failure(&ctx, None, &now);
-                }
-                super::NotificationResult::Skipped => {
-                    // push_reminder does not return Skipped, so this can never happen.
-                }
-            }
-
-            result
-        }
-        None => {
-            // No notification pending
-            super::NotificationResult::Skipped
-        }
-    }
 }
 
 /// Sends a notification via all notifiers.
@@ -139,7 +99,7 @@ pub fn send_notification(
     };
 
     for n in notifiers.iter_mut() {
-        match send_notification_via_notifier(ctx, delta, n) {
+        match send_via_notifier(ctx, Some(delta), n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
                     "[{}] [{}] DRY RUN; not sent",
@@ -179,31 +139,8 @@ pub fn send_notification(
     report
 }
 
-/// Sends a single notification via one notifier.
-fn send_notification_via_notifier(
-    ctx: &super::Context,
-    delta: &super::Delta,
-    n: &mut Box<dyn super::StatefulNotifier>,
-) -> super::NotificationResult {
-    // Time to send a new notification, so discard anything old
-    n.state_mut().reset();
-
-    let result = n.push_notification(ctx, delta);
-
-    match &result {
-        super::NotificationResult::DryRun(_) => {}
-        super::NotificationResult::Success(_) => {}
-        super::NotificationResult::Failure(_, _) => {
-            n.state_mut().on_failure(ctx, Some(delta), &ctx.now);
-        }
-        super::NotificationResult::Skipped => {}
-    }
-
-    result
-}
-
-/// Sends reminders via all notifiers.
-pub fn send_reminders(
+/// Sends a reminder via all notifiers.
+pub fn send_reminder(
     ctx: &super::Context,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
@@ -214,7 +151,7 @@ pub fn send_reminders(
     };
 
     for n in notifiers.iter_mut() {
-        match send_reminder_via_notifier(ctx, n) {
+        match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
                     "[{}] [{}] DRY RUN; not sent",
@@ -254,33 +191,60 @@ pub fn send_reminders(
     report
 }
 
-/// Sends a single reminder notification via one notifier.
-fn send_reminder_via_notifier(
+/// Sends either a notification or a reminder via one notifier, depending on
+/// whether a delta is provided.
+fn send_via_notifier(
     ctx: &super::Context,
+    delta: Option<&super::Delta>,
     n: &mut Box<dyn super::StatefulNotifier>,
 ) -> super::NotificationResult {
-    if !n.state().next_reminder_is_due(&ctx.now) {
-        // Not yet time to send the next reminder
-        return super::NotificationResult::Skipped;
+    match delta {
+        Some(d) => {
+            // Time to send a new notification, so discard anything old
+            //n.state_mut().reset();
+
+            let result = n.push_notification(ctx, d);
+
+            match &result {
+                super::NotificationResult::DryRun(_) => {
+                    n.state_mut().on_successful_notification();
+                }
+                super::NotificationResult::Success(_) => {
+                    n.state_mut().on_successful_notification();
+                }
+                super::NotificationResult::Failure(_, _) => {
+                    n.state_mut().on_failure(ctx, delta, &ctx.now);
+                }
+                super::NotificationResult::Skipped => {}
+            }
+
+            result
+        }
+        None => {
+            if !n.state().next_reminder_is_due(&ctx.now) {
+                // Not yet time to send the next reminder
+                return super::NotificationResult::Skipped;
+            }
+
+            // Time to send a new reminder, so discard anything old
+            //n.state_mut().reset();
+
+            let result = n.push_reminder(ctx);
+
+            match &result {
+                super::NotificationResult::DryRun(_) => {
+                    n.state_mut().on_successful_reminder(&ctx.now);
+                }
+                super::NotificationResult::Success(_) => {
+                    n.state_mut().on_successful_reminder(&ctx.now);
+                }
+                super::NotificationResult::Failure(_, _) => {
+                    n.state_mut().on_failure(ctx, None, &ctx.now);
+                }
+                super::NotificationResult::Skipped => {}
+            }
+
+            result
+        }
     }
-
-    // Time to send a new reminder, so discard anything old
-    n.state_mut().reset();
-
-    let result = n.push_reminder(ctx);
-
-    match &result {
-        super::NotificationResult::DryRun(_) => {
-            n.state_mut().on_successful_reminder(&ctx.now);
-        }
-        super::NotificationResult::Success(_) => {
-            n.state_mut().on_successful_reminder(&ctx.now);
-        }
-        super::NotificationResult::Failure(_, _) => {
-            n.state_mut().on_failure(ctx, None, &ctx.now);
-        }
-        super::NotificationResult::Skipped => {}
-    }
-
-    result
 }

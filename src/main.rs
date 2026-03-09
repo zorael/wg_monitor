@@ -356,7 +356,7 @@ fn run_loop(
             // No change since last loop, check if we should send reminders
             if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
                 // There are peers missing or late
-                let report = notify::send_reminders(ctx, notifiers, &settings);
+                let report = notify::send_reminder(ctx, notifiers, &settings);
 
                 if settings.debug && report.total != report.skipped {
                     println!("{:#?}\n", report);
