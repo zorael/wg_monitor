@@ -155,11 +155,13 @@ impl NotifierState {
     /// notification with a context and delta, or a reminder with just a context.
     pub fn store_notification(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
         self.pending = match delta {
-            Some(d) => Some(super::PendingNotification::Notification(
-                ctx.clone(),
-                d.clone(),
-            )),
-            None => Some(super::PendingNotification::Reminder(ctx.clone())),
+            Some(d) => Some(super::PendingNotification::Notification {
+                context: ctx.clone(),
+                delta: d.clone(),
+            }),
+            None => Some(super::PendingNotification::Reminder {
+                context: ctx.clone(),
+            }),
         }
     }
 

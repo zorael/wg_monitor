@@ -35,18 +35,22 @@ pub fn retry_pending_notifications(
             continue;
         }
 
-        let (ctx, delta) = match &n.state().pending {
-            Some(super::PendingNotification::Notification(ctx, delta)) => {
-                (ctx.clone(), Some(delta.clone()))
+        // Taking sets pending to None
+        let pending = n.state_mut().pending.take();
+
+        let (ctx, delta) = match &pending {
+            Some(super::PendingNotification::Notification { context, delta }) => {
+                (context, Some(delta))
             }
-            Some(super::PendingNotification::Reminder(ctx)) => (ctx.clone(), None),
+            Some(super::PendingNotification::Reminder { context }) => (context, None),
             None => {
+                // None was taken
                 report.skipped += 1;
                 continue;
             }
         };
 
-        match send_via_notifier(&ctx, delta.as_ref(), n) {
+        match send_via_notifier(ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
                     "[{}] [{}] DRY RUN; not sent",
@@ -78,6 +82,9 @@ pub fn retry_pending_notifications(
                 report.failed += 1;
             }
             super::NotificationResult::Skipped => {
+                // May be due to next [something] not being due yet,
+                // so put back the pending notification
+                n.state_mut().pending = pending;
                 report.skipped += 1;
             }
         }
@@ -151,6 +158,12 @@ pub fn send_reminder(
     };
 
     for n in notifiers.iter_mut() {
+        if !n.state().next_reminder_is_due(&ctx.now) {
+            // Not yet time to send the next reminder
+            report.skipped += 1;
+            continue;
+        }
+
         match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
@@ -200,9 +213,6 @@ fn send_via_notifier(
 ) -> super::NotificationResult {
     match delta {
         Some(d) => {
-            // Time to send a new notification, so discard anything old
-            //n.state_mut().reset();
-
             let result = n.push_notification(ctx, d);
 
             match &result {
@@ -221,14 +231,6 @@ fn send_via_notifier(
             result
         }
         None => {
-            if !n.state().next_reminder_is_due(&ctx.now) {
-                // Not yet time to send the next reminder
-                return super::NotificationResult::Skipped;
-            }
-
-            // Time to send a new reminder, so discard anything old
-            //n.state_mut().reset();
-
             let result = n.push_reminder(ctx);
 
             match &result {
