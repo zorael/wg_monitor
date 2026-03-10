@@ -81,4 +81,5 @@ pub mod exit_codes {
     pub const FAILED_TO_LOAD_RESOURCES: u8 = 42;
     pub const FAILED_TO_READ_CONFIG_FILE: u8 = 43;
     pub const CONFIG_FILE_DOES_NOT_EXIST: u8 = 44;
+    pub const INSUFFICIENT_PRIVILEGES: u8 = 50;
 }
