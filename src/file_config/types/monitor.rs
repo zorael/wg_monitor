@@ -27,4 +27,9 @@ pub struct MonitorConfig {
     /// grown as consecutive reminders are sent.
     #[serde(with = "humantime_serde")]
     pub reminder_interval: Option<time::Duration>,
+
+    /// Base retry interval for pending notifications, specified as a human-readable duration.
+    /// This duration will be grown as consecutive retry attempts are made.
+    #[serde(with = "humantime_serde")]
+    pub retry_interval: Option<time::Duration>,
 }

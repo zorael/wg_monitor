@@ -29,7 +29,10 @@ pub fn retry_pending_notifications(
     };
 
     for n in notifiers.iter_mut() {
-        if !n.state().next_retry_is_due(&now) {
+        if !n
+            .state()
+            .next_retry_is_due(&now, &settings.monitor.retry_interval)
+        {
             // Not yet time
             report.skipped += 1;
             continue;
@@ -53,7 +56,7 @@ pub fn retry_pending_notifications(
         match send_via_notifier(ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
-                    "[{}] [{}] DRY RUN; not sent",
+                    "[{}] [{}] DRY RUN; RETRY not sent",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -63,7 +66,7 @@ pub fn retry_pending_notifications(
             }
             super::NotificationResult::Success(message) => {
                 println!(
-                    "[{}] [{}] Notification sent successfully",
+                    "[{}] [{}] Notification RETRIED successfully",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -73,7 +76,7 @@ pub fn retry_pending_notifications(
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!(
-                    "[{}] [{}] Failed to send notification: {e}",
+                    "[{}] [{}] Failed to RETRY notification: {e}",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -88,6 +91,11 @@ pub fn retry_pending_notifications(
                 report.skipped += 1;
             }
         }
+    }
+
+    if report.total != report.skipped {
+        // Linebreak for readability
+        println!();
     }
 
     report
@@ -109,7 +117,7 @@ pub fn send_notification(
         match send_via_notifier(ctx, Some(delta), n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
-                    "[{}] [{}] DRY RUN; not sent",
+                    "[{}] [{}] DRY RUN; notification not sent",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -143,6 +151,11 @@ pub fn send_notification(
         }
     }
 
+    if report.total != report.skipped {
+        // Linebreak for readability
+        println!();
+    }
+
     report
 }
 
@@ -158,7 +171,10 @@ pub fn send_reminder(
     };
 
     for n in notifiers.iter_mut() {
-        if !n.state().next_reminder_is_due(&ctx.now) {
+        if !n
+            .state()
+            .next_reminder_is_due(&ctx.now, &settings.monitor.reminder_interval)
+        {
             // Not yet time to send the next reminder
             report.skipped += 1;
             continue;
@@ -167,7 +183,7 @@ pub fn send_reminder(
         match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
-                    "[{}] [{}] DRY RUN; not sent",
+                    "[{}] [{}] DRY RUN; reminder not sent",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -201,6 +217,11 @@ pub fn send_reminder(
         }
     }
 
+    if report.total != report.skipped {
+        // Linebreak for readability
+        println!();
+    }
+
     report
 }
 
@@ -217,10 +238,10 @@ fn send_via_notifier(
 
             match &result {
                 super::NotificationResult::DryRun(_) => {
-                    n.state_mut().on_successful_notification();
+                    n.state_mut().on_successful_notification(&ctx.now);
                 }
                 super::NotificationResult::Success(_) => {
-                    n.state_mut().on_successful_notification();
+                    n.state_mut().on_successful_notification(&ctx.now);
                 }
                 super::NotificationResult::Failure(_, _) => {
                     n.state_mut().on_failure(ctx, delta, &ctx.now);

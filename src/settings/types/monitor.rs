@@ -19,6 +19,9 @@ pub struct MonitorSettings {
 
     /// Interval between reminders for lost peers.
     pub reminder_interval: time::Duration,
+
+    /// Base retry interval for pending notifications.
+    pub retry_interval: time::Duration,
 }
 
 impl Default for MonitorSettings {
@@ -29,6 +32,7 @@ impl Default for MonitorSettings {
             check_interval: defaults::CHECK_INTERVAL,
             timeout: defaults::TIMEOUT,
             reminder_interval: defaults::REMINDER_INTERVAL,
+            retry_interval: defaults::RETRY_INTERVAL,
         }
     }
 }
@@ -52,6 +56,10 @@ impl MonitorSettings {
         if let Some(reminder_interval) = monitor_config.reminder_interval {
             self.reminder_interval = reminder_interval;
         }
+
+        if let Some(retry_interval) = monitor_config.retry_interval {
+            self.retry_interval = retry_interval;
+        }
     }
 
     /// Sanity check the monitor settings, appending any errors as strings to
@@ -71,6 +79,10 @@ impl MonitorSettings {
 
         if self.reminder_interval == time::Duration::ZERO {
             vec.push("Monitor reminder interval cannot be zero.".to_string());
+        }
+
+        if self.retry_interval == time::Duration::ZERO {
+            vec.push("Monitor retry interval cannot be zero.".to_string());
         }
     }
 }

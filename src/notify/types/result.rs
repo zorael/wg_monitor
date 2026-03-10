@@ -15,5 +15,6 @@ pub enum NotificationResult {
     Failure(String, String),
 
     /// Indicates that a stored notification was skipped.
+    #[allow(dead_code)]
     Skipped,
 }

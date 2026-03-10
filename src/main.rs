@@ -361,14 +361,14 @@ fn run_loop(
                 if settings.debug && report.total != report.skipped {
                     println!("{:#?}\n", report);
                 }
-            } else {
-                // All peers are present, but there may yet be pending
-                // notifications announcing some peers as having returned
-                let report = notify::retry_pending_notifications(notifiers, &settings);
+            }
 
-                if settings.debug && report.total != report.skipped {
-                    println!("{:#?}\n", report);
-                }
+            // Either there are no peers missing/late or there are but no
+            // reminders were due, so check for pending notifications.
+            let report = notify::retry_pending_notifications(notifiers, &settings);
+
+            if settings.debug && report.total != report.skipped {
+                println!("{:#?}\n", report);
             }
 
             end_loop(ctx, settings.monitor.check_interval);

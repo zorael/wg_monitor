@@ -30,6 +30,7 @@ impl From<&settings::Settings> for FileConfig {
                 check_interval: Some(s.monitor.check_interval),
                 timeout: Some(s.monitor.timeout),
                 reminder_interval: Some(s.monitor.reminder_interval),
+                retry_interval: Some(s.monitor.retry_interval),
             },
 
             slack: SlackConfig {
