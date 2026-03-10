@@ -1,0 +1,13 @@
+[Unit]
+Description=Wireguard Monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wg_monitor --dry-run
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
