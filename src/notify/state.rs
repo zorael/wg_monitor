@@ -86,11 +86,11 @@ impl NotifierState {
         let growth_multiplier = match self.num_consecutive_reminders {
             0 => 1,  // 6h (base interval)
             1 => 2,  // 12h
-            2 => 2,  // 12h
-            3 => 4,  // 24h
-            4 => 4,  // 24h
-            5 => 8,  // 48h
-            _ => 12, // 72h (cap)
+            2 => 4,  // 24h (1 day)
+            3 => 8,  // 48h (2 days)
+            4 => 12, // 72h (3 days)
+            5 => 16, // 96h (4 days)
+            _ => 28, // 168h (1 week, cap)
         };
 
         let next_reminder_interval = reminder_interval.saturating_mul(growth_multiplier);
