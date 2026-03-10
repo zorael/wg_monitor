@@ -378,6 +378,12 @@ fn run_loop(
         // opposite mean "there is at least one peer missing or late".
 
         if delta.is_empty() {
+            if ctx.first_run {
+                let _ = notify::send_notification(ctx, &delta, notifiers, &settings);
+                end_loop(ctx, settings.monitor.check_interval);
+                continue;
+            }
+
             // No change since last loop, check if we should send reminders
             if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
                 // There are peers missing or late
