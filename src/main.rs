@@ -111,23 +111,36 @@ fn main() -> process::ExitCode {
         return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
     }
 
-    // Verify that we can execute the `wg show` command but don't actually case
+    // Verify that we can execute the `wg show` command but don't actually care
     // about the handshakes at this point. We just want to verify that the
     // command executes successfully before entering the main loop.
-    // Exit now if it doesn't.
-    let latest_handshakes_output = match wireguard::get_handshakes(&settings.monitor.interface) {
-        Ok(output) => {
-            /*if settings.debug {
-                println!("{output}");
-            }*/
-            output
-        }
-        Err(e) => {
-            eprintln!("[X] Error executing command: {e}");
-            return process::ExitCode::from(
-                defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
-            );
-        }
+    let latest_handshakes_output = loop {
+        match wireguard::get_handshakes(&settings.monitor.interface) {
+            Ok(output) => break output,
+            Err(e) => {
+                let e = e.to_string();
+                eprintln!("[!] {e}");
+
+                if e.contains("No such device") {
+                    println!(
+                        "[?] Interface {} down? Retrying in {}...",
+                        settings.monitor.interface,
+                        humantime::format_duration(settings.monitor.check_interval)
+                    );
+
+                    thread::sleep(settings.monitor.check_interval);
+                    continue;
+                } else if e.contains("Operation not permitted") {
+                    eprintln!("[X] Insufficient privileges to execute 'wg show' command.");
+                    return process::ExitCode::from(defaults::exit_codes::INSUFFICIENT_PRIVILEGES);
+                } else {
+                    eprintln!("[X] Failed to execute handshakes command.");
+                    return process::ExitCode::from(
+                        defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
+                    );
+                }
+            }
+        };
     };
 
     let handshake_validation_errors = wireguard::validate_handshakes(&latest_handshakes_output);
