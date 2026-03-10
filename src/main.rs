@@ -378,7 +378,7 @@ fn run_loop(
         // Only skip after we've computed the delta
         if should_skip_next {
             should_skip_next = false;
-            end_loop(ctx, settings.monitor.check_interval);
+            end_loop(ctx, time::Duration::ZERO);
             continue;
         }
 
