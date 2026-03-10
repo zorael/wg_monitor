@@ -11,7 +11,6 @@ use clap::Parser;
 
 use crate::defaults;
 
-/// Monitors other peers in a Wireguard VPN and sends notifications if contact with a peer is lost.
 #[derive(Parser)]
 #[command(name = defaults::program_metadata::PROGRAM_NAME)]
 #[command(author = defaults::program_metadata::AUTHORS)]
