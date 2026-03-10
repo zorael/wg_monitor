@@ -152,11 +152,9 @@ pub fn get_handshakes(interface: &str) -> io::Result<String> {
         .output()?;
 
     if !output.status.success() {
-        return Err(io::Error::other(format!(
-            "'wg show {interface} latest-handshakes' failed with status: {}\n{}",
-            output.status,
-            String::from_utf8_lossy(&output.stderr)
-        )));
+        return Err(io::Error::other(
+            String::from_utf8_lossy(&output.stderr).trim(),
+        ));
     }
 
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
