@@ -19,8 +19,10 @@ pub fn format_generic_message(
     if ctx.first_run && !ctx.resume {
         // This is only called if there are actually missing or late peers,
         // so we don't need to check for whether missing_keys and late_keys are empty here
-        message.push_str(&strings.first_run_missing);
-        message.push('\n');
+        if !strings.first_run_missing.is_empty() {
+            message.push_str(&strings.first_run_missing);
+            message.push('\n');
+        }
 
         let bp = &strings.bullet_point;
 

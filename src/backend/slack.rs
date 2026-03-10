@@ -74,7 +74,11 @@ impl super::Backend for SlackBackend {
     /// Builds the message to be sent to Slack based on the notification context and delta.
     fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
         let mut message = String::new();
-        message.push_str(&format!("{}\n", &self.strings.header));
+
+        if !self.strings.header.is_empty() {
+            message.push_str(&format!("{}\n", &self.strings.header));
+        }
+
         message.push_str(&notify::format_generic_message(ctx, delta, &self.strings));
         serde_json::json!({ "text": format!("{message}") }).to_string()
     }
@@ -82,7 +86,11 @@ impl super::Backend for SlackBackend {
     /// Builds the reminder message to be sent to Slack based on the notification context.
     fn build_reminder(&self, ctx: &notify::Context) -> String {
         let mut message = String::new();
-        message.push_str(&format!("{}\n", &self.reminder_strings.header));
+
+        if !self.reminder_strings.header.is_empty() {
+            message.push_str(&format!("{}\n", &self.reminder_strings.header));
+        }
+
         message.push_str(&notify::format_generic_reminder(
             ctx,
             &self.reminder_strings,
