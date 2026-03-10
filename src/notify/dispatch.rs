@@ -56,7 +56,7 @@ pub fn retry_pending_notifications(
         match send_via_notifier(ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
-                    "[{}] [{}] DRY RUN; RETRY not sent",
+                    "\n[{}] [{}] DRY RUN; RETRY not sent",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -66,7 +66,7 @@ pub fn retry_pending_notifications(
             }
             super::NotificationResult::Success(message) => {
                 println!(
-                    "[{}] [{}] Notification RETRIED successfully",
+                    "\n[{}] [{}] Notification RETRIED successfully",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -76,7 +76,7 @@ pub fn retry_pending_notifications(
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!(
-                    "[{}] [{}] Failed to RETRY notification: {e}",
+                    "\n[{}] [{}] Failed to RETRY notification: {e}",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -91,11 +91,6 @@ pub fn retry_pending_notifications(
                 report.skipped += 1;
             }
         }
-    }
-
-    if report.total != report.skipped {
-        // Linebreak for readability
-        println!();
     }
 
     report
@@ -117,7 +112,7 @@ pub fn send_notification(
         match send_via_notifier(ctx, Some(delta), n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
-                    "[{}] [{}] DRY RUN; notification not sent",
+                    "\n[{}] [{}] DRY RUN; notification not sent",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -127,7 +122,7 @@ pub fn send_notification(
             }
             super::NotificationResult::Success(message) => {
                 println!(
-                    "[{}] [{}] Notification sent successfully",
+                    "\n[{}] [{}] Notification sent successfully",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -137,7 +132,7 @@ pub fn send_notification(
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!(
-                    "[{}] [{}] Failed to send notification: {e}",
+                    "\n[{}] [{}] Failed to send notification: {e}",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -149,11 +144,6 @@ pub fn send_notification(
                 report.skipped += 1;
             }
         }
-    }
-
-    if report.total != report.skipped {
-        // Linebreak for readability
-        println!();
     }
 
     report
@@ -183,7 +173,7 @@ pub fn send_reminder(
         match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
                 println!(
-                    "[{}] [{}] DRY RUN; reminder not sent",
+                    "\n[{}] [{}] DRY RUN; reminder not sent",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -193,7 +183,7 @@ pub fn send_reminder(
             }
             super::NotificationResult::Success(message) => {
                 println!(
-                    "[{}] [{}] Reminder sent successfully",
+                    "\n[{}] [{}] Reminder sent successfully",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -203,7 +193,7 @@ pub fn send_reminder(
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!(
-                    "[{}] [{}] Failed to send reminder: {e}",
+                    "\n[{}] [{}] Failed to send reminder: {e}",
                     utils::timestamp_now(),
                     n.name()
                 );
@@ -215,11 +205,6 @@ pub fn send_reminder(
                 report.skipped += 1;
             }
         }
-    }
-
-    if report.total != report.skipped {
-        // Linebreak for readability
-        println!();
     }
 
     report

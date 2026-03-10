@@ -82,15 +82,14 @@ fn main() -> process::ExitCode {
     }
 
     if let Err(sanity_check_failures) = settings.sanity_check() {
-        eprintln!("[X] Configuration has errors:");
+        eprintln!("[X] Incomplete or invalid configuration:");
 
         for error in sanity_check_failures {
             eprintln!("  * {error}");
         }
 
         if settings.dry_run {
-            println!("[!] Continuing anyway because --dry-run is set.");
-            println!();
+            println!("[!] Continuing anyway because --dry-run was supplied.");
         } else {
             return process::ExitCode::from(defaults::exit_codes::CONFIGURATION_ERROR);
         }
@@ -111,10 +110,6 @@ fn main() -> process::ExitCode {
         );
         return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
     }
-
-    // Print resolved settings as part of program startup.
-    settings.print();
-    println!();
 
     // Verify that we can execute the `wg show` command but don't actually case
     // about the handshakes at this point. We just want to verify that the
