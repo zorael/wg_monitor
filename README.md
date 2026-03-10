@@ -16,8 +16,6 @@ Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/me
 wg_monitor x.y.z | copyright 2026 jr
 $ git clone https://github.com/zorael/wg_monitor
 
-Monitors other peers in a Wireguard VPN and sends notifications if contact with a peer is lost
-
 Usage: wg_monitor [OPTIONS]
 
 Options:
@@ -29,17 +27,21 @@ Options:
   -d, --debug              Print additional debug information
       --dry-run            Perform a dry run without sending any notifications
       --save               Write configuration to disk
-  -V, --version            Display version information and exit
-  -h, --help               Print help
 ```
 
-You can customize the formatting of notifications in the configuration file.
+## config.toml
+
+Configuration is largely done by editing a configuration file. Supply `--save` to generate a new one. It will be created someplace contextual to your user, creating directories as necessary.
+
+* `/home/user/.config/wg_monitor/config.toml` for normal users (directory overridden by `$XDG_CONFIG_HOME`)
+* `/etc/wg_monitor/config.toml` for root
+
+Pass `--config-dir=/path/to/somewhere/else` to override the target location.
 
 ## todo
 
 * external command as notification method
 * better documentation
-* review all textual output
 * colored terminal output?
 
 ## license
