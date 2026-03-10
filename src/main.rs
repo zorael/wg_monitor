@@ -162,6 +162,36 @@ fn main() -> process::ExitCode {
         }
     }
 
+    println!("[O] Initialization complete.");
+
+    if settings.debug {
+        println!("\n{:#?}\n", settings);
+    } else {
+        println!();
+        println!(
+            "{} peer(s) monitored, {} notifier(s) configured.",
+            peers.len(),
+            notifiers.len()
+        );
+        println!(
+            "check interval: {}, peer timeout: {}",
+            humantime::format_duration(settings.monitor.check_interval),
+            humantime::format_duration(settings.monitor.timeout),
+        );
+        println!(
+            "reminder interval: {}, retry interval: {}",
+            humantime::format_duration(settings.monitor.reminder_interval),
+            humantime::format_duration(settings.monitor.retry_interval),
+        );
+        println!();
+
+        if settings.dry_run {
+            println!("[!] DRY RUN");
+        }
+    }
+
+    println!("[O] Entering main loop...");
+
     // All done, create the initial context and enter the loop.
     let mut ctx = notify::Context::inherit(peers);
     run_loop(&mut ctx, &mut notifiers, settings)
