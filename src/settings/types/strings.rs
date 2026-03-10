@@ -58,17 +58,17 @@ impl Default for MessageStrings {
     /// config file overrides.
     fn default() -> Self {
         Self {
-            header: "Wireguard Monitor report".to_string(),
-            first_run_header: "Wireguard Monitor starting up".to_string(),
-            first_run_missing: "Missing peers:\\n".to_string(),
-            lost: "Just lost:\\n".to_string(),
+            header: "Wireguard Monitor report\\n".to_string(),
+            first_run_header: "Wireguard Monitor starting up\\n".to_string(),
+            first_run_missing: "Missing:\\n".to_string(),
+            lost: "Lost:\\n".to_string(),
             forgot: "Lost track of due to a restart of the VPN:\\n".to_string(),
             appeared: "Just appeared:\\n".to_string(),
             returned: "Returned:\\n".to_string(),
             still_lost: "Still lost:\\n".to_string(),
             still_missing: "Still have yet to see (since last restart):\\n".to_string(),
             footer: String::new(),
-            bullet_point: "* ".to_string(),
+            bullet_point: "- ".to_string(),
             peer_with_timestamp: "{peer} (last seen {when})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
         }
@@ -168,11 +168,11 @@ impl Default for ReminderStrings {
     /// applying configuration file overrides.
     fn default() -> Self {
         Self {
-            header: "Wireguard Monitor reminder".to_string(),
+            header: "Wireguard Monitor reminder\\n".to_string(),
             still_lost: "Still lost:\\n".to_string(),
-            still_missing: "Still has yet to see (since last restart):\\n".to_string(),
+            still_missing: "Still have yet to see (since last restart):\\n".to_string(),
             footer: String::new(),
-            bullet_point: "* ".to_string(),
+            bullet_point: "- ".to_string(),
             peer_with_timestamp: "{peer} (last seen {when})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
         }
