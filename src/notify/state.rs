@@ -32,9 +32,9 @@ pub struct NotifierState {
 }
 
 impl NotifierState {
-    /// Stores a notification for later retrying, which can be either a regular
+    /// Saves a notification for later retrying, which can be either a regular
     /// notification with a context and delta, or a reminder with just a context.
-    pub fn store_notification(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
+    pub fn save_pending(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
         self.pending = match delta {
             Some(d) => Some(super::PendingNotification::Notification {
                 context: ctx.clone(),
@@ -140,7 +140,7 @@ impl NotifierState {
         delta: Option<&super::Delta>,
         now: &time::SystemTime,
     ) {
-        self.store_notification(ctx, delta);
+        self.save_pending(ctx, delta);
         self.last_failed_send = Some(*now);
         self.num_consecutive_failures += 1;
 
