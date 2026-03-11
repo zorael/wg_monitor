@@ -113,9 +113,9 @@ impl super::Backend for BatsignBackend {
         _ctx: &notify::Context,
         _delta: Option<&notify::Delta>,
         message: &str,
-    ) -> Result<(), String> {
+    ) -> Result<Option<String>, String> {
         match self.client.post(&self.url).body(message.to_owned()).send() {
-            Ok(resp) if resp.status().is_success() => Ok(()),
+            Ok(resp) if resp.status().is_success() => Ok(None),
             Ok(resp) => Err(format!("HTTP {}", resp.status())),
             Err(e) => Err(e.to_string()),
         }

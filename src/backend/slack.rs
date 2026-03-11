@@ -117,11 +117,11 @@ impl super::Backend for SlackBackend {
         _ctx: &notify::Context,
         _delta: Option<&notify::Delta>,
         message: &str,
-    ) -> Result<(), String> {
+    ) -> Result<Option<String>, String> {
         let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
 
         match self.client.post(&self.url).json(&json).send() {
-            Ok(resp) if resp.status().is_success() => Ok(()),
+            Ok(resp) if resp.status().is_success() => Ok(None),
             Ok(resp) => Err(format!("HTTP {}", resp.status())),
             Err(e) => Err(e.to_string()),
         }

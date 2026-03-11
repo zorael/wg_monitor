@@ -26,5 +26,5 @@ pub trait Backend {
         ctx: &notify::Context,
         delta: Option<&notify::Delta>,
         message: &str,
-    ) -> Result<(), String>;
+    ) -> Result<Option<String>, String>;
 }

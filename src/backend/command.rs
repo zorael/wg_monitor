@@ -83,7 +83,7 @@ impl super::Backend for CommandBackend {
         ctx: &notify::Context,
         delta: Option<&notify::Delta>,
         message: &str,
-    ) -> Result<(), String> {
+    ) -> Result<Option<String>, String> {
         let late_keys = ctx.late_keys.join(",");
         let missing_keys = ctx.missing_keys.join(",");
         let previous_late_keys = ctx.previous_late_keys.join(",");
@@ -134,6 +134,6 @@ impl super::Backend for CommandBackend {
             return Err(stdout);
         }
 
-        Ok(())
+        Ok(Some(stdout))
     }
 }
