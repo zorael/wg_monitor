@@ -46,7 +46,7 @@ pub fn read_peer_list(
 
             let peer = peer::WireguardPeer {
                 public_key: key.to_string(),
-                human_name: human_name.to_string(),
+                human_name: human_name.trim().to_string(),
                 last_seen: None,
                 last_seen_unix: 0,
             };
