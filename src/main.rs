@@ -381,6 +381,10 @@ fn run_loop(
                 // If you --skip-first the first run, reminds will never be sent
                 // because the stateful notifiers will never have their
                 // last_notification_sent set. So fake a notification being sent here, once.
+                // The alternative is to keep a program_started_at timestamp
+                // in Context and check against that in the reminder logic, but
+                // this is simpler, leverages existing code and achieves the same results.
+                // Hacky, though.
                 for n in notifiers.iter_mut() {
                     n.state_mut().on_successful_notification(&ctx.now);
                 }
@@ -391,6 +395,8 @@ fn run_loop(
             continue;
         }
 
+        // !delta.is_empty() means "there was at least one change since the last loop"
+        // which is another way of saying "there is at least one new notification to send".
         if !delta.is_empty() {
             if settings.debug {
                 delta.print_nonempty_prefixed("... ");
@@ -406,19 +412,14 @@ fn run_loop(
             continue;
         }
 
-        // delta.is_empty() means "no change since last loop", which is another
-        // way of saying "no new notifications to send", but we may still want
-        // to send reminders for existing notifications or retry pending ones.
-
         if ctx.first_run {
             let _ = notify::send_notification(ctx, &delta, notifiers, &settings);
             end_loop(ctx, settings.monitor.check_interval);
             continue;
         }
 
-        // ctx_missing_keys.is_empty() && ctx.late_keys.is_empty() means
-        // "all peers are present and have phoned home in time", which makes the
-        // opposite mean "there is at least one peer missing or late".
+        // !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() means
+        // "there is at least one peer missing or late"
         if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
             let report = notify::send_reminder(ctx, notifiers, &settings);
 
