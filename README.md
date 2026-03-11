@@ -2,7 +2,7 @@
 
 Monitors other peers in a [Wireguard VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
 
-The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compiling may be required.](#cross-compilation))
+The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation may be required.](#cross-compilation))
 
 In a hub-and-spoke Wireguard configuration, this should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
 
@@ -49,7 +49,7 @@ A `peers.txt` file will have been created next to the configuration `config.toml
 ```
 # <public key> <description>
 CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi2= Alice's house
-PeerKey/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
+AigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 #Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
 ```
 
@@ -65,7 +65,7 @@ $ cargo run -- --save
 
 ## cross-compilation
 
-A Pi can trivially run the program, but does not have enough memory to compile it with the default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another Linux computer.
+A Pi can trivially *run* the program, but does not have enough memory to compile it, at least not with the default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another Linux computer and transfering the resulting binary.
 
 > Mind that your `$CFLAGS` environment variable must not contain `-march=native` for all dependencies to build.
 
@@ -89,9 +89,9 @@ $ cargo build --release -j1
 
 Mind that build times will be *very* long. Cross-compilation is recommended.
 
-### GCC target packages
+### gcc target packages
 
-If you cannot install the required packages for AArch64 cross-compilation, such as if you are running an immutable distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling it from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available as Flatpaks, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
+If you cannot install the required packages for **AArch64** cross-compilation, such as if you are running an immutable distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling it from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available as Flatpaks, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
 
 ```
 $ sudo pacman -S rust-aarch64-gnu
