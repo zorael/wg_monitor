@@ -20,7 +20,7 @@ pub struct Cli {
     #[arg(short = 'c', long, value_name = "path")]
     pub config_dir: Option<String>,
 
-    /// Skip notifications about program startup
+    /// Word the first notification as if the program was not just started
     #[arg(long)]
     pub resume: bool,
 
@@ -28,7 +28,7 @@ pub struct Cli {
     #[arg(long)]
     pub skip_first: bool,
 
-    /// Show the resolved configuration and exit
+    /// Output configuration to screen and exit
     #[arg(long)]
     pub show: bool,
 
@@ -36,11 +36,11 @@ pub struct Cli {
     #[arg(short = 'v', long)]
     pub verbose: bool,
 
-    /// Print additional debug information
+    /// Print much more additional information
     #[arg(short = 'd', long)]
     pub debug: bool,
 
-    /// Perform a dry run without sending any notifications
+    /// Perform a dry run, echoing what would be done
     #[arg(long)]
     pub dry_run: bool,
 
