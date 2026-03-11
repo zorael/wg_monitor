@@ -36,6 +36,8 @@ pub struct Context {
     /// Indicates that the program is resuming from a previous run, which means
     /// that some startup notifications should be skipped.
     pub resume: bool,
+
+    pub peer_list_file_path: String,
 }
 
 impl Context {
@@ -50,6 +52,7 @@ impl Context {
             now: time::SystemTime::UNIX_EPOCH,
             first_run: false,
             resume: false,
+            peer_list_file_path: String::new(),
         }
     }
 

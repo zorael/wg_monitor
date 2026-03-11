@@ -203,10 +203,14 @@ fn main() -> process::ExitCode {
         }
     }
 
-    println!("[O] Entering main loop...");
-
-    // All done, create the initial context and enter the loop.
+    // All done, create the initial context
     let mut ctx = notify::Context::inherit(peers);
+
+    // Store the peer list file path in the context so that backends can access it
+    ctx.peer_list_file_path = settings.paths.peer_list.display().to_string();
+
+    // And finally enter the loop.
+    println!("[O] Entering main loop...");
     run_loop(&mut ctx, &mut notifiers, settings)
 }
 

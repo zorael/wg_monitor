@@ -2,6 +2,7 @@
 
 mod api;
 mod batsign;
+mod command;
 mod slack;
 
 pub use api::Backend;

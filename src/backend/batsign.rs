@@ -3,7 +3,6 @@
 use reqwest::blocking;
 use std::sync;
 
-use crate::backend;
 use crate::notify;
 use crate::settings;
 
@@ -55,9 +54,8 @@ impl BatsignBackend {
     }
 }
 
-impl backend::Backend for BatsignBackend {
+impl super::Backend for BatsignBackend {
     /// Returns the unique identifier of the backend instance.
-    #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }
@@ -110,7 +108,12 @@ impl backend::Backend for BatsignBackend {
 
     /// Sends a notification via the Batsign backend by making a POST request
     /// to the specified URL, with the passed message as the request body.
-    fn send(&mut self, message: &str) -> Result<(), String> {
+    fn emit(
+        &mut self,
+        _ctx: &notify::Context,
+        _delta: Option<&notify::Delta>,
+        message: &str,
+    ) -> Result<(), String> {
         match self.client.post(&self.url).body(message.to_owned()).send() {
             Ok(resp) if resp.status().is_success() => Ok(()),
             Ok(resp) => Err(format!("HTTP {}", resp.status())),

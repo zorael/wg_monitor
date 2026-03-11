@@ -21,5 +21,10 @@ pub trait Backend {
     fn build_reminder(&self, ctx: &notify::Context) -> String;
 
     /// Delivers the already-built message using backend-owned methods.
-    fn send(&mut self, message: &str) -> Result<(), String>;
+    fn emit(
+        &mut self,
+        ctx: &notify::Context,
+        delta: Option<&notify::Delta>,
+        message: &str,
+    ) -> Result<(), String>;
 }

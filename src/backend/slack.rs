@@ -15,7 +15,6 @@ use crate::settings;
 pub struct SlackBackend {
     /// Unique identifier for the Slack backend instance, used for logging and
     /// identification purposes.
-    #[allow(dead_code)]
     id: usize,
 
     /// HTTP client used to send requests to the Slack API.
@@ -113,7 +112,12 @@ impl super::Backend for SlackBackend {
     /// Sends a notification via the Slack backend by making a POST request
     /// to the specified webhook URL, with the passed message string as parsed
     /// into a JSON payload.
-    fn send(&mut self, message: &str) -> Result<(), String> {
+    fn emit(
+        &mut self,
+        _ctx: &notify::Context,
+        _delta: Option<&notify::Delta>,
+        message: &str,
+    ) -> Result<(), String> {
         let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
 
         match self.client.post(&self.url).json(&json).send() {
