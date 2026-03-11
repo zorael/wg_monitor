@@ -2,22 +2,22 @@
 //!
 //! This is just to gather them in one neat place.
 
-use std::time::Duration;
+use std::time;
 
 /// Default Wireguard interface name.
 pub const INTERFACE: &str = "wg0";
 
 /// Default timeout duration for monitoring checks.
-pub const TIMEOUT: Duration = Duration::from_secs(600);
+pub const TIMEOUT: time::Duration = time::Duration::from_secs(600);
 
 /// Default check interval for monitoring the Wireguard interface.
-pub const CHECK_INTERVAL: Duration = Duration::from_secs(60);
+pub const CHECK_INTERVAL: time::Duration = time::Duration::from_secs(60);
 
 /// Default reminder interval for sending reminder notifications. Base value, will be grown.
-pub const REMINDER_INTERVAL: Duration = Duration::from_secs(3600 * 6);
+pub const REMINDER_INTERVAL: time::Duration = time::Duration::from_secs(3600 * 6);
 
 /// Base retry interval. Will be grown as retry attempts increase.
-pub const RETRY_INTERVAL: Duration = Duration::from_secs(60); // 1m
+pub const RETRY_INTERVAL: time::Duration = time::Duration::from_secs(60); // 1m
 
 /// Default configuration file name.
 pub const CONFIG_FILENAME: &str = "config.toml";

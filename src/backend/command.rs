@@ -1,5 +1,7 @@
 //! FIXME
 
+use std::process;
+
 use crate::notify;
 use crate::settings;
 
@@ -100,7 +102,7 @@ impl super::Backend for CommandBackend {
                 let no_longer_late_keys = d.no_longer_late_keys.join(",");
                 let returned_keys = d.returned_keys.join(",");
 
-                std::process::Command::new(&self.command)
+                process::Command::new(&self.command)
                     .arg(message)
                     .arg(&ctx.peer_list_file_path)
                     .arg(first_run)
@@ -115,7 +117,7 @@ impl super::Backend for CommandBackend {
                     .output()
                     .map_err(|e| e.to_string())?
             }
-            None => std::process::Command::new(&self.command)
+            None => process::Command::new(&self.command)
                 .arg(message)
                 .arg(&ctx.peer_list_file_path)
                 .arg(first_run)

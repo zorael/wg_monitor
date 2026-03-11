@@ -1,7 +1,7 @@
 //! Wireguard peer presentation and management functionality.
 
-use std::cmp::Reverse;
-use std::collections::HashMap;
+use std::cmp;
+use std::collections;
 use std::time;
 
 /// Represents a Wireguard peer, including its public key, human-readable name,
@@ -81,9 +81,9 @@ impl WireguardPeer {
 /// provided peers map. Peers that are present (have a non-0 timestamp) are sorted first,
 /// with newer timestamps appearing before older ones. Peers without a timestamp
 /// (or rather, with a timestamp of 0) are sorted last.
-pub fn sort_keys(keys: &mut [String], peers: &HashMap<String, WireguardPeer>) {
+pub fn sort_keys(keys: &mut [String], peers: &collections::HashMap<String, WireguardPeer>) {
     keys.sort_unstable_by_key(|k| {
         let timestamp = peers.get(k).map(|p| p.last_seen_unix).unwrap_or(0);
-        (timestamp == 0, Reverse(timestamp))
+        (timestamp == 0, cmp::Reverse(timestamp))
     });
 }

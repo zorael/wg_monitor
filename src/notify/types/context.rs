@@ -1,7 +1,7 @@
 //! Module defining the `Context` struct, which holds the state of peers and timing information
 //! used for building notification messages in the `notify` module.
 
-use std::collections::HashMap;
+use std::collections;
 use std::mem;
 use std::time;
 
@@ -12,7 +12,7 @@ use crate::peer;
 /// state of peers, as well as timing information.
 pub struct Context {
     /// Map of public keys to `WireguardPeer` structs, representing all known peers.
-    pub peers: HashMap<String, peer::WireguardPeer>,
+    pub peers: collections::HashMap<String, peer::WireguardPeer>,
 
     /// Current peers that are late (seen but not within the expected time).
     pub late_keys: Vec<String>,
@@ -44,7 +44,7 @@ impl Context {
     /// Creates a new `Context` with the specified capacity for the peer key vectors.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            peers: HashMap::with_capacity(capacity),
+            peers: collections::HashMap::with_capacity(capacity),
             late_keys: Vec::with_capacity(capacity),
             missing_keys: Vec::with_capacity(capacity),
             previous_late_keys: Vec::with_capacity(capacity),
@@ -58,7 +58,7 @@ impl Context {
 
     /// Creates a new `Context` with the provided peers, initializing the
     /// vectors based on the number of peers.
-    pub fn inherit(peers: HashMap<String, peer::WireguardPeer>) -> Self {
+    pub fn inherit(peers: collections::HashMap<String, peer::WireguardPeer>) -> Self {
         let mut sized = Self::with_capacity(peers.len());
         sized.peers = peers;
         sized

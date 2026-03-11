@@ -37,7 +37,7 @@ use clap::Parser;
 use reqwest::blocking;
 use std::fs;
 use std::process;
-use std::sync::Arc;
+use std::sync;
 use std::thread;
 use std::time;
 
@@ -218,7 +218,7 @@ fn main() -> process::ExitCode {
 /// boxed trait objects.
 fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::StatefulNotifier>> {
     let mut notifiers: Vec<Box<dyn notify::StatefulNotifier>> = Vec::new();
-    let client = Arc::new(blocking::Client::new());
+    let client = sync::Arc::new(blocking::Client::new());
 
     /// Helper function to build and push notifiers for a passed backend type.
     fn build_and_push_notifiers<B, F>(
@@ -241,7 +241,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     let make_slack_backend = |i: usize, url: &String| {
         backend::SlackBackend::new(
             i,
-            Arc::clone(&client),
+            sync::Arc::clone(&client),
             url,
             &settings.slack.strings,
             &settings.slack.reminder_strings,
@@ -252,7 +252,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     let make_batsign_backend = |i: usize, url: &String| {
         backend::BatsignBackend::new(
             i,
-            Arc::clone(&client),
+            sync::Arc::clone(&client),
             url,
             &settings.batsign.strings,
             &settings.batsign.reminder_strings,

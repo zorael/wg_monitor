@@ -5,10 +5,12 @@
 //! last seen timestamps for peers based on the command output, and get the
 //! terminal output from running the command.
 
-use std::collections::HashMap;
+use std::collections;
 use std::fs;
-use std::io::{self, BufRead, BufReader};
+use std::io;
+use std::io::BufRead;
 use std::path;
+use std::process;
 use std::time;
 
 use crate::peer;
@@ -18,14 +20,14 @@ use crate::peer;
 pub fn read_peer_list(
     path: &path::Path,
     debug: bool,
-) -> io::Result<HashMap<String, peer::WireguardPeer>> {
+) -> io::Result<collections::HashMap<String, peer::WireguardPeer>> {
     if debug {
         println!("[i] Reading peers from file: '{}'\n", path.display());
     }
 
     let file = fs::File::open(path)?;
-    let reader = BufReader::new(file);
-    let mut peers = HashMap::new();
+    let reader = io::BufReader::new(file);
+    let mut peers = collections::HashMap::new();
 
     for line in reader.lines() {
         let line = line?.trim().to_string();
@@ -113,7 +115,10 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 
 /// Updates the last seen timestamps for peers based on the output of the
 /// `wg show {iface} latest-handshakes` command.
-pub fn update_handshakes(terminal_output: &str, peers: &mut HashMap<String, peer::WireguardPeer>) {
+pub fn update_handshakes(
+    terminal_output: &str,
+    peers: &mut collections::HashMap<String, peer::WireguardPeer>,
+) {
     for line in terminal_output.lines() {
         let line = line.trim();
 
@@ -145,7 +150,7 @@ pub fn update_handshakes(terminal_output: &str, peers: &mut HashMap<String, peer
 /// Gets the terminal output from running the `wg show iface latest-handshakes` command,
 /// returning an error if the command fails or produces invalid output.
 pub fn get_handshakes(interface: &str) -> io::Result<String> {
-    let output = std::process::Command::new("/usr/bin/wg")
+    let output = process::Command::new("/usr/bin/wg")
         .arg("show")
         .arg(interface)
         .arg("latest-handshakes")
