@@ -12,7 +12,7 @@ Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/me
 
 ## tl;dr
 
-```
+```text
 wg_monitor x.y.z | copyright 2026 jr
 $ git clone https://github.com/zorael/wg_monitor
 
@@ -31,8 +31,8 @@ Options:
 
 To get started, create new [configuration](#configtoml) and [peer list](#peers) files by passing `--save`.
 
-```
-$ cargo run -- --save
+```sh
+cargo run -- --save
 ```
 
 ## toc
@@ -52,26 +52,26 @@ $ cargo run -- --save
 
 This project uses [**Cargo**](https://doc.rust-lang.org/cargo) for compilation and dependency management.
 
-```
-$ cargo build
-$ cargo run -- --help
-$ cargo run -- --save
+```sh
+cargo build
+cargo run -- --help
+cargo run -- --save
 ```
 
 A normal desktop or laptop computer should be able to trivially build it without any additional steps taken.
 
 Pre-compiled binaries will be provided under [**Releases**](https://github.com/zorael/wg_monitor/releases) once the code stabilizes a bit and `v1.0.0` can be tagged.
 
-## cross-compilation
+### cross-compilation
 
 A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another Linux computer and transferring the resulting binary.
 
 > Your `$CFLAGS` environment variable seemingly must not contain `-march=native` for all dependencies to build.
 
-```
-$ export CFLAGS="-O2 -pipe"  # as an example
-$ cargo build --target=aarch64-unknown-linux-gnu
-$ rsync -avz --progress target/aarch64-unknown-linux-gnu/debug/wg_monitor user@pi:~/
+```sh
+export CFLAGS="-O2 -pipe"  # as an example
+cargo build --target=aarch64-unknown-linux-gnu
+rsync -avz --progress target/aarch64-unknown-linux-gnu/debug/wg_monitor user@pi:~/
 ```
 
 This should require upwards of 600 Mb of free system memory, exceeding the total RAM of the Pi Zero 2W.
@@ -82,8 +82,8 @@ Add `--release` to build the project in release mode, applying some optimization
 
 You *may* have some luck building it on the Pi if you build it in a serial mode, compiling one dependency at a time.
 
-```
-$ cargo build --release -j1
+```sh
+cargo build --release -j1
 ```
 
 Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, a heatsink.
@@ -92,8 +92,8 @@ Mind that build times will be *very* long. Cross-compilation is recommended. Fai
 
 If you are unable to install the required packages for **AArch64** cross-compilation, which is the case if you are running an image-based distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available as Flatpaks, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing container images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
 
-```
-$ sudo pacman -S rust-aarch64-gnu
+```sh
+sudo pacman -S rust-aarch64-gnu
 ```
 
 ## config.toml
@@ -121,10 +121,10 @@ A new `peers.txt` file will have been created next to the configuration `config.
 
 Lines that start with an octothorpe `#` will be ignored.
 
-```
+```text
 # <public key> <description>
 CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi2= Alice's house
-AigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
+XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 #Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
 ```
 
