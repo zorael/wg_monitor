@@ -74,9 +74,13 @@ impl super::Backend for SlackBackend {
     /// Builds the message to be sent to Slack based on the notification context and delta.
     fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
         let mut message = String::new();
+        let header = match ctx.first_run {
+            true => &self.strings.first_run_header,
+            false => &self.strings.header,
+        };
 
-        if !self.strings.header.is_empty() {
-            message.push_str(&format!("{}\n", &self.strings.header));
+        if !header.is_empty() {
+            message.push_str(&format!("{header}\n"));
         }
 
         message.push_str(&notify::format_generic_message(ctx, delta, &self.strings));

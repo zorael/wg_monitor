@@ -17,11 +17,6 @@ pub fn format_generic_message(
     let mut message = String::new();
 
     if ctx.first_run && !ctx.resume {
-        if !strings.first_run_header.is_empty() {
-            message.push_str(&strings.first_run_header);
-            message.push('\n');
-        }
-
         if strings.first_run_missing.is_empty()
             || (ctx.missing_keys.is_empty() && ctx.late_keys.is_empty())
         {
