@@ -94,10 +94,7 @@ impl backend::Backend for BatsignBackend {
     /// Builds the reminder message to be sent to Batsign based on the notification context.
     fn build_reminder(&self, ctx: &notify::Context) -> String {
         let mut message = String::new();
-        let body = &notify::format_generic_reminder(
-            ctx,
-            &self.reminder_strings,
-        );
+        let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
 
         if body.is_empty() {
             return message;
