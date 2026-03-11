@@ -48,7 +48,7 @@ pub fn read_peer_list(
                 public_key: key.to_string(),
                 human_name: human_name.to_string(),
                 last_seen: None,
-                timestamp: None,
+                last_seen_unix: 0,
             };
 
             if debug {
@@ -62,7 +62,7 @@ pub fn read_peer_list(
                 public_key: key.clone(),
                 human_name: peer::WireguardPeer::shorten_key(&key),
                 last_seen: None,
-                timestamp: None,
+                last_seen_unix: 0,
             };
 
             if debug {
@@ -131,11 +131,11 @@ pub fn update_handshakes(terminal_output: &str, peers: &mut HashMap<String, peer
 
         match timestamp.parse::<u64>() {
             Ok(0) | Err(_) => {
-                peer.timestamp = None;
+                peer.last_seen_unix = 0;
                 peer.last_seen = None;
             }
             Ok(seconds) => {
-                peer.timestamp = Some(seconds);
+                peer.last_seen_unix = seconds;
                 peer.last_seen = Some(time::UNIX_EPOCH + time::Duration::from_secs(seconds));
             }
         };

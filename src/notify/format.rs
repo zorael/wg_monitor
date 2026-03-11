@@ -144,7 +144,7 @@ fn format_peer_line(
         .replace("{peer}", &peer.human_name)
         .replace("{key}", &peer.public_key)
         .replace("{when}", &when)
-        .replace("{timestamp}", &peer.timestamp.unwrap_or(0).to_string())
+        .replace("{unix}", &peer.last_seen_unix.to_string())
 }
 
 /// Appends a section to the notification message for a list of peer keys,

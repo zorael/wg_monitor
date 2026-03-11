@@ -22,8 +22,8 @@ pub struct WireguardPeer {
     pub last_seen: Option<time::SystemTime>,
 
     /// The timestamp of the last handshake with the peer, represented as an
-    /// optional `u64` UNIX timestamp.
-    pub timestamp: Option<u64>,
+    /// `u64` UNIX timestamp.
+    pub last_seen_unix: u64,
 }
 
 impl WireguardPeer {
@@ -77,13 +77,13 @@ impl WireguardPeer {
     }
 }
 
-/// Sorts a vector of peer public keys based on their last seen timestamps in the
-/// provided peers map. Peers that are present (have a timestamp) are sorted first,
-/// with newer timestamps appearing before older ones. Peers that are missing
-/// (have no timestamp) are sorted last.
+/// Sorts an array of peer public keys based on their last seen UNIX timestamps in the
+/// provided peers map. Peers that are present (have a non-0 timestamp) are sorted first,
+/// with newer timestamps appearing before older ones. Peers without a timestamp
+/// (or rather, with a timestamp of 0) are sorted last.
 pub fn sort_keys(keys: &mut [String], peers: &HashMap<String, WireguardPeer>) {
-    keys.sort_unstable_by_key(|k| match peers.get(k).and_then(|p| p.timestamp) {
-        Some(ts) => (0u8, Reverse(ts)),
-        None => (1u8, Reverse(0u64)),
+    keys.sort_unstable_by_key(|k| {
+        let timestamp = peers.get(k).map(|p| p.last_seen_unix).unwrap_or(0);
+        (timestamp == 0, Reverse(timestamp))
     });
 }
