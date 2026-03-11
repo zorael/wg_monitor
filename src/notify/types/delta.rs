@@ -6,6 +6,7 @@
 //! the `Context` struct.
 
 use crate::notify;
+use crate::peer;
 use crate::utils;
 
 /// Structure representing the changes in peer status between two checks.
@@ -67,12 +68,20 @@ impl Delta {
             &mut self.no_longer_late_keys,
             &mut self.became_late_keys,
         );
+
         utils::append_vec_difference(
             &ctx.previous_missing_keys,
             &ctx.missing_keys,
             &mut self.returned_keys,
             &mut self.went_missing_keys,
         );
+
+        // Sort keys so that notifications present them in a descending order of
+        // disappearance time, with missing peers last.
+        peer::sort_keys(&mut self.no_longer_late_keys, &ctx.peers);
+        peer::sort_keys(&mut self.became_late_keys, &ctx.peers);
+        peer::sort_keys(&mut self.returned_keys, &ctx.peers);
+        peer::sort_keys(&mut self.went_missing_keys, &ctx.peers);
     }
 
     /// Prints the non-empty vectors in the `Delta` for debugging purposes,
