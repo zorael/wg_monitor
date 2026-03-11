@@ -14,6 +14,9 @@ pub enum NotificationResult {
     /// Indicates that the notification failed.
     Failure(String, String),
 
+    /// Indicates that there was no message to send (e.g., the backend returned an empty message).
+    NoMessage,
+
     /// Indicates that a stored notification was skipped.
     #[allow(dead_code)]
     Skipped,

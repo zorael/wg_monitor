@@ -56,6 +56,10 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
             return super::NotificationResult::DryRun(message);
         }
 
+        if message.is_empty() {
+            return super::NotificationResult::NoMessage;
+        }
+
         match self.backend.send(&message) {
             Ok(_) => super::NotificationResult::Success(message),
             Err(e) => super::NotificationResult::Failure(e, message),
@@ -68,6 +72,10 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
 
         if self.dry_run {
             return super::NotificationResult::DryRun(reminder);
+        }
+
+        if reminder.is_empty() {
+            return super::NotificationResult::Skipped;
         }
 
         match self.backend.send(&reminder) {

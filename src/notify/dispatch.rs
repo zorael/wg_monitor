@@ -84,6 +84,10 @@ pub fn retry_pending_notifications(
                 verbose_print(&message, settings);
                 report.failed += 1;
             }
+            super::NotificationResult::NoMessage => {
+                // Backend returned an empty message, so nothing to send
+                report.no_message += 1;
+            }
             super::NotificationResult::Skipped => {
                 // May be due to next [something] not being due yet,
                 // so put back the pending notification
@@ -139,6 +143,10 @@ pub fn send_notification(
 
                 verbose_print(&message, settings);
                 report.failed += 1;
+            }
+            super::NotificationResult::NoMessage => {
+                // Backend returned an empty message, so nothing to send
+                report.no_message += 1;
             }
             super::NotificationResult::Skipped => {
                 report.skipped += 1;
@@ -201,6 +209,10 @@ pub fn send_reminder(
                 verbose_print(&message, settings);
                 report.failed += 1;
             }
+            super::NotificationResult::NoMessage => {
+                // Backend returned an empty message, so nothing to send
+                report.no_message += 1;
+            }
             super::NotificationResult::Skipped => {
                 report.skipped += 1;
             }
@@ -231,6 +243,9 @@ fn send_via_notifier(
                 super::NotificationResult::Failure(_, _) => {
                     n.state_mut().on_failure(ctx, delta, &ctx.now);
                 }
+                super::NotificationResult::NoMessage => {
+                    n.state_mut().on_successful_notification(&ctx.now);
+                }
                 super::NotificationResult::Skipped => {}
             }
 
@@ -248,6 +263,9 @@ fn send_via_notifier(
                 }
                 super::NotificationResult::Failure(_, _) => {
                     n.state_mut().on_failure(ctx, None, &ctx.now);
+                }
+                super::NotificationResult::NoMessage => {
+                    n.state_mut().on_successful_reminder(&ctx.now);
                 }
                 super::NotificationResult::Skipped => {}
             }
