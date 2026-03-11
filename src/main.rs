@@ -377,6 +377,15 @@ fn run_loop(
         // --skip-first logic is here
         // Only skip after we've computed the delta
         if should_skip_next {
+            if ctx.first_run {
+                // If you --skip-first the first run, reminds will never be sent
+                // because the stateful notifiers will never have their
+                // last_notification_sent set. So fake a notification being sent here, once.
+                for n in notifiers.iter_mut() {
+                    n.state_mut().on_successful_notification(&ctx.now);
+                }
+            }
+
             should_skip_next = false;
             end_loop(ctx, time::Duration::ZERO);
             continue;
