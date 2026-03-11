@@ -2,7 +2,7 @@
 
 Monitors other peers in a [Wireguard VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
 
-The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation may be required.](#cross-compilation))
+The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
 
 In a hub-and-spoke Wireguard configuration, this should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
 
@@ -10,7 +10,7 @@ Peers must have a `PersistentKeepalive` setting in their Wireguard configuration
 
 Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) and/or as short emails via [**Batsign**](https://batsign.me).
 
-## usage
+## tl;dr
 
 ```
 wg_monitor x.y.z | copyright 2026 jr
@@ -29,29 +29,24 @@ Options:
       --save               Write configuration to disk
 ```
 
-## config.toml
-
-Changing settings is done by editing a configuration file. You can generate a new one by passing `--save`.
-
-This `config.toml` file will be placed in somewhere of the following locations, in decreasing order of precedence:
-
-* ...as was overridden with `--config-dir=/path/to/directory`
-* `/etc/wg_config` **if** your user is root
-* `$XDG_CONFIG_HOME/wg_config` if `$XDG_CONFIG_HOME` is set
-* `$HOME/.config/wg_config`
-
-Running the program with `--save` will not overwrite previous contents in an existing file, but beware that any comments will be removed.
-
-## peers
-
-A `peers.txt` file will have been created next to the configuration `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can attach a human-readable name to the key if you separate them with a normal space. Lines that start with an octothorpe `#` will be ignored by the program.
+To get started, create new [configuration](#configtoml) and [peer list](#peers) files by passing `--save`.
 
 ```
-# <public key> <description>
-CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi2= Alice's house
-AigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
-#Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
+$ cargo run -- --save
 ```
+
+## toc
+
+* [compilation](#compilation)
+  * [cross-compilation](#cross-compilation)
+  * [-j1](#-j1)
+  * [gcc target packages](#gcc-target-packages)
+* [config.toml](#configtoml)
+* [peers](#peers)
+* [todo](#todo)
+* [license](#license)
+
+---
 
 ## compilation
 
@@ -63,11 +58,15 @@ $ cargo run -- --help
 $ cargo run -- --save
 ```
 
+A normal desktop or laptop computer should be able to trivially build it without any additional steps taken.
+
+Pre-compiled binaries will be provided under [**Releases**](https://github.com/zorael/wg_monitor/releases) once the code stabilizes a bit and `v1.0.0` can be tagged.
+
 ## cross-compilation
 
-A Pi can trivially *run* the program, but does not have enough memory to compile it, at least not with the default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another Linux computer and transfering the resulting binary.
+A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another Linux computer and transferring the resulting binary.
 
-> Mind that your `$CFLAGS` environment variable must not contain `-march=native` for all dependencies to build.
+> Your `$CFLAGS` environment variable seemingly must not contain `-march=native` for all dependencies to build.
 
 ```
 $ export CFLAGS="-O2 -pipe"  # as an example
@@ -81,23 +80,53 @@ Add `--release` to build the project in release mode, applying some optimization
 
 ### `-j1`
 
-All that said, you *may* have some luck building it on the Pi if you build it in serial mode, compiling one dependency at a time.
+You *may* have some luck building it on the Pi if you build it in a serial mode, compiling one dependency at a time.
 
 ```
 $ cargo build --release -j1
 ```
 
-Mind that build times will be *very* long. Cross-compilation is recommended.
+Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, a heatsink.
 
 ### gcc target packages
 
-If you cannot install the required packages for **AArch64** cross-compilation, such as if you are running an immutable distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling it from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available as Flatpaks, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
+If you are unable to install the required packages for **AArch64** cross-compilation, which is the case if you are running an image-based distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available as Flatpaks, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing container images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
 
 ```
 $ sudo pacman -S rust-aarch64-gnu
 ```
 
-A pre-compiled binary will be provided under [**Releases**](https://github.com/zorael/wg_monitor/releases) once the code stabilizes a bit and `v1.0.0` can be tagged.
+## config.toml
+
+Changing settings is done by editing a configuration file. You can generate a new one by passing `--save`.
+
+A new `config.toml` file will be created in one of the following locations, in decreasing order of precedence:
+
+* ...as was explicitly declared with `--config-dir=/path/to/directory`
+* `$WG_MONITOR_CONFIG_DIR` if set
+* `/etc/wg_config` if your user is root
+* `$XDG_CONFIG_HOME/wg_config` if `$XDG_CONFIG_HOME` is set
+* `$HOME/.config/wg_config`
+* fail if `$HOME` is unset
+
+The program will likely require root permissions to be able to issue queries for handshake timestamps of the Wireguard interface. Mind that, as per the list above, this would make the configuration directory default to `/etc/wg_config`.
+
+Directories will be created as necessary, including parent directories.
+
+Running the program with `--save` will not overwrite previous contents in an existing file, but beware that any comments will be removed.
+
+## peers
+
+A new `peers.txt` file will have been created next to the configuration `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by a normal space character.
+
+Lines that start with an octothorpe `#` will be ignored.
+
+```
+# <public key> <description>
+CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi2= Alice's house
+AigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
+#Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
+```
 
 ## todo
 
