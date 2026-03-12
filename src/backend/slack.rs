@@ -85,10 +85,19 @@ impl super::Backend for SlackBackend {
         };
 
         if !header.is_empty() {
-            message.push_str(&format!("{header}\n"));
+            message.push_str(header);
+            message.push('\n');
         }
 
         message.push_str(body);
+
+        let message = escape_common_json_characters(&message);
+        let message = message
+            .replace("\\\\n", "\n")
+            .replace("\\n", "\n")
+            .trim_end()
+            .to_string();
+
         serde_json::json!({ "text": format!("{message}") }).to_string()
     }
 
@@ -102,10 +111,19 @@ impl super::Backend for SlackBackend {
         }
 
         if !self.reminder_strings.header.is_empty() {
-            message.push_str(&format!("{}\n", &self.reminder_strings.header));
+            message.push_str(&self.reminder_strings.header);
+            message.push('\n');
         }
 
         message.push_str(body);
+
+        let message = escape_common_json_characters(&message);
+        let message = message
+            .replace("\\\\n", "\n")
+            .replace("\\n", "\n")
+            .trim_end()
+            .to_string();
+
         serde_json::json!({ "text": format!("{message}") }).to_string()
     }
 
@@ -126,4 +144,14 @@ impl super::Backend for SlackBackend {
             Err(e) => Err(e.to_string()),
         }
     }
+}
+
+/// Escapes common characters in the input string that may interfere with JSON formatting,
+/// such as backslashes, quotes, and curly braces.
+fn escape_common_json_characters(input: &str) -> String {
+    input
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("{", "\\{")
+        .replace("}", "\\}")
 }
