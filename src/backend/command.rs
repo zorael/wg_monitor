@@ -88,6 +88,23 @@ impl super::Backend for CommandBackend {
     }
 
     /// Delivers the already-built message using the external command.
+    ///
+    /// The command is invoked with the following arguments:
+    ///
+    /// 1. The composed message to be sent
+    /// 2. The path to the peer list file
+    /// 3. A "1" or "0" string indicating whether this is the first run
+    /// 4. A comma-separated string of late keys
+    /// 5. A comma-separated string of missing keys
+    /// 6. A comma-separated string of previous late keys
+    /// 7. A comma-separated string of previous missing keys
+    /// 8. If a delta is provided, a comma-separated string of keys that became late
+    /// 9. If a delta is provided, a comma-separated string of keys that went missing
+    /// 10. If a delta is provided, a comma-separated string of keys that are no longer late
+    /// 11. If a delta is provided, a comma-separated string of keys that returned
+    ///
+    /// Any parameter for which there is no value (as in, no late keys), the
+    /// argument passed but is simply empty.
     fn emit(
         &mut self,
         ctx: &notify::Context,
