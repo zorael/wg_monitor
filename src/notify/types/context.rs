@@ -37,6 +37,8 @@ pub struct Context {
     /// that some startup notifications should be skipped.
     pub resume: bool,
 
+    /// The file path of the peer list file, which can be used in notifications
+    /// to indicate the source of the peer information.
     pub peer_list_file_path: String,
 }
 

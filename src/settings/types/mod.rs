@@ -2,6 +2,7 @@
 //! Batsign, Slack, and the base monitoring system.
 
 mod batsign;
+mod command;
 mod monitor;
 mod pathbufs;
 mod root;
@@ -9,6 +10,7 @@ mod slack;
 mod strings;
 
 pub use batsign::BatsignSettings;
+pub use command::CommandSettings;
 pub use monitor::MonitorSettings;
 pub use pathbufs::PathBufs;
 pub use root::Settings;

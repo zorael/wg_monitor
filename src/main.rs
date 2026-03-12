@@ -223,15 +223,15 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     /// Helper function to build and push notifiers for a passed backend type.
     fn build_and_push_notifiers<B, F>(
         vec: &mut Vec<Box<dyn notify::StatefulNotifier>>,
-        urls: &[String],
+        elements: &[String],
         mut make_backend_fn: F,
         dry_run: bool,
     ) where
         B: backend::Backend + 'static,
         F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
     {
-        for (i, url) in urls.iter().enumerate() {
-            let backend = make_backend_fn(i, url);
+        for (i, element) in elements.iter().enumerate() {
+            let backend = make_backend_fn(i, element);
             let boxed = Box::new(notify::Notifier::new(backend, dry_run));
             vec.push(boxed);
         }
@@ -259,6 +259,15 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
         )
     };
 
+    let make_command_backend = |i: usize, command: &String| {
+        backend::CommandBackend::new(
+            i,
+            command,
+            &settings.command.strings,
+            &settings.command.reminder_strings,
+        )
+    };
+
     if settings.dry_run {
         // Use dummy URLs for dry runs so that we can get output for all backends
         // even if no URLs were configured.
@@ -270,6 +279,12 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             &mut notifiers,
             &dummy_batsign_urls,
             make_batsign_backend,
+            true,
+        );
+        build_and_push_notifiers(
+            &mut notifiers,
+            &settings.command.commands,
+            make_command_backend,
             true,
         );
     } else {
@@ -287,6 +302,15 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
                 &mut notifiers,
                 &settings.batsign.urls,
                 make_batsign_backend,
+                false,
+            )
+        }
+
+        if settings.command.enabled && !settings.command.commands.is_empty() {
+            build_and_push_notifiers(
+                &mut notifiers,
+                &settings.command.commands,
+                make_command_backend,
                 false,
             )
         }

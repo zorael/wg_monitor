@@ -61,7 +61,11 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         }
 
         match self.backend.emit(ctx, Some(delta), &message) {
-            Ok(_) => super::NotificationResult::Success(message),
+            Ok(Some(response)) => {
+                println!("{response}");
+                super::NotificationResult::Success(message)
+            }
+            Ok(None) => super::NotificationResult::Success(message),
             Err(e) => super::NotificationResult::Failure(e, message),
         }
     }
@@ -79,7 +83,11 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         }
 
         match self.backend.emit(ctx, None, &reminder) {
-            Ok(_) => super::NotificationResult::Success(reminder),
+            Ok(Some(response)) => {
+                println!("{response}");
+                super::NotificationResult::Success(reminder)
+            }
+            Ok(None) => super::NotificationResult::Success(reminder),
             Err(e) => super::NotificationResult::Failure(e, reminder),
         }
     }

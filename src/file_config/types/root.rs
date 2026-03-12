@@ -18,6 +18,8 @@ pub struct FileConfig {
 
     /// Batsign settings loaded from the configuration file.
     pub batsign: BatsignConfig,
+
+    pub command: CommandConfig,
 }
 
 impl From<&settings::Settings> for FileConfig {
@@ -45,6 +47,13 @@ impl From<&settings::Settings> for FileConfig {
                 reminder_strings: ReminderStringsConfig::from(&s.batsign.reminder_strings),
                 enabled: Some(s.batsign.enabled),
                 urls: Some(s.batsign.urls.clone()),
+            },
+
+            command: CommandConfig {
+                strings: MessageStringsConfig::from(&s.command.strings),
+                reminder_strings: ReminderStringsConfig::from(&s.command.reminder_strings),
+                enabled: Some(s.command.enabled),
+                commands: Some(s.command.commands.clone()),
             },
         }
     }

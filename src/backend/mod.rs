@@ -7,4 +7,5 @@ mod slack;
 
 pub use api::Backend;
 pub use batsign::BatsignBackend;
+pub use command::CommandBackend;
 pub use slack::SlackBackend;

@@ -19,6 +19,8 @@ pub struct Settings {
     /// Batsign settings.
     pub batsign: super::BatsignSettings,
 
+    pub command: super::CommandSettings,
+
     /// Paths to resources, resolved at runtime.
     pub paths: super::PathBufs,
 
@@ -63,6 +65,7 @@ impl Settings {
     pub fn clean_up(&mut self) {
         self.slack.trim_urls();
         self.batsign.trim_urls();
+        self.command.trim_commands();
     }
 
     /// Sanity check settings, returning a list of strings of errors in the
@@ -73,8 +76,9 @@ impl Settings {
         self.monitor.sanity_check(&mut vec);
         self.slack.sanity_check(&mut vec);
         self.batsign.sanity_check(&mut vec);
+        self.command.sanity_check(&mut vec);
 
-        if !self.slack.enabled && !self.batsign.enabled {
+        if !self.slack.enabled && !self.batsign.enabled && !self.command.enabled {
             vec.push("At least one notifier backend must be enabled.".to_string());
         }
 
@@ -106,6 +110,7 @@ impl Settings {
         self.monitor.apply_file(&file_config.monitor);
         self.slack.apply_file(&file_config.slack);
         self.batsign.apply_file(&file_config.batsign);
+        self.command.apply_file(&file_config.command);
     }
 
     /// Applies CLI settings, returning the resulting settings.

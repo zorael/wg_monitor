@@ -8,5 +8,4 @@ mod types;
 
 pub use io::deserialize_config_file;
 pub use paths::resolve_default_config_directory_from_env;
-pub use types::{BatsignConfig, FileConfig, MonitorConfig, SlackConfig};
-pub use types::{MessageStringsConfig, ReminderStringsConfig};
+pub use types::*;

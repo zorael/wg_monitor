@@ -1,10 +1,11 @@
-//! FIXME
+//! A simple external command backend.
 
 use std::process;
 
 use crate::notify;
 use crate::settings;
 
+/// The Command backend, which executes an external command to send notifications.
 pub struct CommandBackend {
     id: usize,
     command: String,
@@ -14,6 +15,7 @@ pub struct CommandBackend {
 }
 
 impl CommandBackend {
+    /// Creates a new instance of CommandBackend.
     pub fn new(
         id: usize,
         command: &str,
@@ -24,7 +26,7 @@ impl CommandBackend {
 
         Self {
             id,
-            command: command.to_owned(),
+            command: command.to_string(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
@@ -33,14 +35,18 @@ impl CommandBackend {
 }
 
 impl super::Backend for CommandBackend {
+    /// Returns the unique identifier of the backend instance.
     fn id(&self) -> usize {
         self.id
     }
 
+    /// Returns the name of this instance of the backend.
     fn name(&self) -> &str {
         &self.cached_name
     }
 
+    /// Builds the message to be sent based on the notification context and the
+    /// delta expressing the changes since the last notification.
     fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
         let mut message = String::new();
         let body = &notify::format_generic_message(ctx, delta, &self.strings);
@@ -60,9 +66,10 @@ impl super::Backend for CommandBackend {
         }
 
         message.push_str(body);
-        message.trim_end().to_owned()
+        message.trim_end().to_string()
     }
 
+    /// Builds the reminder message to be sent based on the notification context.
     fn build_reminder(&self, ctx: &notify::Context) -> String {
         let mut message = String::new();
         let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
@@ -77,9 +84,10 @@ impl super::Backend for CommandBackend {
         }
 
         message.push_str(body);
-        message.trim_end().to_owned()
+        message.trim_end().to_string()
     }
 
+    /// Delivers the already-built message using the external command.
     fn emit(
         &mut self,
         ctx: &notify::Context,
@@ -130,7 +138,6 @@ impl super::Backend for CommandBackend {
         };
 
         let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        println!("{stdout}");
 
         if !output.status.success() {
             return Err(stdout);
