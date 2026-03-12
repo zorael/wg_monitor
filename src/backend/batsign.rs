@@ -69,7 +69,7 @@ impl super::Backend for BatsignBackend {
     }
 
     /// Builds the message to be sent to Batsign based on the notification context and delta.
-    fn build_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
         let mut message = String::new();
         let body = &notify::format_generic_message(ctx, delta, &self.strings);
 
@@ -91,7 +91,7 @@ impl super::Backend for BatsignBackend {
     }
 
     /// Builds the reminder message to be sent to Batsign based on the notification context.
-    fn build_reminder(&self, ctx: &notify::Context) -> String {
+    fn compose_reminder(&self, ctx: &notify::Context) -> String {
         let mut message = String::new();
         let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
 

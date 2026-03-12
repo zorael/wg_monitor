@@ -50,7 +50,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         ctx: &super::Context,
         delta: &super::Delta,
     ) -> super::NotificationResult {
-        let message = self.backend.build_message(ctx, delta);
+        let message = self.backend.compose_message(ctx, delta);
 
         if self.dry_run {
             return super::NotificationResult::DryRun(message);
@@ -72,7 +72,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
 
     /// Sends a reminder notification.
     fn push_reminder(&mut self, ctx: &super::Context) -> super::NotificationResult {
-        let reminder = self.backend.build_reminder(ctx);
+        let reminder = self.backend.compose_reminder(ctx);
 
         if self.dry_run {
             return super::NotificationResult::DryRun(reminder);
