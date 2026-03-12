@@ -137,12 +137,17 @@ impl super::Backend for CommandBackend {
                 .map_err(|e| e.to_string())?,
         };
 
-        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-
         if !output.status.success() {
-            return Err(stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            return Err(stderr);
         }
 
-        Ok(Some(stdout))
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+
+        if stdout.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(stdout))
+        }
     }
 }
