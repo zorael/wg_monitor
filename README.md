@@ -8,7 +8,7 @@ In a hub-and-spoke Wireguard configuration, this should be run on the hub server
 
 Peers must have a `PersistentKeepalive` setting in their Wireguard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
 
-Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) and/or as short emails via [**Batsign**](https://batsign.me).
+Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks), as short emails via [**Batsign**](https://batsign.me), and/or by invocation of [an external command](#external-command).
 
 ## tl;dr
 
@@ -43,6 +43,11 @@ cargo run -- --save
   * [gcc target packages](#gcc-target-packages)
 * [config.toml](#configtoml)
 * [peers](#peers)
+* [slack](#slack)
+* [batsign](#batsign)
+* [external command](#external-command)
+  * [arguments](#arguments)
+  * [example](#example)
 * [todo](#todo)
 * [license](#license)
 
@@ -128,9 +133,86 @@ XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 #Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
 ```
 
+## slack
+
+Messages to Slack channels can trivially be pushed by enabling one or more webhook URLs. HTTP POST requests made to those URLs will end up as messages in their respective channels. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
+
+You may enter any number of urls as long as you separate the individual strings with a comma.
+
+```toml
+[slack]
+enabled = true
+urls = ["https://hooks.slack.com/services/REDACTED/ALSOTHIS/asdfasdfasdf", "https://hooks.slack.com/services/ASDFASDF/FDSAFDSA/qwertyiiioqer"]
+```
+
+## batsign
+
+It is likewise easy to push email notifications by signing up for a [Batsign](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
+
+```toml
+[batsign]
+enabled = true
+urls = ["https://batsign.me/at/example@address.tld/asdfasdf", "https://batsign.me/at/other@address.tld/fdsafdafa"]
+```
+
+## external command
+
+It is possible to have the program execute an external command to push notifications, although there are several caveats.
+
+* The command run will be passed several arguments in a specific order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something you can use.
+
+* If you run the project binary as root (which may be unavoidable) the command it runs will also be run as root. If you need it to be run as your own user, you will have to use `su` in your shell script, and even then environment variables may prove a problem.
+
+### arguments
+
+The order of arguments is as follows:
+
+1. The composed message body, formatted with strings as defined in the configuration file
+2. The path to the `peers.txt` file
+3. The number `1` if this is the first run, otherwise the number `0`
+4. A comma-separated string of late keys
+5. A comma-separated string of missing keys
+6. A comma-separated string of keys that were late the previous loop
+7. A comma-separated string of keys that were missing the previous loop
+8. In non-reminder notifications, a comma-separated string of keys that became late
+9. In non-reminder notifications, a comma-separated string of keys that went missing
+10. In non-reminder notifications, a comma-separated string of keys that are no longer late
+11. In non-reminder notifications, a comma-separated string of keys that returned
+
+Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply empty.
+
+### (untested) example
+
+```bash
+#!/bin/bash
+
+icon="network-wireless-disconnected"
+urgency="critical"
+
+if [[ $3 = 0 ]]; then
+    # loop iteration 0
+    summary="Wireguard Monitor: first run"
+else
+    summary="Wireguard Monitor: update"
+fi
+
+notify-send \
+    --icon="$icon" \
+    --urgency="$urgency" \
+    "$summary"
+    "$1"
+```
+
+In the configuration file;
+
+```toml
+[command]
+enabled = true
+commands = ["/absolute/path/to/script.sh"]
+```
+
 ## todo
 
-* external command as notification method
 * better documentation
 * colored terminal output?
 * pre-compiled binary
