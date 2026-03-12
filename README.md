@@ -40,7 +40,6 @@ cargo run -- --save
 * [compilation](#compilation)
   * [cross-compilation](#cross-compilation)
   * [-j1](#-j1)
-  * [gcc target packages](#gcc-target-packages)
 * [config.toml](#configtoml)
 * [peers](#peers)
 * [slack](#slack)
@@ -74,20 +73,20 @@ A device like the Pi Zero 2W can *run* the program but does not have enough memo
 
 > Your `$CFLAGS` environment variable seemingly must not contain `-march=native` for all dependencies to build.
 
-This assumes `rustup` is being used to manage the Rust compilers and toolchains.
+Use of `cargo-cross` is recommended but not required.
 
 ```sh
-rustup toolchain install aarch64-unknown-linux-gnu
+cargo install cargo-cross
 
-export CFLAGS="-O2 -pipe"  # as an example
-cargo build --target=aarch64-unknown-linux-gnu
+export CFLAGS="-O2 -pipe" # no -march
+cargo cross build --target=aarch64-unknown-linux-gnu --profile=dev
 
 rsync -avz --progress target/aarch64-unknown-linux-gnu/debug/wg_monitor user@pi:~/
 ```
 
-This should require upwards of 600 Mb of free system memory, exceeding the total RAM of the Pi Zero 2W.
+This should require upwards of 500 Mb of free system memory, effectively exceeding the total RAM of the Pi Zero 2W.
 
-Add `--release` to build the project in release mode, applying some optimizations and considerably lowering the binary file size.
+By default it will implicitly build with `--profile=release`, applying some optimizations and considerably lowering the binary file size compared to when built with `--profile=dev`.
 
 ### `-j1`
 
@@ -98,14 +97,6 @@ cargo build --release -j1
 ```
 
 Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, a heatsink.
-
-### gcc target packages
-
-If you are unable to install the required packages for **AArch64** cross-compilation, which is the case if you are running an image-based distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available on Flathub, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing container images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
-
-```sh
-sudo pacman -S rust-aarch64-gnu
-```
 
 ## config.toml
 
@@ -210,7 +201,7 @@ Any parameter for which there is no value (as in, there are no late peers so the
 icon="network-wireless-disconnected"
 urgency="critical"
 
-if [[ $3 = 0 ]]; then
+if [[ "$3" = "0" ]]; then
     # loop iteration 0
     summary="Wireguard Monitor: first run"
 else
