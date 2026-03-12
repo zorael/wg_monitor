@@ -399,6 +399,9 @@ fn run_loop(
             }
         }
 
+        peer::sort_keys(&mut ctx.missing_keys, &ctx.peers);
+        peer::sort_keys(&mut ctx.late_keys, &ctx.peers);
+
         delta.compute_from(ctx);
 
         // --skip-first logic is here
