@@ -46,7 +46,7 @@ impl BatsignBackend {
         Self {
             id,
             client,
-            url: url.to_owned(),
+            url: url.to_string(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
@@ -86,7 +86,7 @@ impl super::Backend for BatsignBackend {
         }
 
         message.push_str(body);
-        message.trim_end().to_owned()
+        message.trim_end().to_string()
     }
 
     /// Builds the reminder message to be sent to Batsign based on the notification context.
@@ -103,7 +103,7 @@ impl super::Backend for BatsignBackend {
         }
 
         message.push_str(body);
-        message.trim_end().to_owned()
+        message.trim_end().to_string()
     }
 
     /// Sends a notification via the Batsign backend by making a POST request
@@ -114,7 +114,7 @@ impl super::Backend for BatsignBackend {
         _delta: Option<&notify::Delta>,
         message: &str,
     ) -> Result<Option<String>, String> {
-        match self.client.post(&self.url).body(message.to_owned()).send() {
+        match self.client.post(&self.url).body(message.to_string()).send() {
             Ok(resp) if resp.status().is_success() => Ok(None),
             Ok(resp) => Err(format!("HTTP {}", resp.status())),
             Err(e) => Err(e.to_string()),

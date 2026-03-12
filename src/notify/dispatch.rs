@@ -11,8 +11,8 @@ use crate::utils;
 fn verbose_print(message: &str, settings: &settings::Settings) {
     const SEP: &str = "--------------------";
 
-    if settings.verbose {
-        println!("{SEP}\n{message}\n{SEP}");
+    if settings.verbose && !message.is_empty() {
+        println!("{SEP}\n{}\n{SEP}", message.replace("\\n", "\n"));
     }
 }
 

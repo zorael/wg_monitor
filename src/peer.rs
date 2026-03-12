@@ -37,7 +37,7 @@ impl WireguardPeer {
                 && pos > 0
             {
                 let pre_delimiter = &key[..pos];
-                return Some(pre_delimiter.to_owned());
+                return Some(pre_delimiter.to_string());
             }
 
             None
@@ -46,7 +46,7 @@ impl WireguardPeer {
         // We should not need this; validate_public_key ensures the key is 44
         // characters long. Keep it just in case.
         if public_key.len() < 7 {
-            return public_key.to_owned();
+            return public_key.to_string();
         }
 
         let first_seven = &public_key[..7];
@@ -59,7 +59,7 @@ impl WireguardPeer {
             return shortened;
         }
 
-        first_seven.to_owned()
+        first_seven.to_string()
     }
 
     /// Validates a Wireguard public key, returning true if it does not seem

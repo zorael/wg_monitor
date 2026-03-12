@@ -49,7 +49,7 @@ impl SlackBackend {
         Self {
             id,
             client,
-            url: url.to_owned(),
+            url: url.to_string(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,

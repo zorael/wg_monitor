@@ -20,7 +20,7 @@ pub fn format_generic_message(
         if strings.first_run_missing.is_empty()
             || (ctx.missing_keys.is_empty() && ctx.late_keys.is_empty())
         {
-            return message.replace("\\n", "\n").trim_end().to_owned();
+            return message.replace("\\n", "\n").trim_end().to_string();
         }
 
         if !strings.first_run_missing.is_empty() {
@@ -46,7 +46,7 @@ pub fn format_generic_message(
             message.push_str(&strings.footer);
         }
 
-        return message.replace("\\n", "\n").trim_end().to_owned();
+        return message.replace("\\n", "\n").trim_end().to_string();
     }
 
     let mut add_section = |keys: &[String], header: &str| {
@@ -69,7 +69,7 @@ pub fn format_generic_message(
             message.push_str(&strings.footer);
         }
 
-        return message.replace("\\n", "\n").trim_end().to_owned();
+        return message.replace("\\n", "\n").trim_end().to_string();
     }
 
     let late_sans_new_late_keys =
@@ -90,7 +90,7 @@ pub fn format_generic_message(
         message.push_str(&strings.footer);
     }
 
-    message.replace("\\n", "\n").trim_end().to_owned()
+    message.replace("\\n", "\n").trim_end().to_string()
 }
 
 /// Builds a generic reminder message based on the provided `Context`, using the
@@ -121,7 +121,7 @@ pub fn format_generic_reminder(
         message.push_str(&strings.footer);
     }
 
-    message.replace("\\n", "\n").trim_end().to_owned()
+    message.replace("\\n", "\n").trim_end().to_string()
 }
 
 /// Formats a single peer line for notifications, using the provided string
