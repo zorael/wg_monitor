@@ -1,8 +1,8 @@
 # wg_monitor
 
-Monitors other peers in a [Wireguard VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
+Monitors other peers in a [**Wireguard** VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
 
-The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
+The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
 
 In a hub-and-spoke Wireguard configuration, this should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
 
@@ -44,6 +44,7 @@ cargo run -- --save
 * [config.toml](#configtoml)
 * [peers](#peers)
 * [slack](#slack)
+  * [formatting](#formatting)
 * [batsign](#batsign)
 * [external command](#external-command)
   * [arguments](#arguments)
@@ -69,13 +70,18 @@ Pre-compiled binaries will be provided under [**Releases**](https://github.com/z
 
 ### cross-compilation
 
-A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another Linux computer and transferring the resulting binary.
+A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another (Linux) computer and transferring the resulting binary.
 
 > Your `$CFLAGS` environment variable seemingly must not contain `-march=native` for all dependencies to build.
 
+This assumes `rustup` is being used to manage the Rust compilers and toolchains.
+
 ```sh
+rustup toolchain install aarch64-unknown-linux-gnu
+
 export CFLAGS="-O2 -pipe"  # as an example
 cargo build --target=aarch64-unknown-linux-gnu
+
 rsync -avz --progress target/aarch64-unknown-linux-gnu/debug/wg_monitor user@pi:~/
 ```
 
@@ -85,7 +91,7 @@ Add `--release` to build the project in release mode, applying some optimization
 
 ### `-j1`
 
-You *may* have some luck building it on the Pi if you build it in a serial mode, compiling one dependency at a time.
+You *may* have some luck building it on the Pi if you build it in a serial mode, compiling one dependency at a time. Swap is probably still required.
 
 ```sh
 cargo build --release -j1
@@ -95,7 +101,7 @@ Mind that build times will be *very* long. Cross-compilation is recommended. Fai
 
 ### gcc target packages
 
-If you are unable to install the required packages for **AArch64** cross-compilation, which is the case if you are running an image-based distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available as Flatpaks, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing container images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
+If you are unable to install the required packages for **AArch64** cross-compilation, which is the case if you are running an image-based distro (like [**Aurora**](https://getaurora.dev) or [**Bazzite**](https://bazzite.gg)), consider compiling from within a [**Distrobox** container](https://wiki.archlinux.org/title/Distrobox). There are graphical container managers available on Flathub, such as [**Kontainer**](https://flathub.org/apps/io.github.DenysMb.Kontainer) and [**Distroshelf**](https://flathub.org/en/apps/com.ranfdev.DistroShelf), that can facilitate fetching and installing container images. As of the time of writing and on a system running Aurora, the `ghcr.io/ublue-os/arch-distrobox:latest` Arch Linux image works very well.
 
 ```sh
 sudo pacman -S rust-aarch64-gnu
@@ -145,9 +151,24 @@ enabled = true
 urls = ["https://hooks.slack.com/services/REDACTED/ALSOTHIS/asdfasdfasdf", "https://hooks.slack.com/services/ASDFASDF/FDSAFDSA/qwertyiiioqer"]
 ```
 
+### formatting
+
+Slack supports some formatting. Text between \***two asterisks**\* will be in **bold**, text between \_*two underscores*\_ will be in *italics*, text between \~~~two tildes~~\~ will be in ~~strikethrough~~, etc.
+
+Strings defined in the configuration file can make use of this.
+
+```toml
+[slack.strings]
+header = ""
+header_first_run = ":zap: *Power restored* _(or restart of device)_"
+bullet_point = "*-* "
+```
+
+See [this help article](https://slack.com/intl/en-gb/help/articles/360039953113-Format-your-messages-in-Slack-with-markup) for the full listing.
+
 ## batsign
 
-It is likewise easy to push email notifications by signing up for a [Batsign](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
+It is likewise easy to push simple email notifications by signing up for a [Batsign](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
 
 ```toml
 [batsign]
