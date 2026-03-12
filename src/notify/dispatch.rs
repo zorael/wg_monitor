@@ -16,7 +16,7 @@ fn verbose_print(message: &str, settings: &settings::Settings) {
     }
 }
 
-/// Retries sending any notifications stored in notifiers.
+/// Retries sending any notifications pending in notifiers.
 pub fn retry_pending_notifications(
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,

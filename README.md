@@ -115,12 +115,12 @@ A new `config.toml` file will be created in one of the following locations, in d
 
 * ...as was explicitly declared with `--config-dir=/path/to/directory`
 * `$WG_MONITOR_CONFIG_DIR` if set
-* `/etc/wg_config` if your user is root
-* `$XDG_CONFIG_HOME/wg_config` if `$XDG_CONFIG_HOME` is set
-* `$HOME/.config/wg_config`
+* `/etc/wg_monitor` if your user is root
+* `$XDG_CONFIG_HOME/wg_monitor` if `$XDG_CONFIG_HOME` is set
+* `$HOME/.config/wg_monitor`
 * fail if `$HOME` is unset
 
-The program will likely require root permissions to be able to issue queries for handshake timestamps of the Wireguard interface. Mind that, as per the list above, this would make the configuration directory default to `/etc/wg_config`.
+The program will likely require root permissions to be able to issue queries for handshake timestamps of the Wireguard interface. Mind that, as per the list above, this would make the configuration directory default to `/etc/wg_monitor`.
 
 Directories will be created as necessary, including parent directories.
 
@@ -160,7 +160,7 @@ Strings defined in the configuration file can make use of this.
 ```toml
 [slack.strings]
 header = ""
-header_first_run = ":zap: *Power restored* _(or restart of device)_"
+first_run_header = ":zap: *Power restored* _(or restart of device)_"
 bullet_point = "*-* "
 ```
 
@@ -190,7 +190,7 @@ The order of arguments is as follows:
 
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
-3. The number `1` if this is the first run, otherwise the number `0`
+3. The number of time the notification loop has run (starting at 0)
 4. A comma-separated string of late keys
 5. A comma-separated string of missing keys
 6. A comma-separated string of keys that were late the previous loop

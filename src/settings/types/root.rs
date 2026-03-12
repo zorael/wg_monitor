@@ -30,7 +30,7 @@ pub struct Settings {
     /// Whether to skip the first run and thus the first notification.
     pub skip_first: bool,
 
-    /// Whether to send any notifications at all.
+    /// Whether to send notifications or just echo what would be done.
     pub dry_run: bool,
 
     /// Whether to print additional verbose information.

@@ -1,4 +1,4 @@
-//! Backend module for notification backends (e.g., Slack, Batsign).
+//! Backend module for notification backends (e.g., Slack, Batsign, Command).
 
 mod api;
 mod batsign;

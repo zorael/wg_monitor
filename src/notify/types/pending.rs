@@ -1,4 +1,4 @@
-//! Enums used in notifications.
+//! Types relating to pending notifications.
 
 /// Enum representing a pending notification that can be stored for retrying later.
 #[derive(Debug, Clone)]

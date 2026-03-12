@@ -1,4 +1,4 @@
-//! Functions for reading and writing the configuration file to disk.
+//! Functions for reading the configuration file to disk.
 
 use std::path;
 

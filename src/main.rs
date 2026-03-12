@@ -20,8 +20,9 @@
 //! overridden by modifying a configuration file.
 //!
 //! Notifications are sent as
-//! [**Slack** notifications](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks)
-//! and/or as short emails via [**Batsign**](https://batsign.me).
+//! [**Slack** notifications](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks),
+//! as short emails via [**Batsign**](https://batsign.me), and/or as invocations
+//! of an external command.
 
 mod backend;
 mod cli;
