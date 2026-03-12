@@ -5,7 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/wg_monitor --dry-run
+#Environment=WG_MONITOR_CONFIG_DIR=/etc/wg_monitor
+ExecStart=/usr/local/bin/wg_monitor --verbose
 Restart=on-failure
 RestartSec=10
 
