@@ -16,7 +16,7 @@ pub fn format_generic_message(
 ) -> String {
     let mut message = String::new();
 
-    if ctx.first_run && !ctx.resume {
+    if ctx.is_first_run() && !ctx.resume {
         if strings.first_run_missing.is_empty()
             || (ctx.missing_keys.is_empty() && ctx.late_keys.is_empty())
         {

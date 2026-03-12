@@ -328,8 +328,8 @@ fn run_loop(
     /// Perform some cleanup and sleep at the end of each loop duration.
     fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
         ctx.rotate();
-        ctx.first_run = false;
         ctx.resume = false;
+        ctx.loop_iteration += 1;
         thread::sleep(duration);
     }
 
@@ -337,9 +337,11 @@ fn run_loop(
     let mut should_skip_next = settings.skip_first;
 
     // If `resume` is set, we want to skip the first run. The easiest way is to
-    // just set `first_run` to `false` here.
-    ctx.first_run = !settings.resume;
-    ctx.resume = settings.resume;
+    // just set start `loop_iteration` at 1
+    if settings.resume {
+        ctx.resume = true;
+        ctx.loop_iteration = 1;
+    }
 
     loop {
         match wireguard::get_handshakes(&settings.monitor.interface) {
@@ -405,7 +407,7 @@ fn run_loop(
         // --skip-first logic is here
         // Only skip after we've computed the delta
         if should_skip_next {
-            if ctx.first_run {
+            if ctx.is_first_run() {
                 // If you --skip-first the first run, reminds will never be sent
                 // because the stateful notifiers will never have their
                 // last_notification_sent set. So fake a notification being sent here, once.
@@ -440,7 +442,7 @@ fn run_loop(
             continue;
         }
 
-        if ctx.first_run {
+        if ctx.is_first_run() {
             let _ = notify::send_notification(ctx, &delta, notifiers, &settings);
             end_loop(ctx, settings.monitor.check_interval);
             continue;

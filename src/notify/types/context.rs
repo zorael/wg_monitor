@@ -29,9 +29,9 @@ pub struct Context {
     /// Current time.
     pub now: time::SystemTime,
 
-    /// Indicates whether this is the first run of the notifier, which can be used
-    /// to adjust the messaging (e.g., to indicate that the initial state is being reported).
-    pub first_run: bool,
+    /// The current loop iteration, indicating whether this is the first run of
+    /// the notification loop, which can be used to adjust messaging and behavior accordingly.
+    pub loop_iteration: usize,
 
     /// Indicates that the program is resuming from a previous run, which means
     /// that some startup notifications should be skipped.
@@ -52,7 +52,7 @@ impl Context {
             previous_late_keys: Vec::with_capacity(capacity),
             previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
-            first_run: false,
+            loop_iteration: 0,
             resume: false,
             peer_list_file_path: String::new(),
         }
@@ -73,5 +73,10 @@ impl Context {
         mem::swap(&mut self.missing_keys, &mut self.previous_missing_keys);
         self.late_keys.clear();
         self.missing_keys.clear();
+    }
+
+    /// Whether or not this is the first run; e.g. `loop_iteration` is 0.
+    pub fn is_first_run(&self) -> bool {
+        self.loop_iteration == 0
     }
 }

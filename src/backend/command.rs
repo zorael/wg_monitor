@@ -55,7 +55,7 @@ impl super::Backend for CommandBackend {
             return message;
         }
 
-        let header = match ctx.first_run {
+        let header = match ctx.is_first_run() {
             true => &self.strings.first_run_header,
             false => &self.strings.header,
         };
@@ -93,7 +93,7 @@ impl super::Backend for CommandBackend {
     ///
     /// 1. The composed message to be sent
     /// 2. The path to the peer list file
-    /// 3. A "1" or "0" string indicating whether this is the first run
+    /// 3. The number of times the notification loop has run (starting at 0)
     /// 4. A comma-separated string of late keys
     /// 5. A comma-separated string of missing keys
     /// 6. A comma-separated string of previous late keys
@@ -115,10 +115,7 @@ impl super::Backend for CommandBackend {
         let missing_keys = ctx.missing_keys.join(",");
         let previous_late_keys = ctx.previous_late_keys.join(",");
         let previous_missing_keys = ctx.previous_missing_keys.join(",");
-        let first_run = match ctx.first_run {
-            true => "1",
-            false => "0",
-        };
+        let loop_iteration = ctx.loop_iteration.to_string();
 
         let output = match delta {
             Some(d) => {
@@ -130,7 +127,7 @@ impl super::Backend for CommandBackend {
                 process::Command::new(&self.command)
                     .arg(message)
                     .arg(&ctx.peer_list_file_path)
-                    .arg(first_run)
+                    .arg(loop_iteration)
                     .arg(late_keys)
                     .arg(missing_keys)
                     .arg(previous_late_keys)
@@ -145,7 +142,7 @@ impl super::Backend for CommandBackend {
             None => process::Command::new(&self.command)
                 .arg(message)
                 .arg(&ctx.peer_list_file_path)
-                .arg(first_run)
+                .arg(loop_iteration)
                 .arg(late_keys)
                 .arg(missing_keys)
                 .arg(previous_late_keys)

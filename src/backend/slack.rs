@@ -79,7 +79,7 @@ impl super::Backend for SlackBackend {
             return message;
         }
 
-        let header = match ctx.first_run {
+        let header = match ctx.is_first_run() {
             true => &self.strings.first_run_header,
             false => &self.strings.header,
         };
