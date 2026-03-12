@@ -274,6 +274,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
         // even if no URLs were configured.
         let dummy_slack_urls = vec![defaults::DUMMY_SLACK_URL.to_string()];
         let dummy_batsign_urls = vec![defaults::DUMMY_BATSIGN_URL.to_string()];
+        let dummy_command = vec![defaults::DUMMY_COMMAND.to_string()];
 
         build_and_push_notifiers(&mut notifiers, &dummy_slack_urls, make_slack_backend, true);
         build_and_push_notifiers(
@@ -282,12 +283,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             make_batsign_backend,
             true,
         );
-        build_and_push_notifiers(
-            &mut notifiers,
-            &settings.command.commands,
-            make_command_backend,
-            true,
-        );
+        build_and_push_notifiers(&mut notifiers, &dummy_command, make_command_backend, true);
     } else {
         if settings.slack.enabled && !settings.slack.urls.is_empty() {
             build_and_push_notifiers(
