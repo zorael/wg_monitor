@@ -7,10 +7,21 @@ use crate::settings;
 
 /// The Command backend, which executes an external command to send notifications.
 pub struct CommandBackend {
+    /// Unique identifier for the Command backend instance, used for
+    /// logging and identification purposes.
     id: usize,
+
+    /// The command to execute for notifications.
     command: String,
+
+    /// Message strings for Command notifications.
     strings: settings::MessageStrings,
+
+    /// Message strings for Command reminder notifications.
     reminder_strings: settings::ReminderStrings,
+
+    /// Cached name of the backend instance, which can be used to avoid
+    /// recomputing the name on every call to `name()`.
     cached_name: String,
 }
 

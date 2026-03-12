@@ -8,9 +8,16 @@ use crate::utils;
 /// by the program for Command notifications.
 #[derive(Debug, Default)]
 pub struct CommandSettings {
+    /// Message strings for Command notifications.
     pub strings: settings::MessageStrings,
+
+    /// Message strings for Command reminder notifications.
     pub reminder_strings: settings::ReminderStrings,
+
+    /// Whether Command notifications are enabled.
     pub enabled: bool,
+
+    /// The commands to execute for notifications.
     pub commands: Vec<String>,
 }
 

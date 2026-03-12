@@ -13,8 +13,8 @@ use crate::settings;
 
 /// Defines the Slack backend for sending notifications to a Slack channel.
 pub struct SlackBackend {
-    /// Unique identifier for the Slack backend instance, used for logging and
-    /// identification purposes.
+    /// Unique identifier for the Slack backend instance, used for
+    /// logging and identification purposes.
     id: usize,
 
     /// HTTP client used to send requests to the Slack API.

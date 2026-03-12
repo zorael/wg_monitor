@@ -8,7 +8,8 @@ use crate::settings;
 
 /// Batsign backend for sending notifications via the free Batsign service.
 pub struct BatsignBackend {
-    /// Unique identifier for the Batsign backend instance, used for logging and identification purposes.
+    /// Unique identifier for the Batsign backend instance, used for
+    /// logging and identification purposes.
     id: usize,
 
     /// HTTP client used to send requests to the Batsign service.
