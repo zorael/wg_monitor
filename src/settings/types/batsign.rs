@@ -5,7 +5,7 @@ use crate::settings;
 use crate::utils;
 
 /// Batsign runtime settings.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BatsignSettings {
     /// Message strings for Batsign notifications.
     pub strings: settings::MessageStrings,
@@ -20,17 +20,17 @@ pub struct BatsignSettings {
     pub urls: Vec<String>,
 }
 
-impl Default for BatsignSettings {
+/*impl Default for BatsignSettings {
     /// Default values for the Batsign settings.
     fn default() -> Self {
         Self {
             strings: settings::MessageStrings::default(),
             reminder_strings: settings::ReminderStrings::default(),
-            enabled: true,
+            enabled: false,
             urls: Vec::new(),
         }
     }
-}
+}*/
 
 impl BatsignSettings {
     /// Applies Batsign settings from the config file, overriding the default

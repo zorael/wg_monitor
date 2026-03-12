@@ -6,7 +6,7 @@ use crate::utils;
 
 /// Command settings structure. This mirrors the runtime settings struct used
 /// by the program for Command notifications.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CommandSettings {
     pub strings: settings::MessageStrings,
     pub reminder_strings: settings::ReminderStrings,
@@ -14,17 +14,17 @@ pub struct CommandSettings {
     pub commands: Vec<String>,
 }
 
-impl Default for CommandSettings {
+/*impl Default for CommandSettings {
     /// Default values for the Command settings.
     fn default() -> Self {
         Self {
             strings: settings::MessageStrings::default(),
             reminder_strings: settings::ReminderStrings::default(),
-            enabled: true,
+            enabled: false,
             commands: Vec::new(),
         }
     }
-}
+}*/
 
 impl CommandSettings {
     /// Applies Command settings from the config file, overriding the default
