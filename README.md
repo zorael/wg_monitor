@@ -71,22 +71,27 @@ Pre-compiled binaries will be provided under [**Releases**](https://github.com/z
 
 A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another (Linux) computer and transferring the resulting binary.
 
-> Your `$CFLAGS` environment variable seemingly must not contain `-march=native` for all dependencies to build.
+Regrettably, manually setting up cross-compilation can be non-trivial. As such, use of one of `cargo-cross` and `cargo-zigbuild` is recommended (but not required). For the latter you need to install a [**Zig**](https://ziglang.org) compiler. Refer to your repositories, alternatively install it via Homebrew (`brew install zig`).
 
-Use of `cargo-cross` is recommended but not required.
+Note that your `$CFLAGS` environment variable must not contain `-march=native` for all dependencies to successfully build.
 
 ```sh
 cargo install cargo-cross
+CFLAGS="-O2 -pipe" cargo cross build --target=aarch64-unknown-linux-gnu
+```
 
-export CFLAGS="-O2 -pipe" # no -march
-cargo cross build --target=aarch64-unknown-linux-gnu --profile=dev
+```sh
+cargo install cargo-zigbuild
+CFLAGS="-O2 -pipe" cargo zigbuild --target=aarch64-unknown-linux-gnu
+```
 
-rsync -avz --progress target/aarch64-unknown-linux-gnu/debug/wg_monitor user@pi:~/
+```sh
+rsync -avz --progress target/aarch64-unknown-linux-gnu/release/wg_monitor user@pi:~/
 ```
 
 This should require upwards of 500 Mb of free system memory, effectively exceeding the total RAM of the Pi Zero 2W.
 
-By default it will implicitly build with `--profile=release`, applying some optimizations and considerably lowering the binary file size compared to when built with `--profile=dev`.
+Both `cargo cross build` and `cargo zigbuild` default to compiling with the `--profile=release` flag, applying some optimizations and considerably lowering the resulting binary file size as compared to when building with `--profile=dev`.
 
 ### `-j1`
 
@@ -96,9 +101,9 @@ You *may* have some luck building it on the Pi if you build it in a serial mode,
 cargo build --release -j1
 ```
 
-Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, a heatsink.
+Mind that build times will be *very* long. Cross-compilation is recommended. Otherwise, remember to use a heatsink.
 
-## config.toml
+## `config.toml`
 
 Changing settings is done by editing a configuration file. You can generate a new one by passing `--save`.
 
