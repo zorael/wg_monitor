@@ -2,13 +2,13 @@
 
 Monitors other peers in a [**Wireguard** VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
 
-The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-connected computer to act as a Wireguard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
+The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-online computer to act as a Wireguard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
 
-In a hub-and-spoke Wireguard configuration, this should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
+In a hub-and-spoke Wireguard configuration, this program should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
 
 Peers must have a `PersistentKeepalive` setting in their Wireguard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
 
-Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks), as short emails via [**Batsign**](https://batsign.me), and/or by invocation of [an external command](#external-command).
+Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks), as short emails via [**Batsign**](https://batsign.me), and/or by invocation of [an external command](#external-command) (like `notify-send`).
 
 ## tl;dr
 
@@ -39,15 +39,15 @@ cargo run -- --save
 
 * [compilation](#compilation)
   * [cross-compilation](#cross-compilation)
-  * [-j1](#-j1)
-* [config.toml](#configtoml)
-* [peers](#peers)
+  * [`-j1`](#-j1)
+* [`config.toml`](#configtoml)
+* [`peers.txt`](#peerstxt)
 * [slack](#slack)
   * [formatting](#formatting)
 * [batsign](#batsign)
 * [external command](#external-command)
   * [arguments](#arguments)
-  * [example](#example)
+  * [(untested) example](#untested-example)
 * [todo](#todo)
 * [license](#license)
 
@@ -69,9 +69,9 @@ Pre-compiled binaries will be provided under [**Releases**](https://github.com/z
 
 ### cross-compilation
 
-A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another (Linux) computer and transferring the resulting binary.
+A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it on such a Pi by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another computer and transferring the resulting binary.
 
-Regrettably, manually setting up cross-compilation can be non-trivial. As such, use of one of `cargo-cross` and `cargo-zigbuild` is recommended (but not required). For the latter you need to install a [**Zig**](https://ziglang.org) compiler. Refer to your repositories, alternatively install it via Homebrew (`brew install zig`).
+Regrettably, manually setting up cross-compilation can be non-trivial. As such, use of one of [`cargo-cross`](https://github.com/cross-rs/cross) or [`cargo-zigbuild`](https://github.com/rust-cross/cargo-zigbuild) is recommended (but not required). For the latter you need to install a [**Zig**](https://ziglang.org) compiler. Refer to your repositories, alternatively install it via Homebrew (`brew install zig`).
 
 Note that your `$CFLAGS` environment variable must not contain `-march=native` for all dependencies to successfully build.
 
@@ -85,13 +85,15 @@ cargo install cargo-zigbuild
 CFLAGS="-O2 -pipe" cargo zigbuild --target=aarch64-unknown-linux-gnu
 ```
 
+This should require upwards of 500 Mb of free system memory, effectively exceeding the total RAM of a Pi Zero 2W.
+
+Both `cargo cross build` and `cargo zigbuild` default to compiling with the `--profile=release` flag, applying some optimizations and considerably lowering the resulting binary file size as compared to when building with `--profile=dev`.
+
 ```sh
 rsync -avz --progress target/aarch64-unknown-linux-gnu/release/wg_monitor user@pi:~/
 ```
 
-This should require upwards of 500 Mb of free system memory, effectively exceeding the total RAM of the Pi Zero 2W.
-
-Both `cargo cross build` and `cargo zigbuild` default to compiling with the `--profile=release` flag, applying some optimizations and considerably lowering the resulting binary file size as compared to when building with `--profile=dev`.
+Replace `release` with `debug` to transfer the binary of a `--profile=dev` build.
 
 ### `-j1`
 
@@ -122,7 +124,7 @@ Directories will be created as necessary, including parent directories.
 
 Running the program with `--save` will not overwrite previous contents in an existing file, but beware that any comments will be removed.
 
-## peers
+## `peers.txt`
 
 A new `peers.txt` file will have been created next to the configuration `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by a normal space character.
 
@@ -137,7 +139,7 @@ XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 
 ## slack
 
-Messages to Slack channels can trivially be pushed by enabling one or more webhook URLs. HTTP POST requests made to those URLs will end up as messages in their respective channels. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
+Messages to Slack channels can trivially be pushed via webhook URLs. HTTP POST requests made to these will end up as messages in the channels the webhook URLs refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
 
 You may enter any number of urls as long as you separate the individual strings with a comma.
 
@@ -166,6 +168,8 @@ See [this help article](https://slack.com/intl/en-gb/help/articles/360039953113-
 
 It is likewise easy to push simple email notifications by signing up for a [Batsign](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
 
+You may enter any number of urls as long as you separate the individual strings with a comma.
+
 ```toml
 [batsign]
 enabled = true
@@ -178,7 +182,7 @@ It is possible to have the program execute an external command to push notificat
 
 * The command run will be passed several arguments in a specific order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something you can use.
 
-* If you run the project binary as root (which may be unavoidable) the command it runs will also be run as root. If you need it to be run as your own user, you will have to use `su` in your shell script, and even then environment variables may prove a problem.
+* If you run the project binary as root (which may be unavoidable) the command it runs will in turn also be run as root. If you need it to be run as your own user, you will have to use `su` in your shell script, and even then environment variables may prove a problem.
 
 ### arguments
 
@@ -187,14 +191,14 @@ The order of arguments is as follows:
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
 3. The number of time the notification loop has run (starting at 0)
-4. A comma-separated string of late keys
-5. A comma-separated string of missing keys
-6. A comma-separated string of keys that were late the previous loop
-7. A comma-separated string of keys that were missing the previous loop
-8. In non-reminder notifications, a comma-separated string of keys that became late
-9. In non-reminder notifications, a comma-separated string of keys that went missing
-10. In non-reminder notifications, a comma-separated string of keys that are no longer late
-11. In non-reminder notifications, a comma-separated string of keys that returned
+4. A comma-separated string of late keys in the format "`key:timestamp`"
+5. A comma-separated string of missing keys in the format "`key:timestamp`"
+6. A comma-separated string of keys that were late the previous loop in the format "`key:timestamp`"
+7. A comma-separated string of keys that were missing the previous loop in the format "`key:timestamp`"
+8. In non-reminder notifications, a comma-separated string of keys that became late in the format "`key:timestamp`"
+9. In non-reminder notifications, a comma-separated string of keys that went missing in the format "`key:timestamp`"
+10. In non-reminder notifications, a comma-separated string of keys that are no longer late in the format "`key:timestamp`"
+11. In non-reminder notifications, a comma-separated string of keys that returned in the format "`key:timestamp`"
 
 Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply empty.
 
