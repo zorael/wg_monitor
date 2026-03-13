@@ -47,6 +47,7 @@ impl CommandBackend {
 
 impl super::Backend for CommandBackend {
     /// Returns the unique identifier of the backend instance.
+    #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }

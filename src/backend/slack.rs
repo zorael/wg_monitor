@@ -15,6 +15,7 @@ use crate::settings;
 pub struct SlackBackend {
     /// Unique identifier for the Slack backend instance, used for
     /// logging and identification purposes.
+    #[allow(dead_code)]
     id: usize,
 
     /// HTTP client used to send requests to the Slack API.
