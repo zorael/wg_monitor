@@ -1,8 +1,10 @@
 //! A simple external command backend.
 
+use std::collections;
 use std::process;
 
 use crate::notify;
+use crate::peer;
 use crate::settings;
 
 /// The Command backend, which executes an external command to send notifications.
@@ -106,14 +108,14 @@ impl super::Backend for CommandBackend {
     /// 1. The composed message to be sent
     /// 2. The path to the peer list file
     /// 3. The number of times the notification loop has run (starting at 0)
-    /// 4. A comma-separated string of late keys
-    /// 5. A comma-separated string of missing keys
-    /// 6. A comma-separated string of previous late keys
-    /// 7. A comma-separated string of previous missing keys
-    /// 8. If a delta is provided, a comma-separated string of keys that became late
-    /// 9. If a delta is provided, a comma-separated string of keys that went missing
-    /// 10. If a delta is provided, a comma-separated string of keys that are no longer late
-    /// 11. If a delta is provided, a comma-separated string of keys that returned
+    /// 4. A comma-separated string of late keys in the format "key:timestamp"
+    /// 5. A comma-separated string of missing keys in the format "key:timestamp"
+    /// 6. A comma-separated string of previous late keys in the format "key:timestamp"
+    /// 7. A comma-separated string of previous missing keys in the format "key:timestamp"
+    /// 8. If a delta is provided, a comma-separated string of keys that became late in the format "key:timestamp"
+    /// 9. If a delta is provided, a comma-separated string of keys that went missing in the format "key:timestamp"
+    /// 10. If a delta is provided, a comma-separated string of keys that are no longer late in the format "key:timestamp"
+    /// 11. If a delta is provided, a comma-separated string of keys that returned in the format "key:timestamp"
     ///
     /// Any parameter for which there is no value (as in, no late keys), the
     /// argument passed but is simply empty.
@@ -123,18 +125,21 @@ impl super::Backend for CommandBackend {
         delta: Option<&notify::Delta>,
         message: &str,
     ) -> Result<Option<String>, String> {
-        let late_keys = ctx.late_keys.join(",");
-        let missing_keys = ctx.missing_keys.join(",");
-        let previous_late_keys = ctx.previous_late_keys.join(",");
-        let previous_missing_keys = ctx.previous_missing_keys.join(",");
+        let late_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.late_keys);
+        let missing_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.missing_keys);
+        let previous_late_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.previous_late_keys);
+        let previous_missing_keys =
+            format_key_timestamp_pairs(&ctx.peers, &ctx.previous_missing_keys);
         let loop_iteration = ctx.loop_iteration.to_string();
 
         let output = match delta {
             Some(d) => {
-                let became_late_keys = d.became_late_keys.join(",");
-                let went_missing_keys = d.went_missing_keys.join(",");
-                let no_longer_late_keys = d.no_longer_late_keys.join(",");
-                let returned_keys = d.returned_keys.join(",");
+                let became_late_keys = format_key_timestamp_pairs(&ctx.peers, &d.became_late_keys);
+                let went_missing_keys =
+                    format_key_timestamp_pairs(&ctx.peers, &d.went_missing_keys);
+                let no_longer_late_keys =
+                    format_key_timestamp_pairs(&ctx.peers, &d.no_longer_late_keys);
+                let returned_keys = format_key_timestamp_pairs(&ctx.peers, &d.returned_keys);
 
                 process::Command::new(&self.command)
                     .arg(message)
@@ -175,5 +180,69 @@ impl super::Backend for CommandBackend {
         } else {
             Ok(Some(stdout))
         }
+    }
+}
+
+/// Formats the given keys and their corresponding timestamps from the peers map
+/// into a comma-separated string in the format "key:timestamp".
+/// There must exist a peer in the peers map for each key in the keys slice,
+/// or this function will panic.
+///
+/// Replace the map with the following to avoid panicking if a key is not found.
+///
+/// ```rust
+/// .filter_map(|key| {
+///     peers
+///         .get(key)
+///         .map(|peer| format!("{key}:{}", peer.last_seen_unix))
+/// })
+/// ```
+fn format_key_timestamp_pairs(
+    peers: &collections::HashMap<String, peer::WireguardPeer>,
+    keys: &[String],
+) -> String {
+    keys.iter()
+        .map(|key| format!("{key}:{}", peers[key].last_seen_unix))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+mod test {
+    #[allow(unused_imports)]
+    use super::*;
+
+    /// Tests the `format_key_timestamp_pairs` function to ensure it correctly
+    /// formats the key-timestamp pairs as a comma-separated string.
+    #[test]
+    fn test_format_key_timestamp_pairs() {
+        let mut peers = collections::HashMap::new();
+
+        peers.insert(
+            "key1".to_string(),
+            peer::WireguardPeer {
+                public_key: "key1".to_string(),
+                human_name: "Peer 1".to_string(),
+                last_seen: None,
+                last_seen_unix: 1234567890,
+            },
+        );
+
+        peers.insert(
+            "key2".to_string(),
+            peer::WireguardPeer {
+                public_key: "key2".to_string(),
+                human_name: "Peer 2".to_string(),
+                last_seen: None,
+                last_seen_unix: 9876543210,
+            },
+        );
+
+        let keys = vec!["key1".to_string(), "key2".to_string()];
+        let result = format_key_timestamp_pairs(&peers, &keys);
+        assert_eq!(result, "key1:1234567890,key2:9876543210");
+
+        let keys: Vec<String> = Vec::new();
+        let result = format_key_timestamp_pairs(&peers, &keys);
+        assert_eq!(result, "");
     }
 }
