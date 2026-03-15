@@ -49,7 +49,7 @@ pub fn format_generic_message(
         return message.trim_end().to_string();
     }
 
-    let mut add_section = |keys: &[String], header: &str| {
+    let mut add_section = |keys: &[String], header: &str, disable_timestamps: bool| {
         append_message_section(
             &ctx.peers,
             &mut message,
@@ -58,12 +58,13 @@ pub fn format_generic_message(
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
             &strings.bullet_point,
+            disable_timestamps,
         );
     };
 
     if ctx.resume {
-        add_section(&ctx.late_keys, &strings.still_lost);
-        add_section(&ctx.missing_keys, &strings.still_missing);
+        add_section(&ctx.late_keys, &strings.still_lost, false);
+        add_section(&ctx.missing_keys, &strings.still_missing, false);
 
         if !strings.footer.is_empty() {
             message.push_str(&strings.footer);
@@ -78,12 +79,16 @@ pub fn format_generic_message(
     let missing_sans_new_missing_keys =
         utils::get_elements_not_in_other_vec(&ctx.missing_keys, &delta.went_missing_keys);
 
-    add_section(&delta.became_late_keys, &strings.lost);
-    add_section(&delta.went_missing_keys, &strings.forgot);
-    add_section(&delta.no_longer_late_keys, &strings.returned);
-    add_section(&delta.returned_keys, &strings.appeared);
-    add_section(&late_sans_new_late_keys, &strings.still_lost);
-    add_section(&missing_sans_new_missing_keys, &strings.still_missing);
+    add_section(&delta.became_late_keys, &strings.lost, false);
+    add_section(&delta.went_missing_keys, &strings.forgot, false);
+    add_section(&delta.no_longer_late_keys, &strings.returned, true);
+    add_section(&delta.returned_keys, &strings.appeared, true);
+    add_section(&late_sans_new_late_keys, &strings.still_lost, false);
+    add_section(
+        &missing_sans_new_missing_keys,
+        &strings.still_missing,
+        false,
+    );
 
     if !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
@@ -110,6 +115,7 @@ pub fn format_generic_reminder(
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
             &strings.bullet_point,
+            false,
         );
     };
 
@@ -153,6 +159,7 @@ fn format_peer_line(
 
 /// Appends a section to the notification message for a list of peer keys,
 /// using the provided section header and patterns for formatting each peer line.
+#[allow(clippy::too_many_arguments)]
 fn append_message_section(
     peers: &collections::HashMap<String, peer::WireguardPeer>,
     message: &mut String,
@@ -161,10 +168,17 @@ fn append_message_section(
     peer_with_timestamp: &str,
     peer_no_timestamp: &str,
     bullet_point: &str,
+    disable_timestamps: bool,
 ) {
     if keys.is_empty() || header.is_empty() {
         return;
     }
+
+    let peer_with_timestamp = if disable_timestamps {
+        peer_no_timestamp
+    } else {
+        peer_with_timestamp
+    };
 
     message.push_str(header);
     message.push('\n');
