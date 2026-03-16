@@ -76,7 +76,9 @@ impl super::Backend for SlackBackend {
         let mut message = String::new();
         let body = &notify::format_generic_message(ctx, delta, &self.strings);
 
-        if body.is_empty() {
+        if body.is_empty() && !ctx.is_first_run() {
+            // Nothing to send. If it's the first run, we still want to send the
+            // "first run" banner, even if there are no changes.
             return message;
         }
 
@@ -88,6 +90,16 @@ impl super::Backend for SlackBackend {
         if !header.is_empty() {
             message.push_str(header);
             message.push('\n');
+        }
+
+        if body.is_empty() && ctx.is_first_run() {
+            // Nothing to send, but send the first run header to alert that
+            // power is back.
+            return message
+                .replace("\\\\", "\\")
+                .replace("\\n", "\n")
+                .trim_end()
+                .to_string();
         }
 
         message.push_str(body);
