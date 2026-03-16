@@ -88,7 +88,11 @@ impl super::Backend for BatsignBackend {
         }
 
         message.push_str(body);
-        message.trim_end().replace("\\n", "\n").to_string()
+        message
+            .trim_end()
+            .replace("\\\\", "\\")
+            .replace("\\n", "\n")
+            .to_string()
     }
 
     /// Builds the reminder message to be sent to Batsign based on the notification context.
@@ -105,7 +109,11 @@ impl super::Backend for BatsignBackend {
         }
 
         message.push_str(body);
-        message.trim_end().replace("\\n", "\n").to_string()
+        message
+            .trim_end()
+            .replace("\\\\", "\\")
+            .replace("\\n", "\n")
+            .to_string()
     }
 
     /// Sends a notification via the Batsign backend by making a POST request

@@ -94,7 +94,7 @@ impl super::Backend for SlackBackend {
 
         let message = escape_common_json_characters(&message);
         let message = message
-            .replace("\\\\n", "\n")
+            .replace("\\\\", "\\")
             .replace("\\n", "\n")
             .trim_end()
             .to_string();
@@ -120,7 +120,7 @@ impl super::Backend for SlackBackend {
 
         let message = escape_common_json_characters(&message);
         let message = message
-            .replace("\\\\n", "\n")
+            .replace("\\\\", "\\")
             .replace("\\n", "\n")
             .trim_end()
             .to_string();

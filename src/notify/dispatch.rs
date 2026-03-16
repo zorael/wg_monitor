@@ -12,7 +12,7 @@ fn verbose_print(message: &str, settings: &settings::Settings) {
     const SEP: &str = "--------------------";
 
     if settings.verbose && !message.is_empty() {
-        println!("{SEP}\n{}\n{SEP}", message.replace("\\n", "\n"));
+        println!("{SEP}\n{}\n{SEP}", message);
     }
 }
 

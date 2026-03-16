@@ -80,7 +80,11 @@ impl super::Backend for CommandBackend {
         }
 
         message.push_str(body);
-        message.trim_end().to_string()
+        message
+            .trim_end()
+            .replace("\\\\", "\\")
+            .replace("\\n", "\n")
+            .to_string()
     }
 
     /// Builds the reminder message to be sent based on the notification context.
@@ -98,7 +102,11 @@ impl super::Backend for CommandBackend {
         }
 
         message.push_str(body);
-        message.trim_end().to_string()
+        message
+            .trim_end()
+            .replace("\\\\", "\\")
+            .replace("\\n", "\n")
+            .to_string()
     }
 
     /// Delivers the already-built message using the external command.
