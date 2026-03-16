@@ -70,14 +70,14 @@ impl super::Backend for BatsignBackend {
     }
 
     /// Builds the message to be sent to Batsign based on the notification context and delta.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
         let mut message = String::new();
         let body = &notify::format_generic_message(ctx, delta, &self.strings);
 
         if body.is_empty() && !ctx.is_first_run() {
             // Nothing to send. If it's the first run, we still want to send the
             // "first run" banner, even if there are no changes.
-            return message;
+            return None;
         }
 
         let header = match ctx.is_first_run() {
@@ -92,28 +92,32 @@ impl super::Backend for BatsignBackend {
         if body.is_empty() && ctx.is_first_run() {
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            return message
+            let message = message
                 .replace("\\\\", "\\")
                 .replace("\\n", "\n")
                 .trim_end()
                 .to_string();
+            return Some(message);
         }
 
         message.push_str(body);
-        message
+
+        let message = message
             .trim_end()
             .replace("\\\\", "\\")
             .replace("\\n", "\n")
-            .to_string()
+            .to_string();
+
+        Some(message)
     }
 
     /// Builds the reminder message to be sent to Batsign based on the notification context.
-    fn compose_reminder(&self, ctx: &notify::Context) -> String {
+    fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
         let mut message = String::new();
         let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
 
         if body.is_empty() {
-            return message;
+            return None;
         }
 
         if !self.reminder_strings.header.is_empty() {
@@ -121,11 +125,14 @@ impl super::Backend for BatsignBackend {
         }
 
         message.push_str(body);
-        message
+
+        let message = message
             .trim_end()
             .replace("\\\\", "\\")
             .replace("\\n", "\n")
-            .to_string()
+            .to_string();
+
+        Some(message)
     }
 
     /// Sends a notification via the Batsign backend by making a POST request

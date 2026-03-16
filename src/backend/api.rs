@@ -15,10 +15,10 @@ pub trait Backend {
 
     /// Builds the message to be sent based on the notification context and the
     /// delta expressing the changes since the last notification.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String;
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String>;
 
     /// Builds the reminder message to be sent based on the notification context.
-    fn compose_reminder(&self, ctx: &notify::Context) -> String;
+    fn compose_reminder(&self, ctx: &notify::Context) -> Option<String>;
 
     /// Delivers the already-built message using backend-owned methods.
     fn emit(

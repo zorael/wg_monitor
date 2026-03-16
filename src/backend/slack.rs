@@ -72,14 +72,14 @@ impl super::Backend for SlackBackend {
     }
 
     /// Builds the message to be sent to Slack based on the notification context and delta.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> String {
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
         let mut message = String::new();
         let body = &notify::format_generic_message(ctx, delta, &self.strings);
 
         if body.is_empty() && !ctx.is_first_run() {
             // Nothing to send. If it's the first run, we still want to send the
             // "first run" banner, even if there are no changes.
-            return message;
+            return None;
         }
 
         let header = match ctx.is_first_run() {
@@ -95,11 +95,13 @@ impl super::Backend for SlackBackend {
         if body.is_empty() && ctx.is_first_run() {
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            return message
+            let message = message
                 .replace("\\\\", "\\")
                 .replace("\\n", "\n")
                 .trim_end()
                 .to_string();
+            let json = serde_json::json!({ "text": format!("{message}") }).to_string();
+            return Some(json);
         }
 
         message.push_str(body);
@@ -111,16 +113,18 @@ impl super::Backend for SlackBackend {
             .trim_end()
             .to_string();
 
-        serde_json::json!({ "text": format!("{message}") }).to_string()
+        Some(serde_json::json!({ "text": format!("{message}") }).to_string())
     }
 
     /// Builds the reminder message to be sent to Slack based on the notification context.
-    fn compose_reminder(&self, ctx: &notify::Context) -> String {
+    fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
         let mut message = String::new();
         let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
 
-        if body.is_empty() {
-            return message;
+        if body.is_empty() && !ctx.is_first_run() {
+            // Nothing to send. If it's the first run, we still want to send the
+            // "first run" banner, even if there are no changes.
+            return None;
         }
 
         if !self.reminder_strings.header.is_empty() {
@@ -128,6 +132,18 @@ impl super::Backend for SlackBackend {
             message.push('\n');
         }
 
+        if body.is_empty() && ctx.is_first_run() {
+            // Nothing to send, but send the first run header to alert that
+            // power is back.
+            let message = message
+                .replace("\\\\", "\\")
+                .replace("\\n", "\n")
+                .trim_end()
+                .to_string();
+            let json = serde_json::json!({ "text": format!("{message}") }).to_string();
+            return Some(json);
+        }
+
         message.push_str(body);
 
         let message = escape_common_json_characters(&message);
@@ -137,7 +153,7 @@ impl super::Backend for SlackBackend {
             .trim_end()
             .to_string();
 
-        serde_json::json!({ "text": format!("{message}") }).to_string()
+        Some(serde_json::json!({ "text": format!("{message}") }).to_string())
     }
 
     /// Sends a notification via the Slack backend by making a POST request

@@ -50,14 +50,13 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         ctx: &super::Context,
         delta: &super::Delta,
     ) -> super::NotificationResult {
-        let message = self.backend.compose_message(ctx, delta);
+        let message = match self.backend.compose_message(ctx, delta) {
+            Some(m) => m,
+            None => return super::NotificationResult::NoMessage,
+        };
 
         if self.dry_run {
             return super::NotificationResult::DryRun(message);
-        }
-
-        if message.is_empty() {
-            return super::NotificationResult::NoMessage;
         }
 
         match self.backend.emit(ctx, Some(delta), &message) {
@@ -72,14 +71,13 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
 
     /// Sends a reminder notification.
     fn push_reminder(&mut self, ctx: &super::Context) -> super::NotificationResult {
-        let reminder = self.backend.compose_reminder(ctx);
+        let reminder = match self.backend.compose_reminder(ctx) {
+            Some(m) => m,
+            None => return super::NotificationResult::NoMessage,
+        };
 
         if self.dry_run {
             return super::NotificationResult::DryRun(reminder);
-        }
-
-        if reminder.is_empty() {
-            return super::NotificationResult::Skipped;
         }
 
         match self.backend.emit(ctx, None, &reminder) {
