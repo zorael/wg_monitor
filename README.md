@@ -47,7 +47,7 @@ cargo run -- --save
 * [batsign](#batsign)
 * [external command](#external-command)
   * [arguments](#arguments)
-  * [(untested) example](#untested-example)
+  * [example script (untested)](#example-script-untested)
 * [todo](#todo)
 * [license](#license)
 
@@ -139,9 +139,9 @@ XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 
 ## slack
 
-Messages to Slack channels can trivially be pushed via webhook URLs. HTTP POST requests made to these will end up as messages in the channels the webhook URLs refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
+Messages to Slack channels can trivially be pushed by use of webhook URLs. HTTP POST requests made to these will end up as messages in the channels the webhook URLs refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
 
-You may enter any number of urls as long as you separate the individual strings with a comma.
+URLs must be between double quotes `"`. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
 ```toml
 [slack]
@@ -151,7 +151,7 @@ urls = ["https://hooks.slack.com/services/REDACTED/ALSOTHIS/asdfasdfasdf", "http
 
 ### formatting
 
-Slack supports some formatting. Text between \***two asterisks**\* will be in **bold**, text between \_*two underscores*\_ will be in *italics*, text between \~~~two tildes~~\~ will be in ~~strikethrough~~, etc.
+Slack supports some formatting. Text between \***asterisks**\* will be in **bold**, text between \_*underscores*\_ will be in *italics*, text between \~~~tildes~~\~ will be in ~~strikethrough~~, etc.
 
 Strings defined in the configuration file can make use of this.
 
@@ -166,9 +166,9 @@ See [this help article](https://slack.com/intl/en-gb/help/articles/360039953113-
 
 ## batsign
 
-It is likewise easy to push simple email notifications by signing up for a [Batsign](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
+It is likewise easy to push simple email notifications by signing up for a [**Batsign**](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
 
-You may enter any number of urls as long as you separate the individual strings with a comma.
+URLs must be between double quotes `"`. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
 ```toml
 [batsign]
@@ -202,7 +202,7 @@ The order of arguments is as follows:
 
 Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply empty.
 
-### (untested) example
+### example script (untested)
 
 ```bash
 #!/bin/bash
@@ -231,6 +231,8 @@ In the configuration file;
 enabled = true
 commands = ["/absolute/path/to/script.sh"]
 ```
+
+Remember to `chmod` it executable `+x`.
 
 ## todo
 
