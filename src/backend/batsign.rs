@@ -90,6 +90,12 @@ impl super::Backend for BatsignBackend {
         }
 
         if body.is_empty() && ctx.is_first_run() {
+            if header.is_empty() {
+                // Nothing to send on first run and no header,
+                // so just skip sending a message.
+                return None;
+            }
+
             // Nothing to send, but send the first run header to alert that
             // power is back.
             let message = message
