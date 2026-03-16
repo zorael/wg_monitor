@@ -83,14 +83,20 @@ fn main() -> process::ExitCode {
     }
 
     if let Err(sanity_check_failures) = settings.sanity_check() {
-        eprintln!("[X] Incomplete or invalid configuration:");
+        eprintln!(
+            "[{}] Incomplete or invalid configuration:",
+            utils::timestamp_now()
+        );
 
         for error in sanity_check_failures {
             eprintln!("  * {error}");
         }
 
         if settings.dry_run {
-            println!("[!] Continuing anyway because --dry-run was supplied.");
+            println!(
+                "[{}] Continuing anyway because --dry-run was supplied.",
+                utils::timestamp_now()
+            );
         } else {
             return process::ExitCode::from(defaults::exit_codes::CONFIGURATION_ERROR);
         }
@@ -99,14 +105,15 @@ fn main() -> process::ExitCode {
     let peers = match wireguard::read_peer_list(&settings.paths.peer_list, settings.debug) {
         Ok(peers) => peers,
         Err(e) => {
-            eprintln!("[X] Error reading peers file: {}", e);
+            eprintln!("[{}] Error reading peers file: {e}", utils::timestamp_now());
             return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
         }
     };
 
     if peers.is_empty() {
         eprintln!(
-            "[X] Peer list file {} is empty.",
+            "[{}] Peer list file {} is empty.",
+            utils::timestamp_now(),
             settings.paths.peer_list.display()
         );
         return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
@@ -120,11 +127,12 @@ fn main() -> process::ExitCode {
             Ok(output) => break output,
             Err(e) => {
                 let e = e.to_string();
-                eprintln!("[!] {e}");
+                eprintln!("[{}] {e}", utils::timestamp_now());
 
                 if e.contains("No such device") {
                     println!(
-                        "[?] Interface {} down? Retrying in {}...",
+                        "[{}] Interface {} down? Retrying in {}...",
+                        utils::timestamp_now(),
                         settings.monitor.interface,
                         humantime::format_duration(settings.monitor.check_interval)
                     );
@@ -132,10 +140,16 @@ fn main() -> process::ExitCode {
                     thread::sleep(settings.monitor.check_interval);
                     continue;
                 } else if e.contains("Operation not permitted") {
-                    eprintln!("[X] Insufficient privileges to execute 'wg show' command.");
+                    eprintln!(
+                        "[{}] Insufficient privileges to execute 'wg show' command.",
+                        utils::timestamp_now()
+                    );
                     return process::ExitCode::from(defaults::exit_codes::INSUFFICIENT_PRIVILEGES);
                 } else {
-                    eprintln!("[X] Failed to execute handshakes command.");
+                    eprintln!(
+                        "[{}] Failed to execute handshakes command.",
+                        utils::timestamp_now()
+                    );
                     return process::ExitCode::from(
                         defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
                     );
@@ -147,14 +161,20 @@ fn main() -> process::ExitCode {
     let handshake_validation_errors = wireguard::validate_handshakes(&latest_handshakes_output);
 
     if !handshake_validation_errors.is_empty() {
-        eprintln!("[X] Error validating latest-handshakes output:");
+        eprintln!(
+            "[{}] Error validating latest-handshakes output:",
+            utils::timestamp_now()
+        );
 
         for error in handshake_validation_errors {
             eprintln!("  * {error}");
         }
 
         if settings.dry_run {
-            println!("[!] Continuing anyway because --dry-run is set.");
+            println!(
+                "[{}] Continuing anyway because --dry-run is set.",
+                utils::timestamp_now()
+            );
             println!();
         } else {
             return process::ExitCode::from(
@@ -166,17 +186,20 @@ fn main() -> process::ExitCode {
     let mut notifiers = build_notifiers(&settings);
 
     if notifiers.is_empty() {
-        eprintln!("[X] No notifiers configured.");
+        eprintln!("[{}] No notifiers configured.", utils::timestamp_now());
 
         if settings.dry_run {
-            println!("[!] Continuing anyway because --dry-run is set.");
+            println!(
+                "[{}] Continuing anyway because --dry-run is set.",
+                utils::timestamp_now()
+            );
             println!();
         } else {
             return process::ExitCode::from(defaults::exit_codes::NO_NOTIFIERS_CONFIGURED);
         }
     }
 
-    println!("[O] Initialization complete.");
+    println!("[{}] Initialization complete.", utils::timestamp_now());
 
     if settings.debug {
         println!("\n{:#?}\n", settings);
@@ -200,7 +223,7 @@ fn main() -> process::ExitCode {
         println!();
 
         if settings.dry_run {
-            println!("[!] DRY RUN");
+            println!("[{}] DRY RUN", utils::timestamp_now());
         }
     }
 
@@ -211,7 +234,7 @@ fn main() -> process::ExitCode {
     ctx.peer_list_file_path = settings.paths.peer_list.display().to_string();
 
     // And finally enter the loop.
-    println!("[O] Entering main loop...");
+    println!("[{}] Entering main loop...", utils::timestamp_now());
     run_loop(&mut ctx, &mut notifiers, settings)
 }
 
@@ -350,7 +373,7 @@ fn run_loop(
                 wireguard::update_handshakes(&output, &mut ctx.peers);
             }
             Err(e) => {
-                eprintln!("[!] Error executing command: {e}");
+                eprintln!("[{}] Error executing command: {e}", utils::timestamp_now());
                 thread::sleep(settings.monitor.check_interval);
                 continue;
             }
@@ -475,7 +498,10 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
     let mut settings = settings::Settings::default();
 
     if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
-        eprintln!("[X] Error resolving default configuration directory: {}", e);
+        eprintln!(
+            "[{}] Error resolving default configuration directory: {e}",
+            utils::timestamp_now()
+        );
         return Err(process::ExitCode::from(
             defaults::exit_codes::FAILED_TO_RESOLVE_CONFIG_DIR,
         ));
@@ -483,8 +509,9 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
 
     if !settings.paths.config_dir.exists() && !cli.save {
         eprintln!(
-            "[X] Configuration directory {} does not exist. \
+            "[{}] Configuration directory {} does not exist. \
             Create it or run with `--save` to generate default configuration and resources.",
+            utils::timestamp_now(),
             settings.paths.config_dir.display()
         );
         return Err(process::ExitCode::from(
@@ -498,7 +525,8 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
         Ok(cfg) => cfg,
         Err(e) => {
             eprintln!(
-                "[X] Failed to read configuration file {}: {e}",
+                "[{}] Failed to read configuration file {}: {e}",
+                utils::timestamp_now(),
                 settings.paths.config_file.display()
             );
             return Err(process::ExitCode::from(
@@ -509,8 +537,9 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
 
     if !cli.save && config.is_none() {
         eprintln!(
-            "[X] No configuration file found at {}. \
+            "[{}] No configuration file found at {}. \
             Create it or run with `--save` to generate default configuration and resources.",
+            utils::timestamp_now(),
             settings.paths.config_file.display()
         );
         return Err(process::ExitCode::from(
@@ -527,13 +556,15 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             match fs::create_dir_all(&settings.paths.config_dir) {
                 Ok(()) => {
                     println!(
-                        "[O] Configuration directory {} created.",
+                        "[{}] Configuration directory {} created.",
+                        utils::timestamp_now(),
                         settings.paths.config_dir.display()
                     );
                 }
                 Err(e) => {
                     eprintln!(
-                        "[X] Failed to create configuration directory {}: {e}",
+                        "[{}] Failed to create configuration directory {}: {e}",
+                        utils::timestamp_now(),
                         settings.paths.config_dir.display()
                     );
 
@@ -548,7 +579,8 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
 
         if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
             eprintln!(
-                "[X] Failed to write configuration file {}: {e}",
+                "[{}] Failed to write configuration file {}: {e}",
+                utils::timestamp_now(),
                 settings.paths.config_file.display()
             );
 
@@ -561,14 +593,16 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
                 Ok(()) => {
                     println!(
-                        "[O] Empty peer list file {} created.",
+                        "[{}] Empty peer list file {} created.",
+                        utils::timestamp_now(),
                         settings.paths.peer_list.display()
                     );
                 }
                 Err(e) => {
                     eprintln!(
-                        "[X] Failed to write empty peer list file {}: {e}",
-                        &settings.paths.peer_list.display()
+                        "[{}] Failed to write empty peer list file {}: {e}",
+                        utils::timestamp_now(),
+                        settings.paths.peer_list.display()
                     );
 
                     return Err(process::ExitCode::from(
@@ -579,7 +613,8 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
         }
 
         println!(
-            "[O] Configuration and resources written successfully to {}.",
+            "[{}] Configuration and resources written successfully to {}.",
+            utils::timestamp_now(),
             settings.paths.config_dir.display()
         );
         return Err(process::ExitCode::SUCCESS);
