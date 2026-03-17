@@ -84,14 +84,14 @@ fn main() -> process::ExitCode {
     }
 
     if let Err(sanity_check_failures) = settings.sanity_check() {
-        tseprintln!(&settings, "Incomplete or invalid configuration:");
+        crate::tseprintln!(&settings, "Incomplete or invalid configuration:");
 
         for error in sanity_check_failures {
             eprintln!("  * {error}");
         }
 
         if settings.dry_run {
-            tsprintln!(
+            crate::tsprintln!(
                 &settings,
                 "Continuing anyway because --dry-run was supplied."
             );
@@ -103,13 +103,13 @@ fn main() -> process::ExitCode {
     let peers = match wireguard::read_peer_list(&settings.paths.peer_list, settings.debug) {
         Ok(peers) => peers,
         Err(e) => {
-            tseprintln!(&settings, "Error reading peers file: {e}");
+            crate::tseprintln!(&settings, "Error reading peers file: {e}");
             return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
         }
     };
 
     if peers.is_empty() {
-        tseprintln!(
+        crate::tseprintln!(
             &settings,
             "Peer list file {} is empty.",
             settings.paths.peer_list.display()
@@ -125,10 +125,10 @@ fn main() -> process::ExitCode {
             Ok(output) => break output,
             Err(e) => {
                 let e = e.to_string();
-                tseprintln!(&settings, "{e}");
+                crate::tseprintln!(&settings, "{e}");
 
                 if e.contains("No such device") {
-                    tsprintln!(
+                    crate::tsprintln!(
                         &settings,
                         "Interface {} down? Retrying in {}...",
                         settings.monitor.interface,
@@ -138,13 +138,13 @@ fn main() -> process::ExitCode {
                     thread::sleep(settings.monitor.check_interval);
                     continue;
                 } else if e.contains("Operation not permitted") {
-                    tseprintln!(
+                    crate::tseprintln!(
                         &settings,
                         "Insufficient privileges to execute 'wg show' command."
                     );
                     return process::ExitCode::from(defaults::exit_codes::INSUFFICIENT_PRIVILEGES);
                 } else {
-                    tseprintln!(&settings, "Failed to execute handshakes command.");
+                    crate::tseprintln!(&settings, "Failed to execute handshakes command.");
                     return process::ExitCode::from(
                         defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
                     );
@@ -156,14 +156,14 @@ fn main() -> process::ExitCode {
     let handshake_validation_errors = wireguard::validate_handshakes(&latest_handshakes_output);
 
     if !handshake_validation_errors.is_empty() {
-        tseprintln!(&settings, "Error validating latest-handshakes output:",);
+        crate::tseprintln!(&settings, "Error validating latest-handshakes output:",);
 
         for error in handshake_validation_errors {
             eprintln!("  * {error}");
         }
 
         if settings.dry_run {
-            tsprintln!(&settings, "Continuing anyway because --dry-run is set.",);
+            crate::tsprintln!(&settings, "Continuing anyway because --dry-run is set.",);
             println!();
         } else {
             return process::ExitCode::from(
@@ -175,17 +175,17 @@ fn main() -> process::ExitCode {
     let mut notifiers = build_notifiers(&settings);
 
     if notifiers.is_empty() {
-        tseprintln!(&settings, "No notifiers configured.");
+        crate::tseprintln!(&settings, "No notifiers configured.");
 
         if settings.dry_run {
-            tsprintln!(&settings, "Continuing anyway because --dry-run is set.",);
+            crate::tsprintln!(&settings, "Continuing anyway because --dry-run is set.",);
             println!();
         } else {
             return process::ExitCode::from(defaults::exit_codes::NO_NOTIFIERS_CONFIGURED);
         }
     }
 
-    tsprintln!(&settings, "Initialization complete.");
+    crate::tsprintln!(&settings, "Initialization complete.");
 
     if settings.debug {
         println!("\n{:#?}\n", settings);
@@ -209,7 +209,7 @@ fn main() -> process::ExitCode {
         println!();
 
         if settings.dry_run {
-            tsprintln!(&settings, "DRY RUN");
+            crate::tsprintln!(&settings, "DRY RUN");
         }
     }
 
@@ -220,7 +220,7 @@ fn main() -> process::ExitCode {
     ctx.peer_list_file_path = settings.paths.peer_list.display().to_string();
 
     // And finally enter the loop.
-    tsprintln!(&settings, "Entering main loop...");
+    crate::tsprintln!(&settings, "Entering main loop...");
     run_loop(&mut ctx, &mut notifiers, settings)
 }
 
@@ -359,7 +359,7 @@ fn run_loop(
                 wireguard::update_handshakes(&output, &mut ctx.peers);
             }
             Err(e) => {
-                tseprintln!(&settings, "Error executing command: {e}");
+                crate::tseprintln!(&settings, "Error executing command: {e}");
                 thread::sleep(settings.monitor.check_interval);
                 continue;
             }
@@ -484,7 +484,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
     let mut settings = settings::Settings::default();
 
     if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
-        tseprintln!(
+        crate::tseprintln!(
             &settings,
             "Error resolving default configuration directory: {e}"
         );
@@ -494,7 +494,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
     }
 
     if !settings.paths.config_dir.exists() && !cli.save {
-        tseprintln!(
+        crate::tseprintln!(
             &settings,
             "Configuration directory {} does not exist. \
             Create it or run with `--save` to generate default configuration and resources.",
@@ -510,7 +510,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
     let config = match file_config::deserialize_config_file(&settings.paths.config_file) {
         Ok(cfg) => cfg,
         Err(e) => {
-            tseprintln!(
+            crate::tseprintln!(
                 &settings,
                 "Failed to read configuration file {}: {e}",
                 settings.paths.config_file.display()
@@ -522,7 +522,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
     };
 
     if !cli.save && config.is_none() {
-        tseprintln!(
+        crate::tseprintln!(
             &settings,
             "No configuration file found at {}. \
             Create it or run with `--save` to generate default configuration and resources.",
@@ -541,14 +541,14 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
         if !settings.paths.config_dir.exists() {
             match fs::create_dir_all(&settings.paths.config_dir) {
                 Ok(()) => {
-                    tsprintln!(
+                    crate::tsprintln!(
                         &settings,
                         "Configuration directory {} created.",
                         settings.paths.config_dir.display()
                     );
                 }
                 Err(e) => {
-                    tseprintln!(
+                    crate::tseprintln!(
                         &settings,
                         "Failed to create configuration directory {}: {e}",
                         settings.paths.config_dir.display()
@@ -564,7 +564,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
         let config = file_config::FileConfig::from(&settings);
 
         if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
-            tseprintln!(
+            crate::tseprintln!(
                 &settings,
                 "Failed to write configuration file {}: {e}",
                 settings.paths.config_file.display()
@@ -578,14 +578,14 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
         if !settings.paths.peer_list.exists() {
             match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
                 Ok(()) => {
-                    tsprintln!(
+                    crate::tsprintln!(
                         &settings,
                         "Empty peer list file {} created.",
                         settings.paths.peer_list.display()
                     );
                 }
                 Err(e) => {
-                    tseprintln!(
+                    crate::tseprintln!(
                         &settings,
                         "Failed to write empty peer list file {}: {e}",
                         settings.paths.peer_list.display()
@@ -598,7 +598,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             };
         }
 
-        tsprintln!(
+        crate::tsprintln!(
             &settings,
             "Configuration and resources written successfully to {}.",
             settings.paths.config_dir.display()
