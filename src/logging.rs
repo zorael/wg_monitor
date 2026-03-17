@@ -12,7 +12,7 @@ pub fn eprint_timestamp_prefix() {
 
 /// Prints a timestamped message to standard out if timestamps are enabled in
 /// settings, otherwise just prints the message.
-#[macro_export]
+//#[macro_export]
 macro_rules! tsprintln {
     ($settings:expr, $($args:tt)*) => {{
         if !$settings.disable_timestamps {
@@ -24,7 +24,7 @@ macro_rules! tsprintln {
 
 /// Prints a timestamped message to standard error if timestamps are enabled in
 /// settings, otherwise just prints the message.
-#[macro_export]
+//#[macro_export]
 macro_rules! tseprintln {
     ($settings:expr, $($args:tt)*) => {{
         if !$settings.disable_timestamps {
@@ -33,3 +33,7 @@ macro_rules! tseprintln {
         eprintln!($($args)*);
     }};
 }
+
+// Re-export macros for use in other modules.
+pub(crate) use tsprintln;
+pub(crate) use tseprintln;

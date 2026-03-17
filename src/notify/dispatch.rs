@@ -5,6 +5,7 @@
 use std::time;
 
 use crate::settings;
+use crate::logging;
 
 /// Small helper that prints a message if the `verbose` setting is enabled.
 fn verbose_print(message: &str, settings: &settings::Settings) {
@@ -55,13 +56,13 @@ pub fn retry_pending_notifications(
         match send_via_notifier(ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
-                crate::tsprintln!(&settings, "[{}] DRY RUN; RETRY not sent", n.name());
+                logging::tsprintln!(&settings, "[{}] DRY RUN; RETRY not sent", n.name());
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
-                crate::tsprintln!(
+                logging::tsprintln!(
                     &settings,
                     "[{}] Notification RETRIED successfully",
                     n.name()
@@ -72,7 +73,7 @@ pub fn retry_pending_notifications(
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
-                crate::tseprintln!(
+                logging::tseprintln!(
                     &settings,
                     "[{}] Failed to RETRY notification: {e}",
                     n.name()
@@ -113,21 +114,21 @@ pub fn send_notification(
         match send_via_notifier(ctx, Some(delta), n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
-                crate::tsprintln!(&settings, "[{}] DRY RUN; notification not sent", n.name());
+                logging::tsprintln!(&settings, "[{}] DRY RUN; notification not sent", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
-                crate::tsprintln!(&settings, "[{}] Notification sent successfully", n.name());
+                logging::tsprintln!(&settings, "[{}] Notification sent successfully", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
-                crate::tseprintln!(&settings, "[{}] Failed to send notification: {e}", n.name());
+                logging::tseprintln!(&settings, "[{}] Failed to send notification: {e}", n.name());
 
                 verbose_print(&message, settings);
                 report.failed += 1;
@@ -169,21 +170,21 @@ pub fn send_reminder(
         match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
-                crate::tsprintln!(&settings, "[{}] DRY RUN; reminder not sent", n.name());
+                logging::tsprintln!(&settings, "[{}] DRY RUN; reminder not sent", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
-                crate::tsprintln!(&settings, "[{}] Reminder sent successfully", n.name());
+                logging::tsprintln!(&settings, "[{}] Reminder sent successfully", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
-                crate::tseprintln!(&settings, "[{}] Failed to send reminder: {e}", n.name());
+                logging::tseprintln!(&settings, "[{}] Failed to send reminder: {e}", n.name());
 
                 verbose_print(&message, settings);
                 report.failed += 1;
