@@ -1,13 +1,15 @@
 //! Logging utilities.
 
+use crate::utils;
+
 /// Prints a timestamp prefix in the format "[HH:MM:SS] " to standard output.
 pub fn print_timestamp_prefix() {
-    print!("[{}] ", chrono::Local::now().format("%H:%M:%S"));
+    print!("[{}] ", utils::timestamp_now());
 }
 
 /// Prints a timestamp prefix in the format "[HH:MM:SS] " to standard error.
 pub fn eprint_timestamp_prefix() {
-    eprint!("[{}] ", chrono::Local::now().format("%H:%M:%S"));
+    eprint!("[{}] ", utils::timestamp_now());
 }
 
 /// Prints a timestamped message to standard out if timestamps are enabled in
@@ -35,5 +37,5 @@ macro_rules! tseprintln {
 }
 
 // Re-export macros for use in other modules.
-pub(crate) use tsprintln;
 pub(crate) use tseprintln;
+pub(crate) use tsprintln;
