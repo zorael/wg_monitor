@@ -29,7 +29,7 @@ Options:
       --save               Write configuration to disk
 ```
 
-To get started, create new [configuration](#configtoml) and [peer list](#peers) files by passing `--save`.
+To get started, create new [configuration](#configtoml) and [peer list](#peerstxt) files by passing `--save`.
 
 ```sh
 cargo run -- --save
@@ -103,7 +103,7 @@ You *may* have some luck building it on the Pi if you build it in a serial mode,
 cargo build --release -j1
 ```
 
-Mind that build times will be *very* long. Cross-compilation is recommended. Otherwise, remember to use a heatsink.
+Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, remember to at least use a heatsink.
 
 ## `config.toml`
 
@@ -126,7 +126,7 @@ Running the program with `--save` will not overwrite previous contents in an exi
 
 ## `peers.txt`
 
-A new `peers.txt` file will have been created next to the configuration `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by a normal space character.
+A new `peers.txt` file will also have been created in the configuration diretcory, next to the `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by a normal space character.
 
 Lines that start with an octothorpe `#` will be ignored.
 
@@ -139,9 +139,9 @@ XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 
 ## slack
 
-Messages to Slack channels can trivially be pushed by use of webhook URLs. HTTP POST requests made to these will end up as messages in the channels the webhook URLs refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
+Messages to Slack channels can trivially be pushed by use of [webhook URLs](https://en.wikipedia.org/wiki/Webhook). HTTP requests made to these will end up as messages in the channels they refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
 
-URLs must be between double quotes `"`. You may enter any number of URLs as long as you separate the individual strings with a comma.
+URLs must be be quoted. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
 ```toml
 [slack]
@@ -151,7 +151,7 @@ urls = ["https://hooks.slack.com/services/REDACTED/ALSOTHIS/asdfasdfasdf", "http
 
 ### formatting
 
-Slack supports some formatting. Text between \***asterisks**\* will be in **bold**, text between \_*underscores*\_ will be in *italics*, text between \~~~tildes~~\~ will be in ~~strikethrough~~, etc.
+Slack supports some formatting. Text between asterisks will be in \***bold**\*, text between underscores will be in \_*italics*\_, text between tildes will be in \~~~strikethrough~~\~, etc.
 
 Strings defined in the configuration file can make use of this.
 
@@ -159,16 +159,16 @@ Strings defined in the configuration file can make use of this.
 [slack.strings]
 header = ""
 first_run_header = ":zap: *Power restored* _(or restart of device)_"
-bullet_point = "*-* "
+bullet_point = " *-* "
 ```
 
 See [this help article](https://slack.com/intl/en-gb/help/articles/360039953113-Format-your-messages-in-Slack-with-markup) for the full listing.
 
 ## batsign
 
-It is likewise easy to push simple email notifications by signing up for a [**Batsign**](https://batsign.me) address. Much like Slack webhooks, HTTP POST requests made to the URL you receive will end up as emails sent to the corresponding addresses.
+It is likewise easy to push simple email notifications by signing up for a [**Batsign**](https://batsign.me) address. Much like Slack webhooks, HTTP requests made to these will end up as emails sent to the corresponding addresses.
 
-URLs must be between double quotes `"`. You may enter any number of URLs as long as you separate the individual strings with a comma.
+URLs must be quoted. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
 ```toml
 [batsign]
@@ -178,11 +178,11 @@ urls = ["https://batsign.me/at/example@address.tld/asdfasdf", "https://batsign.m
 
 ## external command
 
-It is possible to have the program execute an external command to push notifications, although there are several caveats.
+You can also have the program execute an external command as a way to push notifications, although there are several caveats.
 
-* The command run will be passed several arguments in a specific order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something you can use.
+* The command run will be passed several arguments in a specific hardcoded order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something you can use.
 
-* If you run the project binary as root (which may be unavoidable) the command it runs will in turn also be run as root. If you need it to be run as your own user, you will have to use `su` in your shell script, and even then environment variables may prove a problem.
+* If you run the project binary as root (which may be unavoidable) the external command you set up as notification command will in turn also be run as root. If you need it to be run as a different user, you will have to use `su` in your shell script, and even then environment variables may prove a problem.
 
 ### arguments
 
@@ -190,7 +190,7 @@ The order of arguments is as follows:
 
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
-3. The number of time the notification loop has run (starting at 0)
+3. The number of time the notification loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
 4. A comma-separated string of late keys in the format "`key:timestamp`"
 5. A comma-separated string of missing keys in the format "`key:timestamp`"
 6. A comma-separated string of keys that were late the previous loop in the format "`key:timestamp`"
@@ -200,7 +200,7 @@ The order of arguments is as follows:
 10. In non-reminder notifications, a comma-separated string of keys that are no longer late in the format "`key:timestamp`"
 11. In non-reminder notifications, a comma-separated string of keys that returned in the format "`key:timestamp`"
 
-Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply empty.
+Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply an empty string.
 
 ### example script (untested)
 
