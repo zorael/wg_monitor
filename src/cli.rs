@@ -28,6 +28,10 @@ pub struct Cli {
     #[arg(long)]
     pub skip_first: bool,
 
+    /// Disable timestamps in terminal output
+    #[arg(long)]
+    pub disable_timestamps: bool,
+
     /// Output configuration to screen and exit
     #[arg(long)]
     pub show: bool,

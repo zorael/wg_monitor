@@ -31,6 +31,10 @@ pub struct Settings {
     /// Whether to skip the first run and thus the first notification.
     pub skip_first: bool,
 
+    /// Whether to include `[HH:MM:SS]` timestamps in terminal output.
+    /// This is disabled by default when the program detects that it's not running in a terminal.
+    pub disable_timestamps: bool,
+
     /// Whether to send notifications or just echo what would be done.
     pub dry_run: bool,
 
@@ -120,6 +124,7 @@ impl Settings {
         // because it affects how other settings are loaded from disk.
         self.resume = cli.resume;
         self.skip_first = cli.skip_first;
+        self.disable_timestamps = cli.disable_timestamps;
         self.dry_run = cli.dry_run;
         self.verbose = cli.verbose;
         self.debug = cli.debug;
