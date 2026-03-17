@@ -1,20 +1,20 @@
-//! Monitors other peers in a [Wireguard VPN](https://www.wireguard.com)
+//! Monitors other peers in a [WireGuard VPN](https://www.wireguard.com)
 //! and sends a notification if contact with a peer is lost.
 //!
 //! The main purpose of this is to monitor Internet-connected locations for
-//! power outages, using Wireguard handshakes as a way for sites to phone home.
-//! Each needs an always-on, always-connected computer to act as a Wireguard
+//! power outages, using WireGuard handshakes as a way for sites to phone home.
+//! Each needs an always-on, always-connected computer to act as a WireGuard
 //! peer, for which something like a
 //! [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w)
 //! is cheap and more than sufficient.
 //!
-//! In a hub-and-spoke Wireguard configuration, this should be run on the hub
+//! In a hub-and-spoke WireGuard configuration, this should be run on the hub
 //! server, ideally with an additional instance on (at least) one other
 //! geographically disconnected peer to monitor the hub. In other configurations,
 //! it can be run on any peer with visibility of other peers, but a secondary
 //! instance monitoring the first is recommended in any setup.
 //!
-//! Peers must have a `PersistentKeepalive` setting in their Wireguard
+//! Peers must have a `PersistentKeepalive` setting in their WireGuard
 //! configuration with a value *comfortably lower* than the peer timeout of
 //! this program. This timeout is **600 seconds** by default, but can be
 //! overridden by modifying a configuration file.

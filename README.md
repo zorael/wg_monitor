@@ -1,12 +1,12 @@
 # wg_monitor
 
-Monitors other peers in a [**Wireguard** VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
+Monitors other peers in a [**WireGuard** VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
 
-The main purpose of this is to monitor Internet-connected locations for power outages, using Wireguard handshakes as a way for sites to phone home. Each site needs an always-on, always-online computer to act as a Wireguard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
+The main purpose of this is to monitor Internet-connected locations for power outages, using WireGuard handshakes as a way for sites to phone home. Each site needs an always-on, always-online computer to act as a WireGuard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
 
-In a hub-and-spoke Wireguard configuration, this program should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
+In a hub-and-spoke WireGuard configuration, this program should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
 
-Peers must have a `PersistentKeepalive` setting in their Wireguard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
+Peers must have a `PersistentKeepalive` setting in their WireGuard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
 
 Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks), as short emails via [**Batsign**](https://batsign.me), and/or by invocation of [an external command](#external-command) (like `notify-send`).
 
@@ -118,7 +118,7 @@ A new `config.toml` file will be created in one of the following locations, in d
 * `$HOME/.config/wg_monitor`
 * fail if `$HOME` is unset
 
-The program will likely require root permissions to be able to issue queries for handshake timestamps of the Wireguard interface. Mind that, as per the list above, this would make the configuration directory default to `/etc/wg_monitor`.
+The program will likely require root permissions to be able to issue queries for handshake timestamps of the WireGuard interface. Mind that, as per the list above, this would make the configuration directory default to `/etc/wg_monitor`.
 
 Directories will be created as necessary, including parent directories.
 
@@ -212,9 +212,9 @@ urgency="critical"
 
 if [[ "$3" = "0" ]]; then
     # loop iteration 0
-    summary="Wireguard Monitor: first run"
+    summary="WireGuard Monitor: first run"
 else
-    summary="Wireguard Monitor: update"
+    summary="WireGuard Monitor: update"
 fi
 
 notify-send \

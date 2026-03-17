@@ -133,7 +133,7 @@ pub fn format_generic_reminder(
 /// Formats a single peer line for notifications, using the provided string
 /// patterns for peers with and without timestamps.
 fn format_peer_line(
-    peer: &peer::WireguardPeer,
+    peer: &peer::WireGuardPeer,
     pattern_with_timestamp: &str,
     pattern_without_timestamp: &str,
 ) -> String {
@@ -161,7 +161,7 @@ fn format_peer_line(
 /// using the provided section header and patterns for formatting each peer line.
 #[allow(clippy::too_many_arguments)]
 fn append_message_section(
-    peers: &collections::HashMap<String, peer::WireguardPeer>,
+    peers: &collections::HashMap<String, peer::WireGuardPeer>,
     message: &mut String,
     keys: &[String],
     header: &str,

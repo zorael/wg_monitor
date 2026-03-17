@@ -1,14 +1,14 @@
-//! Wireguard peer presentation and management functionality.
+//! WireGuard peer presentation and management functionality.
 
 use std::cmp;
 use std::collections;
 use std::time;
 
-/// Represents a Wireguard peer, including its public key, human-readable name,
+/// Represents a WireGuard peer, including its public key, human-readable name,
 /// and last seen timestamp.
 #[derive(Clone, Debug)]
-pub struct WireguardPeer {
-    /// The public key of the Wireguard peer, which serves as its unique identifier.
+pub struct WireGuardPeer {
+    /// The public key of the WireGuard peer, which serves as its unique identifier.
     pub public_key: String,
 
     /// A human-readable name for the peer, which can be specified in the peer
@@ -26,8 +26,8 @@ pub struct WireguardPeer {
     pub last_seen_unix: u64,
 }
 
-impl WireguardPeer {
-    /// Shortens a Wireguard public key for display purposes, returning the
+impl WireGuardPeer {
+    /// Shortens a WireGuard public key for display purposes, returning the
     /// first 7 characters, or the substring before a '/' or '+' if present in
     /// the first 7 characters. If the very first letter (index 0) is a
     /// '/' or '+', the match is ignored and the first 7 characters are returned.
@@ -62,7 +62,7 @@ impl WireguardPeer {
         first_seven.to_string()
     }
 
-    /// Validates a Wireguard public key, returning true if it does not seem
+    /// Validates a WireGuard public key, returning true if it does not seem
     /// obviously invalid. Does not perform an actual cryptographic validation.
     pub fn validate_public_key(public_key: &str) -> bool {
         const EXPECTED_LENGTH: usize = 44;
@@ -81,7 +81,7 @@ impl WireguardPeer {
 /// provided peers map. Peers that are present (have a non-0 timestamp) are sorted first,
 /// with newer timestamps appearing before older ones. Peers without a timestamp
 /// (or rather, with a timestamp of 0) are sorted last.
-pub fn sort_keys(keys: &mut [String], peers: &collections::HashMap<String, WireguardPeer>) {
+pub fn sort_keys(keys: &mut [String], peers: &collections::HashMap<String, WireGuardPeer>) {
     keys.sort_unstable_by_key(|k| {
         let timestamp = peers.get(k).map(|p| p.last_seen_unix).unwrap_or(0);
         (timestamp == 0, cmp::Reverse(timestamp))

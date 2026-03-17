@@ -10,7 +10,7 @@ use crate::file_config;
 /// Application runtime settings root struct.
 #[derive(Debug, Default)]
 pub struct Settings {
-    /// Monitor settings for the Wireguard interface and connection status.
+    /// Monitor settings for the WireGuard interface and connection status.
     pub monitor: super::MonitorSettings,
 
     /// Slack settings.

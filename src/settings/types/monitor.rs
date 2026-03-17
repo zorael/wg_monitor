@@ -1,17 +1,17 @@
-//! Settings related to monitoring the Wireguard interface and connection status.
+//! Settings related to monitoring the WireGuard interface and connection status.
 
 use std::time;
 
 use crate::defaults;
 use crate::file_config;
 
-/// Settings for monitoring the Wireguard interface and connection status.
+/// Settings for monitoring the WireGuard interface and connection status.
 #[derive(Debug)]
 pub struct MonitorSettings {
-    /// Wireguard interface name to monitor.
+    /// WireGuard interface name to monitor.
     pub interface: String,
 
-    /// Interval between checks of the Wireguard interface and connection status.
+    /// Interval between checks of the WireGuard interface and connection status.
     pub check_interval: time::Duration,
 
     /// Timeout after which a peer is considered lost.

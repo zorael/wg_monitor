@@ -1,6 +1,6 @@
-//! Wireguard-related functionality for monitoring peers and handshakes.
+//! WireGuard-related functionality for monitoring peers and handshakes.
 //!
-//! This module provides functions to read the list of Wireguard peers from a file,
+//! This module provides functions to read the list of WireGuard peers from a file,
 //! validate the output of the `wg show latest-handshakes` command, update the
 //! last seen timestamps for peers based on the command output, and get the
 //! terminal output from running the command.
@@ -15,12 +15,12 @@ use std::time;
 
 use crate::peer;
 
-/// Reads the list of Wireguard peers from a file, returning a HashMap of
-/// public keys to `WireguardPeer` structs.
+/// Reads the list of WireGuard peers from a file, returning a HashMap of
+/// public keys to `WireGuardPeer` structs.
 pub fn read_peer_list(
     path: &path::Path,
     debug: bool,
-) -> io::Result<collections::HashMap<String, peer::WireguardPeer>> {
+) -> io::Result<collections::HashMap<String, peer::WireGuardPeer>> {
     if debug {
         println!("[i] Reading peers from file: '{}'\n", path.display());
     }
@@ -41,12 +41,12 @@ pub fn read_peer_list(
         }
 
         if let Some((key, human_name)) = line.split_once(' ') {
-            if !peer::WireguardPeer::validate_public_key(key) {
+            if !peer::WireGuardPeer::validate_public_key(key) {
                 eprintln!("[!] Invalid public key in peers file: '{}'", key);
                 continue;
             }
 
-            let peer = peer::WireguardPeer {
+            let peer = peer::WireGuardPeer {
                 public_key: key.to_string(),
                 human_name: human_name.trim().to_string(),
                 last_seen: None,
@@ -58,11 +58,11 @@ pub fn read_peer_list(
             }
 
             peers.insert(key.to_string(), peer);
-        } else if peer::WireguardPeer::validate_public_key(&line) {
+        } else if peer::WireGuardPeer::validate_public_key(&line) {
             let key = line.to_string();
-            let peer = peer::WireguardPeer {
+            let peer = peer::WireGuardPeer {
                 public_key: key.clone(),
-                human_name: peer::WireguardPeer::shorten_key(&key),
+                human_name: peer::WireGuardPeer::shorten_key(&key),
                 last_seen: None,
                 last_seen_unix: 0,
             };
@@ -117,7 +117,7 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 /// `wg show {iface} latest-handshakes` command.
 pub fn update_handshakes(
     terminal_output: &str,
-    peers: &mut collections::HashMap<String, peer::WireguardPeer>,
+    peers: &mut collections::HashMap<String, peer::WireGuardPeer>,
 ) {
     for line in terminal_output.lines() {
         let line = line.trim();

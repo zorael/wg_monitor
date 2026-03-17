@@ -4,13 +4,13 @@
 
 use std::time;
 
-/// Default Wireguard interface name.
+/// Default WireGuard interface name.
 pub const INTERFACE: &str = "wg0";
 
 /// Default timeout duration for monitoring checks.
 pub const TIMEOUT: time::Duration = time::Duration::from_secs(600);
 
-/// Default check interval for monitoring the Wireguard interface.
+/// Default check interval for monitoring the WireGuard interface.
 pub const CHECK_INTERVAL: time::Duration = time::Duration::from_secs(60);
 
 /// Default reminder interval for sending reminder notifications. Base value, will be grown.

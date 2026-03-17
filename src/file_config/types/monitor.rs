@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 use std::time;
 
 /// Monitor configuration structures for the program. This mirrors the runtime
-/// settings struct used by the program for monitoring the Wireguard interface.
+/// settings struct used by the program for monitoring the WireGuard interface.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MonitorConfig {
-    /// Wireguard interface name to monitor.
+    /// WireGuard interface name to monitor.
     pub interface: Option<String>,
 
-    /// Check interval for monitoring the Wireguard interface,
+    /// Check interval for monitoring the WireGuard interface,
     /// specified as a human-readable duration (e.g., "30s", "1m").
     #[serde(with = "humantime_serde")]
     pub check_interval: Option<time::Duration>,

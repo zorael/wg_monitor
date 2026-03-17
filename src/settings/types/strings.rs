@@ -1,5 +1,5 @@
 //! This module houses structs and functions related to the message strings
-//! used in notifications and reminders for the Wireguard monitor program.
+//! used in notifications and reminders for the WireGuard monitor program.
 
 use crate::file_config;
 
@@ -58,8 +58,8 @@ impl Default for MessageStrings {
     /// config file overrides.
     fn default() -> Self {
         Self {
-            header: "Wireguard Monitor report\\n".to_string(),
-            first_run_header: "Wireguard Monitor starting up\\n".to_string(),
+            header: "WireGuard Monitor report\\n".to_string(),
+            first_run_header: "WireGuard Monitor starting up\\n".to_string(),
             first_run_missing: "Missing:\\n".to_string(),
             lost: "Lost:\\n".to_string(),
             forgot: "Lost to a network reset:\\n".to_string(),
@@ -168,7 +168,7 @@ impl Default for ReminderStrings {
     /// applying configuration file overrides.
     fn default() -> Self {
         Self {
-            header: "Wireguard Monitor reminder\\n".to_string(),
+            header: "WireGuard Monitor reminder\\n".to_string(),
             still_lost: "Still lost:\\n".to_string(),
             still_missing: "Still have yet to see (since last restart):\\n".to_string(),
             footer: String::new(),

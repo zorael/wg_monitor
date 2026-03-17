@@ -1,5 +1,5 @@
 //! The `notify` module contains all the logic related to sending notifications about
-//! Wireguard peer status changes, including building messages based on the notification
+//! WireGuard peer status changes, including building messages based on the notification
 //! context and delta, and dispatching notifications to all configured notifiers.
 
 mod dispatch;

@@ -231,7 +231,7 @@ impl super::Backend for CommandBackend {
 /// })
 /// ```
 fn format_key_timestamp_pairs(
-    peers: &collections::HashMap<String, peer::WireguardPeer>,
+    peers: &collections::HashMap<String, peer::WireGuardPeer>,
     keys: &[String],
 ) -> String {
     keys.iter()
@@ -252,7 +252,7 @@ mod test {
 
         peers.insert(
             "key1".to_string(),
-            peer::WireguardPeer {
+            peer::WireGuardPeer {
                 public_key: "key1".to_string(),
                 human_name: "Peer 1".to_string(),
                 last_seen: None,
@@ -262,7 +262,7 @@ mod test {
 
         peers.insert(
             "key2".to_string(),
-            peer::WireguardPeer {
+            peer::WireGuardPeer {
                 public_key: "key2".to_string(),
                 human_name: "Peer 2".to_string(),
                 last_seen: None,

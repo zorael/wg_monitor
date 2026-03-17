@@ -1,7 +1,7 @@
 //! Defines the `NotificationSender` trait, implemented by types that can send
-//! notifications about Wireguard peer status changes.
+//! notifications about WireGuard peer status changes.
 
-/// Trait for types that can send notifications about Wireguard peer status changes.
+/// Trait for types that can send notifications about WireGuard peer status changes.
 pub trait NotificationSender {
     /// Returns the name of the notifier, which is typically the name of the
     /// backend it uses (e.g., "slack" or "batsign") plus potentially any other

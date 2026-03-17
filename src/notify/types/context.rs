@@ -11,8 +11,8 @@ use crate::peer;
 /// Context for building notification messages, containing the current and previous
 /// state of peers, as well as timing information.
 pub struct Context {
-    /// Map of public keys to `WireguardPeer` structs, representing all known peers.
-    pub peers: collections::HashMap<String, peer::WireguardPeer>,
+    /// Map of public keys to `WireGuardPeer` structs, representing all known peers.
+    pub peers: collections::HashMap<String, peer::WireGuardPeer>,
 
     /// Current peers that are late (seen but not within the expected time).
     pub late_keys: Vec<String>,
@@ -60,7 +60,7 @@ impl Context {
 
     /// Creates a new `Context` with the provided peers, initializing the
     /// vectors based on the number of peers.
-    pub fn inherit(peers: collections::HashMap<String, peer::WireguardPeer>) -> Self {
+    pub fn inherit(peers: collections::HashMap<String, peer::WireGuardPeer>) -> Self {
         let mut sized = Self::with_capacity(peers.len());
         sized.peers = peers;
         sized

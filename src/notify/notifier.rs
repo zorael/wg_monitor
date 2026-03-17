@@ -1,10 +1,10 @@
 //! Defines the `Notifier` struct, which implements the `NotificationSender`
-//! trait and uses a backend to send notifications about Wireguard peer status changes.
+//! trait and uses a backend to send notifications about WireGuard peer status changes.
 
 use crate::backend;
 
 /// A `Notifier` that uses a specific backend to send notifications about
-/// Wireguard peer status changes.
+/// WireGuard peer status changes.
 pub struct Notifier<B: backend::Backend> {
     /// State related to pending notifications, reminder timing, and failure tracking.
     pub state: super::NotifierState,
