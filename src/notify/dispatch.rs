@@ -4,8 +4,8 @@
 
 use std::time;
 
-use crate::settings;
 use crate::logging;
+use crate::settings;
 
 /// Small helper that prints a message if the `verbose` setting is enabled.
 fn verbose_print(message: &str, settings: &settings::Settings) {
