@@ -73,16 +73,16 @@ A device like the Pi Zero 2W can *run* the program but does not have enough memo
 
 Regrettably, manually setting up cross-compilation can be non-trivial. As such, use of one of [`cargo-cross`](https://github.com/cross-rs/cross) or [`cargo-zigbuild`](https://github.com/rust-cross/cargo-zigbuild) is recommended (but not required). For the latter you need to install a [**Zig**](https://ziglang.org) compiler. Refer to your repositories, alternatively install it via Homebrew (`brew install zig`).
 
-Note that your `$CFLAGS` environment variable must not contain `-march=native` for all dependencies to successfully build. Any `-O` value higher than `-O0` may also halt compilation.
+Note that your `$CFLAGS` environment variable must not contain `-march=native` for all dependencies to successfully build.
 
 ```sh
 cargo install cargo-cross
-CFLAGS="-O0 -pipe" cargo cross build --target=aarch64-unknown-linux-gnu
+CFLAGS="-O2 -pipe" cargo cross build --target=aarch64-unknown-linux-gnu
 ```
 
 ```sh
 cargo install cargo-zigbuild
-CFLAGS="-O0 -pipe" cargo zigbuild --target=aarch64-unknown-linux-gnu
+CFLAGS="-O2 -pipe" cargo zigbuild --target=aarch64-unknown-linux-gnu
 ```
 
 This should require upwards of 500 Mb of free system memory, effectively exceeding the total RAM of a Pi Zero 2W.
