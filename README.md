@@ -1,6 +1,6 @@
 # wg_monitor
 
-Monitors other peers in a [**WireGuard** VPN](https://www.wireguard.com) and sends a notification if contact with a peer is lost.
+Monitors other peers in a [**WireGuard**](https://www.wireguard.com) VPN and sends a notification if contact with a peer is lost.
 
 The main purpose of this is to monitor Internet-connected locations for power outages, using WireGuard handshakes as a way for sites to phone home. Each site needs an always-on, always-online computer to act as a WireGuard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
 
@@ -8,7 +8,7 @@ In a hub-and-spoke WireGuard configuration, this program should be run on the hu
 
 Peers must have a `PersistentKeepalive` setting in their WireGuard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
 
-Notifications are sent as [**Slack** webhook messages](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks), as short emails via [**Batsign**](https://batsign.me), and/or by invocation of [an external command](#external-command) (like `notify-send`).
+Notifications can be sent as [**Slack**](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) messages, as short emails via [**Batsign**](https://batsign.me), and/or by invocation of an [**external command**](#external-command) (like `notify-send`).
 
 ## tl;dr
 
@@ -19,14 +19,16 @@ $ git clone https://github.com/zorael/wg_monitor
 Usage: wg_monitor [OPTIONS]
 
 Options:
-  -c, --config-dir <path>  Specify an alternate configuration directory
-      --resume             Word the first notification as if the program was not just started
-      --skip-first         Skip the first run and thus the first notification
-      --show               Output configuration to screen and exit
-  -v, --verbose            Print some additional information
-  -d, --debug              Print much more additional information
-      --dry-run            Perform a dry run, echoing what would be done
-      --save               Write configuration to disk
+  -c, --config-dir <path>   Specify an alternate configuration directory
+      --resume              Word the first notification as if the program was not just started
+      --skip-first          Skip the first run and thus the first notification
+      --disable-timestamps  Disable timestamps in terminal output
+      --show                Output configuration to screen and exit
+  -v, --verbose             Print some additional information
+  -d, --debug               Print much more additional information
+      --dry-run             Perform a dry run, echoing what would be done
+      --save                Write configuration to disk
+  -V, --version             Display version information and exit
 ```
 
 To get started, create new [configuration](#configtoml) and [peer list](#peerstxt) files by passing `--save`.
@@ -47,7 +49,9 @@ cargo run -- --save
 * [batsign](#batsign)
 * [external command](#external-command)
   * [arguments](#arguments)
-  * [example script (untested)](#example-script-untested)
+  * [example scripts](#example-scripts)
+    * [notify all](#notify-all)
+    * [notify one](#notify-one)
 * [todo](#todo)
 * [license](#license)
 
@@ -100,7 +104,7 @@ Replace `release` with `debug` to transfer the binary of a `--profile=dev` build
 You *may* have some luck building it on the Pi if you build it in a serial mode, compiling one dependency at a time. Swap is probably still required.
 
 ```sh
-cargo build --release -j1
+cargo build -j1
 ```
 
 Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, remember to at least use a heatsink.
@@ -151,7 +155,7 @@ urls = ["https://hooks.slack.com/services/REDACTED/ALSOTHIS/asdfasdfasdf", "http
 
 ### formatting
 
-Slack supports some formatting. Text between asterisks will be in \***bold**\*, text between underscores will be in \_*italics*\_, text between tildes will be in \~~~strikethrough~~\~, etc.
+Slack supports some formatting. Text between asterisks `*` will be in \***bold**\*, text between underscores `_` will be in \_*italics*\_, text between tildes `~` will be in \~~~strikethrough~~\~, etc.
 
 Strings defined in the configuration file can make use of this.
 
@@ -182,7 +186,7 @@ You can also have the program execute an external command as a way to push notif
 
 * The command run will be passed several arguments in a specific hardcoded order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something you can use.
 
-* If you run the project binary as root (which may be unavoidable) the external command you set up as notification command will in turn also be run as root. If you need it to be run as a different user, you will have to use `su` in your shell script, and even then environment variables may prove a problem.
+* If you run the project binary as root (which may be unavoidable) the external command you set up as notification command will in turn also be run as root. If you need it to be run as a different user, you will have to use `systemd-run` or `su` in your shell script.
 
 ### arguments
 
@@ -202,26 +206,79 @@ The order of arguments is as follows:
 
 Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply an empty string.
 
-### example script (untested)
+### example scripts
+
+This should theoretically push a desktop notification to all users currently logged into a graphical environment, leveraging `notify-send` for the actual notification.
+
+#### notify all
+
+Example [`notify-send-to-all-gui.sh`](notify-send-to-all-gui.sh), adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/title/Desktop_notifications#Send_notifications_to_all_graphical_users):
 
 ```bash
 #!/bin/bash
 
+# $1 contains the composed message
+# $2 contains the path to the peers.txt file, not relevant for this script
+# $3 contains the loop iteration number
+
 icon="network-wireless-disconnected"
 urgency="critical"
+loop_number=$3
+ids=( $(loginctl list-sessions -j | jq -r '.[] | .session') )
 
-if [[ "$3" = "0" ]]; then
-    # loop iteration 0
+if [[ "$loop_number" = "0" ]]; then
+    # run 0
     summary="WireGuard Monitor: first run"
 else
     summary="WireGuard Monitor: update"
 fi
 
-notify-send \
-    --icon="$icon" \
-    --urgency="$urgency" \
-    "$summary"
-    "$1"
+for id in "${ids[@]}" ; do
+    [[ $(loginctl show-session $id --property=Type) =~ (wayland|x11) ]] || continue
+
+    user=$(loginctl show-session $id --property=Name --value)
+
+    systemd-run --machine=${user}@.host --user \
+        notify-send \
+            --icon="$icon" \
+            --urgency="$urgency" \
+            "$summary" \
+            "$1"
+done
+```
+
+#### notify one
+
+Example [`notify-send-to-one`](notify-send-to-one.sh):
+
+```bash
+#!/bin/bash
+
+# $1 contains the composed message
+# $2 contains the path to the peers.txt file, not relevant for this script
+# $3 contains the loop iteration number
+
+# make sure to change the "user" variable to the actual username or user ID
+# of the user you want to send the notification to, e.g. 1000, "bob" or "alice".
+
+icon="network-wireless-disconnected"
+urgency="critical"
+loop_number=$3
+user=1000
+
+if [[ "$loop_number" = "0" ]]; then
+    # run 0
+    summary="WireGuard Monitor: first run"
+else
+    summary="WireGuard Monitor: update"
+fi
+
+systemd-run --machine=${user}@.host --user \
+    notify-send \
+        --icon="$icon" \
+        --urgency="$urgency" \
+        "$summary" \
+        "$1"
 ```
 
 In the configuration file;
