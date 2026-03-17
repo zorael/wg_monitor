@@ -5,7 +5,6 @@
 use std::time;
 
 use crate::settings;
-use crate::utils;
 
 /// Small helper that prints a message if the `verbose` setting is enabled.
 fn verbose_print(message: &str, settings: &settings::Settings) {
@@ -55,19 +54,16 @@ pub fn retry_pending_notifications(
 
         match send_via_notifier(ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
-                println!(
-                    "\n[{}] [{}] DRY RUN; RETRY not sent",
-                    utils::timestamp_now(),
-                    n.name()
-                );
-
+                println!();
+                crate::tsprintln!(&settings, "[{}] DRY RUN; RETRY not sent", n.name());
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
-                println!(
-                    "\n[{}] [{}] Notification RETRIED successfully",
-                    utils::timestamp_now(),
+                println!();
+                crate::tsprintln!(
+                    &settings,
+                    "[{}] Notification RETRIED successfully",
                     n.name()
                 );
 
@@ -75,9 +71,10 @@ pub fn retry_pending_notifications(
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
-                eprintln!(
-                    "\n[{}] [{}] Failed to RETRY notification: {e}",
-                    utils::timestamp_now(),
+                eprintln!();
+                crate::tseprintln!(
+                    &settings,
+                    "[{}] Failed to RETRY notification: {e}",
                     n.name()
                 );
 
@@ -115,31 +112,22 @@ pub fn send_notification(
     for n in notifiers.iter_mut() {
         match send_via_notifier(ctx, Some(delta), n) {
             super::NotificationResult::DryRun(message) => {
-                println!(
-                    "\n[{}] [{}] DRY RUN; notification not sent",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+                println!();
+                crate::tsprintln!(&settings, "[{}] DRY RUN; notification not sent", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
-                println!(
-                    "\n[{}] [{}] Notification sent successfully",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+                println!();
+                crate::tsprintln!(&settings, "[{}] Notification sent successfully", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
-                eprintln!(
-                    "\n[{}] [{}] Failed to send notification: {e}",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+                eprintln!();
+                crate::tseprintln!(&settings, "[{}] Failed to send notification: {e}", n.name());
 
                 verbose_print(&message, settings);
                 report.failed += 1;
@@ -180,31 +168,22 @@ pub fn send_reminder(
 
         match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
-                println!(
-                    "\n[{}] [{}] DRY RUN; reminder not sent",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+                println!();
+                crate::tsprintln!(&settings, "[{}] DRY RUN; reminder not sent", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
-                println!(
-                    "\n[{}] [{}] Reminder sent successfully",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+                println!();
+                crate::tsprintln!(&settings, "[{}] Reminder sent successfully", n.name());
 
                 verbose_print(&message, settings);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
-                eprintln!(
-                    "\n[{}] [{}] Failed to send reminder: {e}",
-                    utils::timestamp_now(),
-                    n.name()
-                );
+                eprintln!();
+                crate::tseprintln!(&settings, "[{}] Failed to send reminder: {e}", n.name());
 
                 verbose_print(&message, settings);
                 report.failed += 1;
