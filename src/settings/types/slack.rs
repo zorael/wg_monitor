@@ -20,18 +20,6 @@ pub struct SlackSettings {
     pub urls: Vec<String>,
 }
 
-/*impl Default for SlackSettings {
-    /// Default values for the Slack settings.
-    fn default() -> Self {
-        Self {
-            strings: settings::MessageStrings::default(),
-            reminder_strings: settings::ReminderStrings::default(),
-            enabled: false,
-            urls: Vec::new(),
-        }
-    }
-}*/
-
 impl SlackSettings {
     /// Applies Slack settings from the config file, overriding the default
     /// settings where values are available.

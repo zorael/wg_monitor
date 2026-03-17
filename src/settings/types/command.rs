@@ -21,18 +21,6 @@ pub struct CommandSettings {
     pub commands: Vec<String>,
 }
 
-/*impl Default for CommandSettings {
-    /// Default values for the Command settings.
-    fn default() -> Self {
-        Self {
-            strings: settings::MessageStrings::default(),
-            reminder_strings: settings::ReminderStrings::default(),
-            enabled: false,
-            commands: Vec::new(),
-        }
-    }
-}*/
-
 impl CommandSettings {
     /// Applies Command settings from the config file, overriding the default
     /// settings where values are available.

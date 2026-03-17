@@ -20,18 +20,6 @@ pub struct BatsignSettings {
     pub urls: Vec<String>,
 }
 
-/*impl Default for BatsignSettings {
-    /// Default values for the Batsign settings.
-    fn default() -> Self {
-        Self {
-            strings: settings::MessageStrings::default(),
-            reminder_strings: settings::ReminderStrings::default(),
-            enabled: false,
-            urls: Vec::new(),
-        }
-    }
-}*/
-
 impl BatsignSettings {
     /// Applies Batsign settings from the config file, overriding the default
     /// settings where values are available.
