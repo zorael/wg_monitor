@@ -19,6 +19,7 @@ pub struct FileConfig {
     /// Batsign settings loaded from the configuration file.
     pub batsign: BatsignConfig,
 
+    /// Command settings loaded from the configuration file.
     pub command: CommandConfig,
 }
 

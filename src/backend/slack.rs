@@ -5,9 +5,6 @@
 //! reminders based on the notification context and delta, as well as sending the
 //! notifications via HTTP POST requests to the Slack API.
 
-use reqwest::blocking;
-use std::sync;
-
 use crate::notify;
 use crate::settings;
 
@@ -19,7 +16,7 @@ pub struct SlackBackend {
     id: usize,
 
     /// HTTP client used to send requests to the Slack API.
-    client: sync::Arc<blocking::Client>,
+    agent: ureq::Agent,
 
     /// Slack webhook URL to which the notification will be sent.
     url: String,
@@ -40,7 +37,7 @@ impl SlackBackend {
     /// Creates a new instance of SlackBackend.
     pub fn new(
         id: usize,
-        client: sync::Arc<blocking::Client>,
+        agent: ureq::Agent,
         url: &str,
         strings: &settings::MessageStrings,
         reminder_strings: &settings::ReminderStrings,
@@ -49,7 +46,7 @@ impl SlackBackend {
 
         Self {
             id,
-            client,
+            agent,
             url: url.to_string(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
@@ -173,9 +170,13 @@ impl super::Backend for SlackBackend {
     ) -> Result<Option<String>, String> {
         let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
 
-        match self.client.post(&self.url).json(&json).send() {
-            Ok(resp) if resp.status().is_success() => Ok(None),
-            Ok(resp) => Err(format!("HTTP {}", resp.status())),
+        let resp = self.agent.post(&self.url).send_json(json);
+
+        match resp {
+            Ok(mut r) => {
+                let body = r.body_mut().read_to_string().map_err(|e| e.to_string())?;
+                Ok(Some(body))
+            }
             Err(e) => Err(e.to_string()),
         }
     }

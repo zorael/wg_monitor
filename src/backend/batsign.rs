@@ -1,8 +1,5 @@
 //! Batsign backend for sending notifications via the free Batsign service.
 
-use reqwest::blocking;
-use std::sync;
-
 use crate::notify;
 use crate::settings;
 
@@ -13,7 +10,7 @@ pub struct BatsignBackend {
     id: usize,
 
     /// HTTP client used to send requests to the Batsign service.
-    client: sync::Arc<blocking::Client>,
+    agent: ureq::Agent,
 
     /// Batsign URL to which the notification will be sent.
     url: String,
@@ -33,7 +30,7 @@ impl BatsignBackend {
     /// Creates a new instance of the BatsignBackend.
     pub fn new(
         id: usize,
-        client: sync::Arc<blocking::Client>,
+        agent: ureq::Agent,
         url: &str,
         strings: &settings::MessageStrings,
         reminder_strings: &settings::ReminderStrings,
@@ -46,7 +43,7 @@ impl BatsignBackend {
 
         Self {
             id,
-            client,
+            agent,
             url: url.to_string(),
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
@@ -149,9 +146,13 @@ impl super::Backend for BatsignBackend {
         _delta: Option<&notify::Delta>,
         message: &str,
     ) -> Result<Option<String>, String> {
-        match self.client.post(&self.url).body(message.to_string()).send() {
-            Ok(resp) if resp.status().is_success() => Ok(None),
-            Ok(resp) => Err(format!("HTTP {}", resp.status())),
+        let resp = self.agent.post(&self.url).send(message);
+
+        match resp {
+            Ok(mut r) => {
+                let body = r.body_mut().read_to_string().map_err(|e| e.to_string())?;
+                Ok(Some(body))
+            }
             Err(e) => Err(e.to_string()),
         }
     }
