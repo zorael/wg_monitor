@@ -140,7 +140,7 @@ impl super::Backend for CommandBackend {
     ///
     /// 1. The composed message to be sent
     /// 2. The path to the peer list file
-    /// 3. The number of times the notification loop has run (starting at 0)
+    /// 3. The number of times the notification loop has run (starting at 0, unless --resume was passed)
     /// 4. A comma-separated string of late keys in the format "key:timestamp"
     /// 5. A comma-separated string of missing keys in the format "key:timestamp"
     /// 6. A comma-separated string of previous late keys in the format "key:timestamp"

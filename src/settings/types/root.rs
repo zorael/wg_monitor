@@ -19,6 +19,7 @@ pub struct Settings {
     /// Batsign settings.
     pub batsign: super::BatsignSettings,
 
+    /// Command settings.
     pub command: super::CommandSettings,
 
     /// Paths to resources, resolved at runtime.
