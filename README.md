@@ -33,7 +33,7 @@ Options:
 
 Pre-compiled binaries for `x86_64` and `aarch64` architectures are available under [**Releases**](https://github.com/zorael/wg_monitor/releases).
 
-Create new [configuration](#configtoml) and [peer list](#peerstxt) files by passing `--save`.
+Create a [configuration file](#configtoml) and a [peer list](#peerstxt) by passing `--save`.
 
 ```sh
 cargo run -- --save
@@ -60,8 +60,6 @@ cargo run -- --save
 * [systemd](#systemd)
 * [todo](#todo)
 * [license](#license)
-
----
 
 ## compilation
 
@@ -264,6 +262,8 @@ Adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/tit
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number=$3
+message="$1"
+
 ids=( $(loginctl list-sessions -j | jq -r '.[] | .session') )
 
 if [[ "$loop_number" = "0" ]]; then
@@ -283,7 +283,7 @@ for id in "${ids[@]}" ; do
             --icon="$icon" \
             --urgency="$urgency" \
             "$summary" \
-            "$1"
+            "$message"
 done
 ```
 
@@ -304,6 +304,8 @@ A similar script but for only *one* user. Change the `user=` line to match the u
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number=$3
+message="$1"
+
 user=1000
 
 if [[ "$loop_number" = "0" ]]; then
@@ -318,7 +320,7 @@ systemd-run --machine=${user}@.host --user \
         --icon="$icon" \
         --urgency="$urgency" \
         "$summary" \
-        "$1"
+        "$message"
 ```
 
 ## systemd
