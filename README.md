@@ -42,16 +42,19 @@ cargo run -- --save
 * [compilation](#compilation)
   * [cross-compilation](#cross-compilation)
   * [`-j1`](#-j1)
-* [`config.toml`](#configtoml)
-* [`peers.txt`](#peerstxt)
-* [slack](#slack)
-  * [formatting](#formatting)
-* [batsign](#batsign)
-* [external command](#external-command)
-  * [arguments](#arguments)
-  * [example scripts](#example-scripts)
-    * [notify all](#notify-all)
-    * [notify one](#notify-one)
+* [configuration](#configuration)
+  * [`config.toml`](#configtoml)
+  * [`peers.txt`](#peerstxt)
+* [backends](#backends)
+  * [slack](#slack)
+    * [formatting messages](#formatting-messages)
+  * [batsign](#batsign)
+    * [formatting mails](#formatting-mails)
+  * [external command](#external-command)
+    * [arguments](#arguments)
+    * [example scripts](#example-scripts)
+      * [notify-send-to-all-gui.sh](#notify-send-to-all-guish)
+      * [notify-send-to-one.sh](#notify-send-to-onesh)
 * [systemd](#systemd)
 * [todo](#todo)
 * [license](#license)
@@ -110,11 +113,9 @@ cargo build -j1
 
 Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, remember to at least use a heatsink.
 
-## `config.toml`
+## configuration
 
-Changing settings is done by editing a configuration file. You can generate a new one by passing `--save`.
-
-A new `config.toml` file will be created in one of the following locations, in decreasing order of precedence:
+Configuration is done by modifying files created in the *configuration directory*, which is one of the following locations, in decreasing order of precedence:
 
 * ...as was explicitly declared with `--config-dir=/path/to/directory`
 * `$WG_MONITOR_CONFIG_DIR` if set
@@ -123,13 +124,19 @@ A new `config.toml` file will be created in one of the following locations, in d
 * `$HOME/.config/wg_monitor`
 * fail if `$HOME` is unset
 
-The program will likely require root permissions to be able to issue queries for handshake timestamps of the WireGuard interface. Mind that, as per the list above, this would make the configuration directory default to `/etc/wg_monitor`.
+Running the program with `--save` will create this directory, including parent directories if necessary.
 
-Directories will be created as necessary, including parent directories.
+Mind that the program will likely require to be run with root permissions to be able to issue queries for handshake timestamps of the WireGuard interface. As per the list above, running as root would make the configuration directory default to `/etc/wg_monitor`.
 
-Running the program with `--save` will not overwrite previous contents in an existing file, but beware that any comments will be removed.
+```bash
+cargo run -- --save
+```
 
-## `peers.txt`
+### `config.toml`
+
+As part of `--save`, a new `config.toml` will be created in the configuration directory, if it does not already exist. Edit it like you would any text file. `--save` will not overwrite an existing `config.toml`, but beware that any comments will be removed.
+
+### `peers.txt`
 
 A new `peers.txt` file will also have been created in the configuration diretcory, next to the `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by a normal space character.
 
@@ -142,7 +149,11 @@ XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
 #Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
 ```
 
-## slack
+## backends
+
+There are three available notification backends.
+
+### slack
 
 Messages to Slack channels can trivially be pushed by use of [webhook URLs](https://en.wikipedia.org/wiki/Webhook). HTTP requests made to these will end up as messages in the channels they refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
 
@@ -154,7 +165,7 @@ enabled = true
 urls = ["https://hooks.slack.com/services/REDACTED/ALSOTHIS/asdfasdfasdf", "https://hooks.slack.com/services/ASDFASDF/FDSAFDSA/qwertyiiioqer"]
 ```
 
-### formatting
+#### formatting messages
 
 Slack supports some formatting. Text between asterisks `*` will be in \***bold**\*, text between underscores `_` will be in \_*italics*\_, text between tildes `~` will be in \~~~strikethrough~~\~, etc.
 
@@ -169,7 +180,7 @@ bullet_point = " *-* "
 
 See [this help article](https://slack.com/intl/en-gb/help/articles/360039953113-Format-your-messages-in-Slack-with-markup) for the full listing.
 
-## batsign
+### batsign
 
 It is likewise easy to push simple email notifications by signing up for a [**Batsign**](https://batsign.me) address. Much like Slack webhooks, HTTP requests made to these will end up as emails sent to the corresponding addresses.
 
@@ -181,7 +192,11 @@ enabled = true
 urls = ["https://batsign.me/at/example@address.tld/asdfasdf", "https://batsign.me/at/other@address.tld/fdsafdafa"]
 ```
 
-## external command
+#### formatting mails
+
+It is not possible to format text in Batsign emails with HTML markup. The best you can do is to use Unicode characters.
+
+### external command
 
 You can also have the program execute an external command as a way to push notifications, although there are several caveats.
 
@@ -189,7 +204,17 @@ You can also have the program execute an external command as a way to push notif
 
 * If you run the project binary as root (which may be unavoidable) the external command you set up as notification command will in turn also be run as root. If you need it to be run as a different user, you will have to use `systemd-run` or `su` in your shell script.
 
-### arguments
+In the configuration file;
+
+```toml
+[command]
+enabled = true
+commands = ["/absolute/path/to/script.sh"]
+```
+
+Remember to `chmod` the script executable `+x`.
+
+#### arguments
 
 The order of arguments is as follows:
 
@@ -207,13 +232,15 @@ The order of arguments is as follows:
 
 Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply an empty string.
 
-### example scripts
+#### example scripts
 
-This should theoretically push a desktop notification to all users currently logged into a graphical environment, leveraging `notify-send` for the actual notification.
+`notify-send` can be used to send desktop notifications. Here are some example glue-layer scripts that map the arguments passed by the external command backend into something `notify-send` accepts.
 
-#### notify all
+##### [`notify-send-to-all-gui.sh`](notify-send-to-all-gui.sh)
 
-Example [`notify-send-to-all-gui.sh`](notify-send-to-all-gui.sh), adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/title/Desktop_notifications#Send_notifications_to_all_graphical_users):
+This should theoretically push a desktop notification to *all* users currently logged into a graphical environment.
+
+Adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/title/Desktop_notifications#Send_notifications_to_all_graphical_users):
 
 ```bash
 #!/bin/bash
@@ -248,9 +275,9 @@ for id in "${ids[@]}" ; do
 done
 ```
 
-#### notify one
+##### [`notify-send-to-one.sh`](notify-send-to-one.sh)
 
-Example [`notify-send-to-one.sh`](notify-send-to-one.sh):
+A similar script but for only *one* user. Change the `user=` line to match the user that should receive the notification. It accepts both usernames and user IDs.
 
 ```bash
 #!/bin/bash
@@ -282,19 +309,9 @@ systemd-run --machine=${user}@.host --user \
         "$1"
 ```
 
-In the configuration file;
-
-```toml
-[command]
-enabled = true
-commands = ["/absolute/path/to/script.sh"]
-```
-
-Remember to `chmod` the script executable `+x`.
-
 ## systemd
 
-Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it isn't, modify `wg_monitor.service` to point to the correct location. Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
+Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it's stored elsewhere, modify `wg_monitor.service` to point to the correct location. Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
 
 ```bash
 sudo systemctl daemon-reload
