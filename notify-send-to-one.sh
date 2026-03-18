@@ -10,6 +10,8 @@
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number=$3
+message="$1"
+
 user=1000
 
 if [[ "$loop_number" = "0" ]]; then
@@ -24,4 +26,4 @@ systemd-run --machine=${user}@.host --user \
         --icon="$icon" \
         --urgency="$urgency" \
         "$summary" \
-        "$1"
+        "$message"

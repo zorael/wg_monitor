@@ -7,6 +7,8 @@
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number=$3
+message="$1"
+
 ids=( $(loginctl list-sessions -j | jq -r '.[] | .session') )
 
 if [[ "$loop_number" = "0" ]]; then
@@ -26,5 +28,5 @@ for id in "${ids[@]}" ; do
             --icon="$icon" \
             --urgency="$urgency" \
             "$summary" \
-            "$1"
+            "$message"
 done
