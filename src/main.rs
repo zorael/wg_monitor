@@ -36,7 +36,6 @@ mod utils;
 mod wireguard;
 
 use clap::Parser;
-use std::env;
 use std::fs;
 use std::process;
 use std::thread;
@@ -481,22 +480,6 @@ fn run_loop(
 /// Initializes all settings, except for CLI parsing, which must already have been done.
 fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode> {
     let mut settings = settings::Settings::default();
-
-    if env::var_os("JOURNAL_STREAM").is_some() {
-        // If we're running as a systemd service, default to disabling timestamps.
-        // Any CLI args will overwrite the setting below.
-        /*
-           If the standard output or standard error output of the executed
-           processes are connected to the journal (for example, by setting
-           StandardError=journal) $JOURNAL_STREAM contains the device and inode
-           numbers of the connection file descriptor, formatted in decimal,
-           separated by a colon (":"). This permits invoked processes to safely
-           detect whether their standard output or standard error output are
-           connected to the journal.
-        */
-        // https://man.archlinux.org/man/systemd.exec.5.en#Environment_Variables_Set_or_Propagated_by_the_Service_Manager
-        settings.disable_timestamps = true;
-    }
 
     if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
         logging::tseprintln!(
