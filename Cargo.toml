@@ -10,7 +10,6 @@ authors = [ "jr" ]
 chrono = { version = "0.4" }
 clap = { version = "4.5", features = ["derive"] }
 confy = { version = "2.0" }
-constcat = { version = "0.6" }
 humantime = { version = "2.3" }
 humantime-serde = { version = "1.1" }
 serde = { version = "1.0", features = ["derive"] }
