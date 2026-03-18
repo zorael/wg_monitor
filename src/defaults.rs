@@ -41,8 +41,6 @@ pub const DUMMY_COMMAND: &str = "/usr/bin/echo";
 pub mod program_metadata {
     //! Program metadata constants, such as the program name, version, authors, and source repository URL.
 
-    use constcat::concat;
-
     /// The name of the program, as specified in Cargo.toml.
     pub const PROGRAM_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -52,14 +50,8 @@ pub mod program_metadata {
     /// The authors of the program, as specified in Cargo.toml.
     pub const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
-    /// A semver patch string to append to the version for pre-release versions.
-    /// This should be empty for stable releases and can be set to something
-    /// like "-beta.01" for pre-release versions.
-    pub const SEMVER_PATCH: &str = "";
-
-    /// The version of the program, as specified in Cargo.toml,
-    /// with an optional semver patch for pre-release versions.
-    pub const VERSION: &str = concat!("v", env!("CARGO_PKG_VERSION"), SEMVER_PATCH);
+    /// The version of the program, as specified in Cargo.toml.
+    pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
     /// The source repository URL for the program, as specified in Cargo.toml.
     pub const SOURCE_REPOSITORY: &str = env!("CARGO_PKG_REPOSITORY");
