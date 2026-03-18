@@ -52,6 +52,7 @@ cargo run -- --save
   * [example scripts](#example-scripts)
     * [notify all](#notify-all)
     * [notify one](#notify-one)
+* [systemd](#systemd)
 * [todo](#todo)
 * [license](#license)
 
@@ -249,7 +250,7 @@ done
 
 #### notify one
 
-Example [`notify-send-to-one`](notify-send-to-one.sh):
+Example [`notify-send-to-one.sh`](notify-send-to-one.sh):
 
 ```bash
 #!/bin/bash
@@ -289,7 +290,22 @@ enabled = true
 commands = ["/absolute/path/to/script.sh"]
 ```
 
-Remember to `chmod` it executable `+x`.
+Remember to `chmod` the script executable `+x`.
+
+## systemd
+
+Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it isn't, modify `wg_monitor.service` to point to the correct location. Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now wg_monitor.service
+```
+
+`enable --now` both enables the service to be autostarted on subsequent boots as well as starts it immediately. For the terminal output of the program (and error messages if it could not be started), refer to the systemd **journal**.
+
+```bash
+journalctl -b0 -fn100 -u wg_monitor.service
+```
 
 ## todo
 
