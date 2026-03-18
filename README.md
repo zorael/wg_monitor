@@ -31,7 +31,9 @@ Options:
   -V, --version             Display version information and exit
 ```
 
-To get started, create new [configuration](#configtoml) and [peer list](#peerstxt) files by passing `--save`.
+Pre-compiled binaries for `x86_64` and `aarch64` architectures are available under [**Releases**](https://github.com/zorael/wg_monitor/releases).
+
+Create new [configuration](#configtoml) and [peer list](#peerstxt) files by passing `--save`.
 
 ```sh
 cargo run -- --save
@@ -63,17 +65,27 @@ cargo run -- --save
 
 ## compilation
 
-This project uses [**Cargo**](https://doc.rust-lang.org/cargo) for compilation and dependency management.
+This project uses [**Cargo**](https://doc.rust-lang.org/cargo) for compilation and dependency management. Get it from your repositories, install it via [**Homebrew `rustup`**](https://formulae.brew.sh/formula/rustup), or download it with the official [`rustup`](https://rustup.rs) installation script.
+
+```sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+You may have to add `$HOME/.cargo/bin` to your `$PATH`.
+
+Use `cargo build` to build the project. This stores the resulting binary as `target/<profile>/wg_monitor`, where `<profile>` is one of `debug` or `release`, depending on what profile is being built. `debug` is the default; you can make it build in `release` mode with `--release`.
 
 ```sh
 cargo build
+cargo build --release
+```
+
+To compile the program and run it immediately, use `cargo run`. If you also want to pass command-line flags to the program, separate them from `cargo run` with two dashes `--`.
+
+```sh
 cargo run -- --help
 cargo run -- --save
 ```
-
-A normal desktop or laptop computer should be able to trivially build it without any additional steps taken.
-
-Pre-compiled binaries will be provided under [**Releases**](https://github.com/zorael/wg_monitor/releases) once the code stabilizes a bit and `v1.0.0` can be tagged.
 
 ### cross-compilation
 
@@ -128,7 +140,7 @@ Running the program with `--save` will create this directory, including parent d
 
 Mind that the program will likely require to be run with root permissions to be able to issue queries for handshake timestamps of the WireGuard interface. As per the list above, running as root would make the configuration directory default to `/etc/wg_monitor`.
 
-```bash
+```sh
 cargo run -- --save
 ```
 
@@ -313,14 +325,14 @@ systemd-run --machine=${user}@.host --user \
 
 Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it's stored elsewhere, modify `wg_monitor.service` to point to the correct location. Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
 
-```bash
+```sh
 sudo systemctl daemon-reload
 sudo systemctl enable --now wg_monitor.service
 ```
 
 `enable --now` both enables the service to be autostarted on subsequent boots as well as starts it immediately. For the terminal output of the program (and error messages if it could not be started), refer to the systemd **journal**.
 
-```bash
+```sh
 journalctl -b0 -fn100 -u wg_monitor.service
 ```
 
@@ -328,7 +340,6 @@ journalctl -b0 -fn100 -u wg_monitor.service
 
 * better documentation
 * colored terminal output?
-* pre-compiled binary
 
 ## license
 
