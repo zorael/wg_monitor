@@ -173,10 +173,10 @@ impl super::Backend for SlackBackend {
         let resp = self.agent.post(&self.url).send_json(json);
 
         match resp {
-            Ok(mut r) => {
-                let body = r.body_mut().read_to_string().map_err(|e| e.to_string())?;
-                Ok(Some(body))
-            }
+            Ok(mut r) => match r.body_mut().read_to_string() {
+                Ok(_) => Ok(None),
+                Err(e) => Err(e.to_string()),
+            },
             Err(e) => Err(e.to_string()),
         }
     }
