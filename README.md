@@ -2,13 +2,13 @@
 
 Monitors other peers in a [**WireGuard**](https://www.wireguard.com) VPN and sends a notification if contact with a peer is lost.
 
-The main purpose of this is to monitor Internet-connected locations for power outages, using WireGuard handshakes as a way for sites to phone home. Each site needs an always-on, always-online computer to act as a WireGuard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. ([Cross-compilation](#cross-compilation) may be required.)
+The main purpose of this is to monitor Internet-connected locations for power outages, using WireGuard handshakes as a way for sites to phone home. Each site needs an always-on, always-online computer to act as a WireGuard peer, for which something like a [**Raspberry Pi Zero 2W**](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w) is cheap and more than sufficient. (May require [cross-compilation](#cross-compilation).)
 
 In a hub-and-spoke WireGuard configuration, this program should be run on the hub server, with an additional instance on at least one other *geographically disconnected* peer to monitor the hub. In other configurations, it can be run on any peer with visibility of other peers, but a secondary instance monitoring the first is recommended in any setup. If the hub loses power, it cannot report itself as being lost.
 
 Peers must have a `PersistentKeepalive` setting in their WireGuard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
 
-Notifications can be sent as [**Slack**](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) messages, as short emails via [**Batsign**](https://batsign.me), and/or by invocation of an [**external command**](#external-command) (like `notify-send`).
+Notifications can be sent as [**Slack**](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) messages, as short emails via [**Batsign**](https://batsign.me), and/or by invocation of an [**external command**](#external-command) (like `notify-send` or `sendmail`).
 
 ## tl;dr
 
@@ -78,7 +78,7 @@ cargo build
 cargo build --release
 ```
 
-To compile the program and run it immediately, use `cargo run`. If you also want to pass command-line flags to the program, separate them from `cargo run` with two dashes `--`.
+To compile the program and run it immediately, use `cargo run`. If you also want to pass command-line flags to the program, separate them from `cargo run` with [double dashes](https://www.gnu.org/software/bash/manual/html_node/Shell-Builtin-Commands.html) `--`.
 
 ```sh
 cargo run -- --help
@@ -136,11 +136,11 @@ Configuration is done by modifying files created in the *configuration directory
 
 Running the program with `--save` will create this directory, including parent directories if necessary.
 
-Mind that the program will likely require to be run with root permissions to be able to issue queries for handshake timestamps of the WireGuard interface. As per the list above, running as root would make the configuration directory default to `/etc/wg_monitor`.
-
 ```sh
 cargo run -- --save
 ```
+
+Mind that the program will likely require to be run with root permissions to be able to issue queries for handshake timestamps of the WireGuard interface. As per the list above, running as root would make the configuration directory default to `/etc/wg_monitor`.
 
 ### `config.toml`
 
@@ -210,9 +210,9 @@ It is not possible to format text in Batsign emails with HTML markup. The best y
 
 You can also have the program execute an external command as a way to push notifications, although there are several caveats.
 
-* The command run will be passed several arguments in a specific hardcoded order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something you can use.
+* The command run will be passed several arguments in a specific hardcoded order, and it is unlikely that it will immediately suit whatever notification program you want to use. Realistically what you will end up doing is writing some glue-layer script that maps the arguments to something the notification program can use.
 
-* If you run the project binary as root (which may be unavoidable) the external command you set up as notification command will in turn also be run as root. If you need it to be run as a different user, you will have to use `systemd-run` or `su` in your shell script.
+* If you run the project binary as root (which may well be unavoidable) the external command specified will in turn also be run as root. If you need it to be run as a different user, you will have to use `systemd-run` or `su` in your shell script.
 
 In the configuration file;
 
@@ -230,7 +230,7 @@ The order of arguments is as follows:
 
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
-3. The number of time the notification loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
+3. The number of time the main loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
 4. A comma-separated string of late keys in the format "`key:timestamp`"
 5. A comma-separated string of missing keys in the format "`key:timestamp`"
 6. A comma-separated string of keys that were late the previous loop in the format "`key:timestamp`"
@@ -240,15 +240,15 @@ The order of arguments is as follows:
 10. In non-reminder notifications, a comma-separated string of keys that are no longer late in the format "`key:timestamp`"
 11. In non-reminder notifications, a comma-separated string of keys that returned in the format "`key:timestamp`"
 
-Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply an empty string.
+Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply an empty string `""`.
 
 #### example scripts
 
-`notify-send` can be used to send desktop notifications. Here are some example glue-layer scripts that map the arguments passed by the external command backend into something `notify-send` accepts.
+`notify-send` can be used to send desktop notifications. Here are some example glue-layer scripts that map the arguments passed by the external command backend into something `notify-send` can work with.
 
 ##### [`notify-send-to-all-gui.sh`](notify-send-to-all-gui.sh)
 
-This should theoretically push a desktop notification to *all* users currently logged into a graphical environment.
+This will push a desktop notification to *all* users currently logged into a graphical environment on the current machine.
 
 Adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/title/Desktop_notifications#Send_notifications_to_all_graphical_users):
 
@@ -261,12 +261,12 @@ Adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/tit
 
 icon="network-wireless-disconnected"
 urgency="critical"
-loop_number=$3
+loop_number="$3"
 message="$1"
 
 ids=( $(loginctl list-sessions -j | jq -r '.[] | .session') )
 
-if [[ "$loop_number" = "0" ]]; then
+if [[ $loop_number = 0 ]]; then
     # run 0
     summary="WireGuard Monitor: first run"
 else
@@ -301,14 +301,14 @@ A similar script but for only *one* user. Change the `user=` line to match the u
 # make sure to change the "user" variable to the actual username or user ID
 # of the user you want to send the notification to, e.g. 1000, "bob" or "alice".
 
-icon="network-wireless-disconnected"
-urgency="critical"
-loop_number=$3
-message="$1"
-
 user=1000
 
-if [[ "$loop_number" = "0" ]]; then
+icon="network-wireless-disconnected"
+urgency="critical"
+loop_number="$3"
+message="$1"
+
+if [[ $loop_number = 0 ]]; then
     # run 0
     summary="WireGuard Monitor: first run"
 else
@@ -325,7 +325,9 @@ systemd-run --machine=${user}@.host --user \
 
 ## systemd
 
-Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it's stored elsewhere, modify `wg_monitor.service` to point to the correct location. Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
+Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it's stored elsewhere, modify `wg_monitor.service` to point to the correct location.
+
+Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
 
 ```sh
 sudo systemctl daemon-reload
