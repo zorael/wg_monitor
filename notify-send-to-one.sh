@@ -7,14 +7,14 @@
 # make sure to change the "user" variable to the actual username or user ID
 # of the user you want to send the notification to, e.g. 1000, "bob" or "alice".
 
-icon="network-wireless-disconnected"
-urgency="critical"
-loop_number=$3
-message="$1"
-
 user=1000
 
-if [[ "$loop_number" = "0" ]]; then
+icon="network-wireless-disconnected"
+urgency="critical"
+loop_number="$3"
+message="$1"
+
+if [[ $loop_number = 0 ]]; then
     # run 0
     summary="WireGuard Monitor: first run"
 else
