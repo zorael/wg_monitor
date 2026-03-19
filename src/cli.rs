@@ -16,7 +16,7 @@ use crate::defaults;
 #[command(author = defaults::program_metadata::AUTHORS)]
 //#[command(version = defaults::program_metadata::VERSION)]
 pub struct Cli {
-    /// Specify an alternate configuration directory
+    /// Specify an alternative configuration directory
     #[arg(short = 'c', long, value_name = "path")]
     pub config_dir: Option<String>,
 
