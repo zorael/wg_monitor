@@ -75,6 +75,13 @@ impl WireGuardPeer {
             .chars()
             .all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '/')
     }
+
+    /// Resets the last seen timestamps for the peer, setting `last_seen` to `None`
+    /// and `last_seen_unix` to 0.
+    pub fn reset_last_seen(&mut self) {
+        self.last_seen = None;
+        self.last_seen_unix = 0;
+    }
 }
 
 /// Sorts an array of peer public keys based on their last seen UNIX timestamps in the

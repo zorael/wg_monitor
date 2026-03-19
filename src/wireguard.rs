@@ -119,6 +119,13 @@ pub fn update_handshakes(
     terminal_output: &str,
     peers: &mut collections::HashMap<String, peer::WireGuardPeer>,
 ) {
+    for peer in peers.values_mut() {
+        // Reset all peers prior to updating, so that any peers not present
+        // in the command output will be marked as lost (last_seen None, unix 0).
+        // This should only happen when a peer is removed from the VPN.
+        peer.reset_last_seen();
+    }
+
     for line in terminal_output.lines() {
         let line = line.trim();
 
