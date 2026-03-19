@@ -6,6 +6,7 @@ use std::process;
 use crate::notify;
 use crate::peer;
 use crate::settings;
+use crate::utils;
 
 /// The Command backend, which executes an external command to send notifications.
 pub struct CommandBackend {
@@ -90,22 +91,13 @@ impl super::Backend for CommandBackend {
 
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            let message = message
-                .replace("\\\\", "\\")
-                .replace("\\n", "\n")
-                .trim_end()
-                .to_string();
+            let message = utils::unescape(&message).trim_end().to_string();
             return Some(message);
         }
 
         message.push_str(body);
 
-        let message = message
-            .trim_end()
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .to_string();
-
+        let message = utils::unescape(&message).trim_end().to_string();
         Some(message)
     }
 
@@ -125,12 +117,7 @@ impl super::Backend for CommandBackend {
 
         message.push_str(body);
 
-        let message = message
-            .trim_end()
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .to_string();
-
+        let message = utils::unescape(&message).trim_end().to_string();
         Some(message)
     }
 

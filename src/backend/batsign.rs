@@ -2,6 +2,7 @@
 
 use crate::notify;
 use crate::settings;
+use crate::utils;
 
 /// Batsign backend for sending notifications via the free Batsign service.
 pub struct BatsignBackend {
@@ -9,7 +10,7 @@ pub struct BatsignBackend {
     /// logging and identification purposes.
     id: usize,
 
-    /// HTTP client used to send requests to the Batsign service.
+    /// HTTP agent used to send requests to the Batsign service.
     agent: ureq::Agent,
 
     /// Batsign URL to which the notification will be sent.
@@ -95,22 +96,13 @@ impl super::Backend for BatsignBackend {
 
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            let message = message
-                .replace("\\\\", "\\")
-                .replace("\\n", "\n")
-                .trim_end()
-                .to_string();
+            let message = utils::unescape(&message).trim_end().to_string();
             return Some(message);
         }
 
         message.push_str(body);
 
-        let message = message
-            .trim_end()
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .to_string();
-
+        let message = utils::unescape(&message).trim_end().to_string();
         Some(message)
     }
 
@@ -129,12 +121,7 @@ impl super::Backend for BatsignBackend {
 
         message.push_str(body);
 
-        let message = message
-            .trim_end()
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .to_string();
-
+        let message = utils::unescape(&message).trim_end().to_string();
         Some(message)
     }
 
@@ -146,9 +133,7 @@ impl super::Backend for BatsignBackend {
         _delta: Option<&notify::Delta>,
         message: &str,
     ) -> Result<Option<String>, String> {
-        let resp = self.agent.post(&self.url).send(message);
-
-        match resp {
+        match self.agent.post(&self.url).send(message) {
             Ok(mut r) => match r.body_mut().read_to_string() {
                 Ok(_) => Ok(None),
                 Err(e) => Err(e.to_string()),

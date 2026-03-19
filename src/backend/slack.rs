@@ -7,6 +7,7 @@
 
 use crate::notify;
 use crate::settings;
+use crate::utils;
 
 /// Defines the Slack backend for sending notifications to a Slack channel.
 pub struct SlackBackend {
@@ -15,7 +16,7 @@ pub struct SlackBackend {
     #[allow(dead_code)]
     id: usize,
 
-    /// HTTP client used to send requests to the Slack API.
+    /// HTTP agent used to send requests to the Slack API.
     agent: ureq::Agent,
 
     /// Slack webhook URL to which the notification will be sent.
@@ -32,7 +33,6 @@ pub struct SlackBackend {
     cached_name: String,
 }
 
-#[allow(dead_code)]
 impl SlackBackend {
     /// Creates a new instance of SlackBackend.
     pub fn new(
@@ -98,25 +98,15 @@ impl super::Backend for SlackBackend {
 
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            let message = message
-                .replace("\\\\", "\\")
-                .replace("\\n", "\n")
-                .trim_end()
-                .to_string();
-            let json = serde_json::json!({ "text": format!("{message}") }).to_string();
+            let message = utils::escape_json(&message).trim_end().to_string();
+            let json = serde_json::json!({ "text": message }).to_string();
             return Some(json);
         }
 
         message.push_str(body);
 
-        let message = escape_common_json_characters(&message);
-        let message = message
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .trim_end()
-            .to_string();
-
-        Some(serde_json::json!({ "text": format!("{message}") }).to_string())
+        let message = utils::escape_json(&message).trim_end().to_string();
+        Some(serde_json::json!({ "text": message }).to_string())
     }
 
     /// Builds the reminder message to be sent to Slack based on the notification context.
@@ -138,25 +128,16 @@ impl super::Backend for SlackBackend {
         if body.is_empty() && ctx.is_first_run() {
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            let message = message
-                .replace("\\\\", "\\")
-                .replace("\\n", "\n")
-                .trim_end()
-                .to_string();
-            let json = serde_json::json!({ "text": format!("{message}") }).to_string();
+
+            let message = utils::escape_json(&message).trim_end().to_string();
+            let json = serde_json::json!({ "text": message }).to_string();
             return Some(json);
         }
 
         message.push_str(body);
 
-        let message = escape_common_json_characters(&message);
-        let message = message
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .trim_end()
-            .to_string();
-
-        Some(serde_json::json!({ "text": format!("{message}") }).to_string())
+        let message = utils::escape_json(&message).trim_end().to_string();
+        Some(serde_json::json!({ "text": message }).to_string())
     }
 
     /// Sends a notification via the Slack backend by making a POST request
@@ -170,9 +151,7 @@ impl super::Backend for SlackBackend {
     ) -> Result<Option<String>, String> {
         let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
 
-        let resp = self.agent.post(&self.url).send_json(json);
-
-        match resp {
+        match self.agent.post(&self.url).send_json(json) {
             Ok(mut r) => match r.body_mut().read_to_string() {
                 Ok(_) => Ok(None),
                 Err(e) => Err(e.to_string()),
@@ -180,14 +159,4 @@ impl super::Backend for SlackBackend {
             Err(e) => Err(e.to_string()),
         }
     }
-}
-
-/// Escapes common characters in the input string that may interfere with JSON formatting,
-/// such as backslashes, quotes, and curly braces.
-fn escape_common_json_characters(input: &str) -> String {
-    input
-        .replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replace("{", "\\{")
-        .replace("}", "\\}")
 }
