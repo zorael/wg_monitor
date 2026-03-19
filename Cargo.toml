@@ -15,4 +15,4 @@ humantime-serde = { version = "1.1", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0", default-features = false }
 users = { version = "0.11", default-features = false }
-ureq = { version = "3", default-features = false, features = ["json"] }
+ureq = { version = "3", default-features = false, features = ["json", "rustls"] }
