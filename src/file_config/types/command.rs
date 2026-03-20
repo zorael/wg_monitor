@@ -1,10 +1,10 @@
-//! Configuration for the Command backend.
+//! Configuration structures for the Command notification backend.
 
 use super::*;
 use serde::{Deserialize, Serialize};
 
-/// Command configuration structure. This mirrors the runtime settings struct used
-/// by the program for Command notifications.
+/// Command configuration structure. This mirrors the runtime settings struct
+/// used by the program for Command notifications.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct CommandConfig {
@@ -17,6 +17,7 @@ pub struct CommandConfig {
     /// Whether Command notifications are enabled.
     pub enabled: Option<bool>,
 
-    /// The commands to execute for notifications.
+    /// The command strings to execute for notifications.
+    /// Each command string is executed as a separate process.
     pub commands: Option<Vec<String>>,
 }

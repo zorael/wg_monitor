@@ -1,20 +1,19 @@
-//! String configuration structures for the program, which can be deserialized
-//! from a configuration file on disk.
+//! Strings configuration structures for the file-based configuration system.
 
 use serde::{Deserialize, Serialize};
 
 use crate::settings;
 
-/// Notification message string configuration structure. This mirrors the
-/// runtime settings struct used by the program for notification message strings.
+/// Message string configuration structure. This mirrors the runtime settings
+/// struct used by the program for message strings.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MessageStringsConfig {
     /// Message header.
     pub header: Option<String>,
 
-    /// Message header for the first run (first loop) of the program. This is
-    /// used instead of `header` at such times.
+    /// Message header for the first run (first loop) of the program.
+    /// This is used instead of `header` at such times.
     pub first_run_header: Option<String>,
 
     /// Section header for peers that are missing on the first run of the program.
@@ -24,7 +23,7 @@ pub struct MessageStringsConfig {
     pub lost: Option<String>,
 
     /// Section header for peers that were present but are now missing, usually
-    /// (or always?) due to a restart of the VPN.
+    /// due to a restart of the VPN.
     pub forgot: Option<String>,
 
     /// Section header for peers that appeared for the first time since the last check.
@@ -57,8 +56,7 @@ pub struct MessageStringsConfig {
 }
 
 impl From<&settings::MessageStrings> for MessageStringsConfig {
-    /// Converts a `MessageStrings` into a `MessageStringsConfig` for
-    /// serialization purposes.
+    /// Converts a `MessageStrings` into a `MessageStringsConfig` for serialization purposes.
     fn from(strings: &settings::MessageStrings) -> Self {
         Self {
             header: Some(strings.header.clone()),

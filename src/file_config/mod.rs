@@ -1,6 +1,5 @@
-//! Module for handling the file-based configuration of the application.
-//! This includes structures that mirror the runtime settings used by the
-//! program, but are designed to be deserialized from a configuration file on disk.
+//! This module contains functions and types related to the configuration file
+//! used by the program.
 
 mod io;
 mod paths;

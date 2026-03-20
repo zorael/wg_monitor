@@ -1,11 +1,10 @@
-//! Batsign backend configuration structures for the program, which can be deserialized from a
-//! configuration file on disk.
+//! Configuration structures for the Batsign notification backend.
 
 use super::*;
 use serde::{Deserialize, Serialize};
 
 /// Batsign configuration structure. This mirrors the runtime settings struct
-/// used by the program for the Batsign backend.
+/// used by the program for Batsign notifications.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct BatsignConfig {
@@ -18,6 +17,8 @@ pub struct BatsignConfig {
     /// Whether Batsign notifications are enabled.
     pub enabled: Option<bool>,
 
-    /// List of URLs to send Batsign notifications to.
+    /// The Batsign URLs to which the notifications will be sent.
+    /// Each URL is unique to the target email address and includes a token
+    /// for authentication.
     pub urls: Option<Vec<String>>,
 }

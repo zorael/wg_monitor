@@ -1,5 +1,4 @@
-//! Configuration file structures for the program, which can be deserialized
-//! from a configuration file on disk.
+//! Configuration structures for the file-based configuration system.
 
 mod batsign;
 mod command;
