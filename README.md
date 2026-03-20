@@ -58,6 +58,7 @@ cargo run -- --save
       * [notify-send-to-all-gui.sh](#notify-send-to-all-guish)
       * [notify-send-to-one.sh](#notify-send-to-onesh)
 * [systemd](#systemd)
+* [ai](#ai)
 * [todo](#todo)
 * [license](#license)
 
@@ -339,6 +340,10 @@ sudo systemctl enable --now wg_monitor.service
 ```sh
 journalctl -b0 -fn100 -u wg_monitor.service
 ```
+
+## ai
+
+AI was used to inline auto-complete code and documentation. No "write me a function doing *xyz*" prompts were used.
 
 ## todo
 
