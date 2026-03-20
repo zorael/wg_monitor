@@ -1,4 +1,13 @@
-//! A simple external command backend.
+//! Defines the `CommandBackend`, which executes an external command to send
+//! notifications.
+//!
+//! The command is invoked with the composed message and various contextual
+//! information as arguments, allowing for flexible integration with custom
+//! notification systems or scripts.
+//!
+//! The `CommandBackend` implements the `Backend` trait, which specifies the
+//! interface for all notification backends, including methods for composing
+//! messages and sending notifications.
 
 use std::collections;
 use std::process;
@@ -8,13 +17,20 @@ use crate::peer;
 use crate::settings;
 use crate::utils;
 
-/// The Command backend, which executes an external command to send notifications.
+/// Defines the Command backend for sending notifications by executing
+/// an external command.
+///
+/// Commands may be any executable or script that can be invoked from the
+/// command line, and will receive the composed message and various contextual
+/// information as arguments.
 pub struct CommandBackend {
     /// Unique identifier for the Command backend instance, used for
     /// logging and identification purposes.
     id: usize,
 
-    /// The command to execute for notifications.
+    /// The command to execute when sending a notification.
+    ///
+    /// This should be the path to the executable or script to run.
     command: String,
 
     /// Message strings for Command notifications.
@@ -25,11 +41,28 @@ pub struct CommandBackend {
 
     /// Cached name of the backend instance, which can be used to avoid
     /// recomputing the name on every call to `name()`.
+    ///
+    /// The name is in the format "command#{id}:{command}", where {id} is the
+    /// unique numeric identifier of the instance, and {command} is the command
+    /// to execute.
     cached_name: String,
 }
 
 impl CommandBackend {
-    /// Creates a new instance of CommandBackend.
+    /// Creates a new instance of `CommandBackend`.
+    ///
+    /// # Parameters
+    /// - `id`: Unique numeric identifier for this backend instance, used
+    ///   for logging.
+    /// - `command`: The command to execute when sending a notification.
+    ///   This should be the path to the executable or script to run.
+    /// - `strings`: Message strings for Command notifications.
+    /// - `reminder_strings`: Message strings for Command reminder notifications.
+    ///
+    /// # Returns
+    /// A new instance of `CommandBackend` initialized with the provided parameters.
+    /// The `cached_name` field is computed based on the `id` and the
+    /// `command`, and is in the format "command#{id}:{command}".
     pub fn new(
         id: usize,
         command: &str,
@@ -50,18 +83,35 @@ impl CommandBackend {
 
 impl super::Backend for CommandBackend {
     /// Returns the unique identifier of the backend instance.
+    ///
+    /// # Returns
+    /// A numeric identifier that uniquely identifies this backend instance.
     #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }
 
-    /// Returns the name of this instance of the backend.
+    /// Returns the name of this backend instance.
+    ///
+    /// # Returns
+    /// A string slice representing the name of this backend instance.
+    /// It is in the format "command#{id}:{command}", where {id} is the unique
+    /// numeric identifier of the instance, and {command} is the command to execute.
     fn name(&self) -> &str {
         &self.cached_name
     }
 
-    /// Builds the message to be sent based on the notification context and the
-    /// delta expressing the changes since the last notification.
+    /// Composes a message to be used as argument when executing the command,
+    /// based on the notification context and delta.
+    ///
+    /// # Parameters
+    /// - `ctx`: The notification context.
+    /// - `delta`: The changes detected since the last notification.
+    ///
+    /// # Returns
+    /// - `Some(message)` if a message to send was composed.
+    /// - `None` if an empty message was composed, typically meaning no message
+    ///   should be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
         let mut message = String::new();
         let body = &notify::format_generic_message(ctx, delta, &self.strings);
@@ -101,7 +151,16 @@ impl super::Backend for CommandBackend {
         Some(message)
     }
 
-    /// Builds the reminder message to be sent based on the notification context.
+    /// Composes a reminder message to be used as argument when executing the
+    /// command, based on the notification context.
+    ///
+    /// # Parameters
+    /// - `ctx`: The notification context.
+    ///
+    /// # Returns
+    /// - `Some(message)` if a message to send was composed.
+    /// - `None` if an empty message was composed, typically meaning no message
+    ///   should be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
         let mut message = String::new();
         let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
@@ -121,7 +180,8 @@ impl super::Backend for CommandBackend {
         Some(message)
     }
 
-    /// Delivers the already-built message using the external command.
+    /// Sends a composed message by executing the configured command with the
+    /// message and various contextual information as arguments.
     ///
     /// The command is invoked with the following arguments:
     ///
@@ -132,13 +192,31 @@ impl super::Backend for CommandBackend {
     /// 5. A comma-separated string of missing keys in the format "key:timestamp"
     /// 6. A comma-separated string of previous late keys in the format "key:timestamp"
     /// 7. A comma-separated string of previous missing keys in the format "key:timestamp"
-    /// 8. If a delta is provided, a comma-separated string of keys that became late in the format "key:timestamp"
-    /// 9. If a delta is provided, a comma-separated string of keys that went missing in the format "key:timestamp"
-    /// 10. If a delta is provided, a comma-separated string of keys that are no longer late in the format "key:timestamp"
-    /// 11. If a delta is provided, a comma-separated string of keys that returned in the format "key:timestamp"
+    /// 8. If a delta is provided, a comma-separated string of keys that became
+    ///    late in the format "key:timestamp"
+    /// 9. If a delta is provided, a comma-separated string of keys that went
+    ///    missing in the format "key:timestamp"
+    /// 10. If a delta is provided, a comma-separated string of keys that are
+    ///     no longer late in the format "key:timestamp"
+    /// 11. If a delta is provided, a comma-separated string of keys that
+    ///     returned in the format "key:timestamp"
     ///
     /// Any parameter for which there is no value (as in, no late keys), the
     /// argument passed but is simply empty.
+    ///
+    /// # Parameters
+    /// - `ctx`: The notification context.
+    /// - `delta`: The changes detected since the last notification, or `None`
+    ///   if this is a reminder rather than a new notification.
+    /// - `message`: The composed message to send, which is passed as an
+    ///   argument to the command.
+    ///
+    /// # Returns
+    /// - `Ok(None)` if the command executed successfully and produced no output.
+    /// - `Ok(Some(output))` if the command executed successfully and produced
+    ///   output, which is returned as a string.
+    /// - `Err(error)` if the command execution failed, with the error message
+    ///   returned as a string.
     fn emit(
         &mut self,
         ctx: &notify::Context,
@@ -203,20 +281,34 @@ impl super::Backend for CommandBackend {
     }
 }
 
-/// Formats the given keys and their corresponding timestamps from the peers map
-/// into a comma-separated string in the format "key:timestamp".
+/// Formats a list of keys and their corresponding timestamps into a
+/// comma-separated string in the format "key:timestamp".
+///
 /// There must exist a peer in the peers map for each key in the keys slice,
 /// or this function will panic.
 ///
 /// Replace the map with the following to avoid panicking if a key is not found.
 ///
-/// ```rust
+/// ```rust,ignore
 /// .filter_map(|key| {
 ///     peers
 ///         .get(key)
 ///         .map(|peer| format!("{key}:{}", peer.last_seen_unix))
 /// })
 /// ```
+///
+/// # Parameters
+/// - `peers`: A map of peer keys to their corresponding `WireGuardPeer
+///   information, which includes the last seen timestamp for each peer.
+/// - `keys`: A slice of keys for which to format the key-timestamp pairs.
+///   Each key must exist in the `peers` map, or this function will panic.
+///
+/// # Returns
+/// A comma-separated string of key-timestamp pairs in the format "key:timestamp".
+///
+/// # Panics
+/// If any key in the `keys` slice does not exist in the `peers` map,
+/// this function will panic with a message indicating the missing key.
 fn format_key_timestamp_pairs(
     peers: &collections::HashMap<String, peer::WireGuardPeer>,
     keys: &[String],
