@@ -168,6 +168,8 @@ There are three available notification backends.
 
 Messages to Slack channels can trivially be pushed by use of [webhook URLs](https://en.wikipedia.org/wiki/Webhook). HTTP requests made to these will end up as messages in the channels they refer to. See [this guide](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) in the Slack documentation for developers on how to get started.
 
+It is recommended that you make an entry in `/etc/hosts` to manually resolve `hooks.slack.com` to *an* IP of the underlying Slack server, to avoid potential DNS lookup failures.
+
 URLs must be be quoted. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
 ```toml
@@ -193,7 +195,9 @@ See [this help article](https://slack.com/intl/en-gb/help/articles/360039953113-
 
 ### batsign
 
-It is likewise easy to push simple email notifications by signing up for a [**Batsign**](https://batsign.me) address. Much like Slack webhooks, HTTP requests made to these will end up as emails sent to the corresponding addresses.
+[**Batsign**](https://batsign.me) is a free (gratis) service with which you can send brief emails. Requires registration, after which you will receive a unique URL that should be kept secret. HTTP requests made to this URL will send an email to the address you specified when registering.
+
+It is recommended that you make an entry in `/etc/hosts` to manually resolve `batsign.me` to the IP of the underlying Batsign server, to avoid potential DNS lookup failures.
 
 URLs must be quoted. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
@@ -326,9 +330,28 @@ systemd-run --machine=${user}@.host --user \
 
 ## systemd
 
-Included in the repository is a simple **systemd** service which can be used to have the program be autostarted on boot. It assumes the binary is placed in `/usr/local/bin`, so if it's stored elsewhere, modify `wg_monitor.service` to point to the correct location.
+The program is preferably run as a **systemd** service, to have it be automatically restarted upon restoration of power. To facilitate this, [a service unit file](wg_monitor.service) is provided in the repository.
 
-Once it has the right path, copy (or symlink) it to `/etc/systemd/system` to make it visible to systemd, then issue a `daemon-reload` to have it be picked up and cached.
+It will have to be copied (or symlinked) into `/etc/systemd/system`, after which you can use `systemctl edit` to create a drop-in file for the service that overrides the `ExecStart` directive to point to the actual location of the `wg_monitor` binary, *if* it is not already located in the default path of `/usr/local/bin/wg_monitor`.
+
+```sh
+sudo cp wg_monitor.service /etc/systemd/system
+sudo systemctl edit wg_monitor.service
+```
+
+```ini
+### Editing /etc/systemd/system/wg_monitor.service.d/override.conf
+### Anything between here and the comment below will become the contents of the drop-in file
+
+[Service]
+ExecStart=
+ExecStart=/home/user/src/wg_monitor/wg_monitor --disable-timestamps --verbose
+
+### Edits below this comment will be discarded
+### ...
+```
+
+An empty `ExecStart=` must be used to clear the value set in the original file, as `Exec` directives are additive.
 
 ```sh
 sudo systemctl daemon-reload
@@ -343,12 +366,11 @@ journalctl -b0 -fn100 -u wg_monitor.service
 
 ## ai
 
-AI was used to inline auto-complete code and documentation. No "write me a function doing *xyz*" prompts were used.
+**Visual Studio Code Copilot AI** was used for inline suggestions and to tab-complete some code and documentation. [**ChatGPT**](https://chatgpt.com) was used to answer questions and teach Rust. The project contains no code from "write me a function doing *xyz*" prompts.
 
 ## todo
 
-* better documentation
-* colored terminal output?
+* polish in preparation for v1.0
 
 ## license
 
