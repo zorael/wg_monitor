@@ -127,14 +127,14 @@ impl super::Backend for SlackBackend {
 
             // Nothing to send, but send the first run header to alert that
             // power is back.
-            let message = utils::escape_json(&message).trim_end().to_string();
+            let message = utils::unescape(&message).trim_end().to_string();
             let json = serde_json::json!({ "text": message }).to_string();
             return Some(json);
         }
 
         message.push_str(body);
 
-        let message = utils::escape_json(&message).trim_end().to_string();
+        let message = utils::unescape(&message).trim_end().to_string();
         Some(serde_json::json!({ "text": message }).to_string())
     }
 
@@ -167,14 +167,14 @@ impl super::Backend for SlackBackend {
             // Nothing to send, but send the first run header to alert that
             // power is back.
 
-            let message = utils::escape_json(&message).trim_end().to_string();
+            let message = utils::unescape(&message).trim_end().to_string();
             let json = serde_json::json!({ "text": message }).to_string();
             return Some(json);
         }
 
         message.push_str(body);
 
-        let message = utils::escape_json(&message).trim_end().to_string();
+        let message = utils::unescape(&message).trim_end().to_string();
         Some(serde_json::json!({ "text": message }).to_string())
     }
 
