@@ -19,3 +19,6 @@
 /config.toml
 /peers.txt
 /grinds
+/wg_monitor*
+/report.*
+/push*
