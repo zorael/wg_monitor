@@ -1,5 +1,4 @@
-//! Utility functions for string manipulation, including unescaping
-//! of special characters.
+//! Utility functions for string manipulation.
 
 /// Unescapes a string that has been escaped for JSON, reversing the escaping
 /// of special characters such as backslashes, quotes, newlines, tabs, and curly
@@ -40,6 +39,25 @@ pub fn unescape(input: &str) -> String {
         .to_string()
 }
 
+/// Returns the singular or plural form of a word based on the provided number.
+///
+/// # Parameters
+/// - `num`: The number to determine singular or plural form.
+///   Specifically, 1 or -1 will return the singular form, while all other
+///   numbers will return the plural form.
+/// - `singular`: The singular form of the word to return if `num` indicates
+///   singular (1 or -1).
+/// - `plural`: The plural form of the word to return if `num` indicates plural.
+///
+/// # Returns
+/// The singular form if `num` is 1 or -1, otherwise the plural form.
+pub fn plurality<'a>(num: isize, singular: &'a str, plural: &'a str) -> &'a str {
+    match num {
+        1 | -1 => singular,
+        _ => plural,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -51,5 +69,16 @@ mod tests {
         let input = "Hello \\\"world\\\"!\\nThis is a test.\\t\\{Curly braces\\}";
         let expected = "Hello \"world\"!\nThis is a test.\t{Curly braces}";
         assert_eq!(unescape(input), expected);
+    }
+
+    /// Tests the `plurality` function to ensure that it returns the correct
+    /// singular or plural form based on the provided number.
+    #[test]
+    fn test_plurality() {
+        assert_eq!(plurality(1, "peer", "peers"), "peer");
+        assert_eq!(plurality(-1, "peer", "peers"), "peer");
+        assert_eq!(plurality(0, "peer", "peers"), "peers");
+        assert_eq!(plurality(2, "peer", "peers"), "peers");
+        assert_eq!(plurality(-2, "peer", "peers"), "peers");
     }
 }
