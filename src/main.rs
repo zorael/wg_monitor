@@ -545,7 +545,7 @@ fn run_loop(
 ///
 /// # Parameters
 /// - `cli`: The parsed command-line arguments, used to determine the
-/// configuration directory and any overrides to apply to the settings.
+///   configuration directory and any overrides to apply to the settings.
 ///
 /// # Returns
 /// On success, returns the initialized `Settings` object. On failure,
