@@ -1,4 +1,5 @@
-//! Miscellaneous utility functions.
+//! Utility functions and helper methods used across the application,
+//! including string manipulation, time formatting, and vector operations.
 
 #![allow(unused_imports)]
 
