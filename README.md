@@ -13,13 +13,13 @@ Notifications can be sent as [**Slack**](https://docs.slack.dev/messaging/sendin
 ## tl;dr
 
 ```text
-wg_monitor x.y.z | copyright 2026 jr
+wg_monitor x.y.z | copyright (c) 2026 jr
 $ git clone https://github.com/zorael/wg_monitor
 
 Usage: wg_monitor [OPTIONS]
 
 Options:
-  -c, --config-dir <path>   Specify an alternate configuration directory
+  -c, --config-dir <path>   Specify an alternative configuration directory
       --resume              Word the first notification as if the program was not just started
       --skip-first          Skip the first run and thus the first notification
       --disable-timestamps  Disable timestamps in terminal output
