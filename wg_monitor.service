@@ -8,7 +8,9 @@ Type=simple
 #Environment=WG_MONITOR_CONFIG_DIR=/etc/wg_monitor
 ExecStart=/usr/local/bin/wg_monitor --disable-timestamps --verbose
 Restart=on-failure
-RestartSec=10
+RestartPreventExitStatus=10 11 12 20 21 32 40 41 42 43 44
+RestartSec=30
+StartLimitIntervalSec=0
 
 [Install]
 WantedBy=multi-user.target
