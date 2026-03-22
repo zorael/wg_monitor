@@ -210,9 +210,11 @@ fn main() -> process::ExitCode {
     } else {
         println!();
         println!(
-            "{} peer(s) monitored, {} notifier(s) configured.",
+            "{} {} monitored, {} {} configured.",
             peers.len(),
-            notifiers.len()
+            utils::plurality(peers.len() as isize, "peer", "peers"),
+            notifiers.len(),
+            utils::plurality(notifiers.len() as isize, "notifier", "notifiers")
         );
         println!(
             "check interval: {}, peer timeout: {}",
