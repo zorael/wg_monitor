@@ -1,23 +1,28 @@
-//! Module containing result types used in the notification system.
+//! Result types used in the notification system.
 
-/// Represents the result of attempting to send a notification, which can be a
-/// dry run, a success, or a failure with an error message.
+/// Enum representing the result of a notification attempt, including cases for
+/// success, failure, a dry run being in effect, no message rendered,
+/// as well as the notification being skipped.
 #[derive(Debug)]
 pub enum NotificationResult {
-    /// Indicates that the notification was processed as a dry run, meaning
-    /// no notification was sent.
+    /// Indicates that the notification was not actually sent because a dry run
+    /// mode is in effect, but includes the message that would have been sent.
     DryRun(String),
 
-    /// Indicates that the notification was successful.
+    /// Indicates that the notification was successfully sent, including the message
+    /// that was sent.
     Success(String),
 
-    /// Indicates that the notification failed.
+    /// Indicates that there was a failure in sending the notification, including
+    /// an error message describing the failure and the message that was
+    /// attempted to be sent.
     Failure(String, String),
 
-    /// Indicates that there was no message to send (e.g., the backend returned an empty message).
+    /// Indicates that the notification was not sent because the rendered message
+    /// ended up empty.
     NoMessage,
 
-    /// Indicates that a stored notification was skipped.
+    /// Indicates that the notification was skipped, typically due to timing reasons.
     #[allow(dead_code)]
     Skipped,
 }

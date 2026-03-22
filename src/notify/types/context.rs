@@ -1,5 +1,5 @@
-//! Module defining the `Context` struct, which holds the state of peers and timing information
-//! used for building notification messages in the `notify` module.
+//! Context struct for notification message-composing, containing the current
+//! and previous state of peers, as well as timing information.
 
 use std::collections;
 use std::mem;
@@ -8,13 +8,16 @@ use std::time;
 use crate::peer;
 
 #[derive(Clone, Debug)]
-/// Context for building notification messages, containing the current and previous
-/// state of peers, as well as timing information.
+/// Context struct for notification message-composing, containing the current
+/// and previous state of peers, as well as timing information.
 pub struct Context {
-    /// Map of public keys to `WireGuardPeer` structs, representing all known peers.
+    /// Current peers, keyed by their public key.
+    ///
+    /// Can be used by notification backends to access peer information when
+    /// composing notifications.
     pub peers: collections::HashMap<String, peer::WireGuardPeer>,
 
-    /// Current peers that are late (seen but not within the expected time).
+    /// Current peers that are late (seen but timed out).
     pub late_keys: Vec<String>,
 
     /// Current peers that are missing (not seen at all).
@@ -26,24 +29,39 @@ pub struct Context {
     /// Peers that were previously missing in the last check.
     pub previous_missing_keys: Vec<String>,
 
-    /// Current time.
+    /// The current time, which can be used in notifications to indicate when
+    /// the notification is being sent, or to calculate durations since the
+    /// last seen time of peers.
     pub now: time::SystemTime,
 
-    /// The current loop iteration, indicating whether this is the first run of
-    /// the notification loop, which can be used to adjust messaging and behavior accordingly.
+    /// The current loop iteration count, which can be used in notifications to
+    /// indicate how many times the program has checked the peers since it started.
+    ///
+    /// This starts at 0 for the first run, and increments by 1 on each loop iteration.
+    /// If `--resume` was passed, this will start at 1 instead.
     pub loop_iteration: usize,
 
-    /// Indicates that the program is resuming from a previous run, which means
-    /// that some startup notifications should be skipped.
+    /// Whether or not the program is resuming from a previous run, which can be
+    /// used in notifications to indicate that the program has been restarted
+    /// and is resuming its checks.
     pub resume: bool,
 
-    /// The file path of the peer list file, which can be used in notifications
-    /// to indicate the source of the peer information.
+    /// The path to the peer list file, which can be used by some notification
+    /// backends for reading peers' human-readable names.
     pub peer_list_file_path: String,
 }
 
 impl Context {
-    /// Creates a new `Context` with the specified capacity for the peer key vectors.
+    /// Creates a new `Context` with the specified capacity for the peer-related vectors.
+    ///
+    /// # Parameters
+    /// - `capacity`: The capacity to use for the peer-related vectors,
+    ///   which can help avoid unnecessary allocations if the number of peers
+    ///   is known in advance.
+    ///
+    /// # Returns
+    /// A new `Context` instance with the specified capacity for the
+    /// peer-related vectors, initialized with default values for other fields.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             peers: collections::HashMap::with_capacity(capacity),
@@ -58,16 +76,23 @@ impl Context {
         }
     }
 
-    /// Creates a new `Context` with the provided peers, initializing the
-    /// vectors based on the number of peers.
+    /// Creates a new `Context` by inheriting the peer information from a previous state.
+    ///
+    /// # Parameters
+    /// - `peers`: A hashmap of peers to inherit, keyed by their public key.
+    ///
+    /// # Returns
+    /// A new `Context` instance with the specified peers and default values
+    /// for other fields.
     pub fn inherit(peers: collections::HashMap<String, peer::WireGuardPeer>) -> Self {
         let mut sized = Self::with_capacity(peers.len());
         sized.peers = peers;
         sized
     }
 
-    /// Rotates the current late and missing peer vectors into the previous vectors,
-    /// clearing the current ones. They retain their capacity.
+    /// Rotates the peer state by moving the current late and missing keys to
+    /// the previous fields, and clearing the current late and missing keys
+    /// for the next check.
     pub fn rotate(&mut self) {
         mem::swap(&mut self.late_keys, &mut self.previous_late_keys);
         mem::swap(&mut self.missing_keys, &mut self.previous_missing_keys);
@@ -75,7 +100,12 @@ impl Context {
         self.missing_keys.clear();
     }
 
-    /// Whether or not this is the first run; e.g. `loop_iteration` is 0.
+    /// Returns whether this is the first run of the program, which is
+    /// determined by whether the loop iteration count is zero.
+    ///
+    /// # Returns
+    /// `true` if this is the first run of the program (loop iteration count
+    /// is zero), and `false` otherwise.
     pub fn is_first_run(&self) -> bool {
         self.loop_iteration == 0
     }

@@ -1,15 +1,18 @@
-//! Module defining the `Delta` struct, which represents the changes in peer
-//! status between two checks, containing vectors of public keys for peers that
-//! became late, went missing, are no longer late or returned after being missing.
+//! Delta struct representing the changes in peer status between two checks,
+//! key in composing notification messages based on what changed since the
+//! last check.
 //!
-//! The `Delta` is computed based on the current and previous peer status in
-//! the `Context` struct.
+//! This struct is computed from the `Context` and contains vectors of public
+//! keys for peers that changed status, categorized by the type of change
+//! (became late, went missing, no longer late, returned).
 
 use crate::notify;
 use crate::peer;
 use crate::utils;
 
-/// Structure representing the changes in peer status between two checks.
+/// Delta struct representing the changes in peer status between two checks,
+/// key in composing notification messages based on what changed since the
+/// last check.
 #[derive(Debug, Clone)]
 pub struct Delta {
     /// Public keys of peers that were lost (time since last seen exceeds the
@@ -31,6 +34,14 @@ pub struct Delta {
 
 impl Delta {
     /// Creates a new `Delta` with the specified capacity for the key vectors.
+    ///
+    /// # Parameters
+    /// - `capacity`: The capacity to use for the key vectors, which can help
+    ///   avoid unnecessary allocations if the number of peers is known in advance.
+    ///
+    /// # Returns
+    /// A new `Delta` instance with the specified capacity for the key vectors,
+    /// initialized with empty vectors.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             became_late_keys: Vec::with_capacity(capacity),
@@ -40,7 +51,8 @@ impl Delta {
         }
     }
 
-    /// Clears all the key vectors in the `Delta`, preparing it for reuse.
+    /// Clears all the key vectors in the `Delta`, effectively resetting it to an
+    /// empty state while retaining the allocated capacity.
     pub fn clear(&mut self) {
         self.became_late_keys.clear();
         self.went_missing_keys.clear();
@@ -48,7 +60,11 @@ impl Delta {
         self.returned_keys.clear();
     }
 
-    /// Checks if the `Delta` is empty, indicating there were no changes in peer status.
+    /// Returns whether all the key vectors in the `Delta` are empty, indicating
+    /// that there are no changes in peer status since the last check.
+    ///
+    /// # Returns
+    /// `true` if all key vectors are empty, and `false` if any of them contain keys.
     pub fn is_empty(&self) -> bool {
         self.became_late_keys.is_empty()
             && self.went_missing_keys.is_empty()
@@ -56,9 +72,12 @@ impl Delta {
             && self.returned_keys.is_empty()
     }
 
-    /// Computes the `Delta` based on the current and previous peer status in
-    /// the provided `Context`, populating the vectors with the appropriate
-    /// public keys for each category of change.
+    /// Computes the `Delta` from the given `Context`, determining which peers
+    /// changed status since the last check and categorizing them into the
+    /// appropriate vectors.
+    ///
+    /// # Parameters
+    /// - `ctx`: The `Context` containing the current and previous state of peers.
     pub fn compute_from(&mut self, ctx: &notify::Context) {
         self.clear();
 
@@ -84,8 +103,12 @@ impl Delta {
         peer::sort_keys(&mut self.went_missing_keys, &ctx.peers);
     }
 
-    /// Prints the non-empty vectors in the `Delta` for debugging purposes,
-    /// showing which peers changed status.
+    /// Prints the non-empty key vectors in the `Delta` with a specified prefix
+    /// for each line, useful for debugging or logging the changes in peer status.
+    ///
+    /// # Parameters
+    /// - `prefix`: A string prefix to prepend to each line of output, which can
+    ///   help visually distinguish this output in terminal output.
     pub fn print_nonempty_prefixed(&self, prefix: &str) {
         if !self.no_longer_late_keys.is_empty() {
             println!("{prefix}no longer late: {:?}", self.no_longer_late_keys);

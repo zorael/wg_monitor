@@ -1,5 +1,9 @@
-//! Module responsible for formatting notification messages based on the current
-//! context and changes in peer status.
+//! This module contains functions for formatting notification messages based
+//! on the `Context` and `Delta` of peer status changes, using customizable message
+//! strings defined in the settings.
+//!
+//! It provides generic formatting logic that can be reused across different
+//! types of notifications and reminders.
 
 use std::collections;
 
@@ -9,6 +13,26 @@ use crate::utils;
 
 /// Builds a generic notification message based on the provided `Context` and
 /// `Delta`, using the specified message strings for formatting.
+///
+/// The message is composed of sections for peers that became late, went missing,
+/// returned, etc., with appropriate headers and formatting based on the provided
+/// message strings. The formatting logic takes into account whether this is the
+/// first run, whether the program is resuming, and whether timestamps should be
+/// included for each peer.
+///
+/// # Note:
+/// The returned String may be empty if there are no peers to report, or if the
+/// message strings are configured in such a way that no message should be sent
+/// (e.g., no headers for some peers to list).
+///
+/// # Parameters
+/// - `ctx`: The notification context containing the current state of peers
+///   and timing information.
+/// - `delta`: The delta containing the changes in peer status since the last check.
+/// - `strings`: The message strings to use for formatting the notification.
+///
+/// # Returns
+/// A formatted notification message as a `String`.
 pub fn format_generic_message(
     ctx: &super::Context,
     delta: &super::Delta,
@@ -98,8 +122,21 @@ pub fn format_generic_message(
     message.trim_end().to_string()
 }
 
-/// Builds a generic reminder message based on the provided `Context`, using the
-/// specified message strings for formatting.
+/// Builds a generic reminder message based on the provided `Context` and
+/// message strings for reminders.
+///
+/// This is similar to `format_generic_message` but is used for reminder
+/// notifications, which typically only report peers that are still lost or
+/// missing since the last check, without reporting peers that just became late
+/// or went missing.
+///
+/// # Parameters
+/// - `ctx`: The notification context containing the current state of peers
+///   and timing information.
+/// - `strings`: The message strings to use for formatting the reminder notification.
+///
+/// # Returns
+/// A formatted reminder message as a `String`.
 pub fn format_generic_reminder(
     ctx: &super::Context,
     strings: &settings::ReminderStrings,
@@ -130,8 +167,24 @@ pub fn format_generic_reminder(
     message.trim_end().to_string()
 }
 
-/// Formats a single peer line for notifications, using the provided string
-/// patterns for peers with and without timestamps.
+/// Formats a single peer line for the notification message based on the peer's
+/// information and the provided patterns for peers with and without timestamps.
+///
+/// The pattern can include placeholders `{peer}`, `{key}`, `{when}`,
+/// and `{unix}` which will be replaced with the peer's human-readable name,
+/// public key, last seen time (formatted), and last seen time (unix timestamp)
+/// respectively.
+///
+/// # Parameters
+/// - `peer`: The `WireGuardPeer` whose information is to be formatted into a
+///   line in the notification message.
+/// - `pattern_with_timestamp`: The pattern to use for formatting if the peer
+///   has a known last seen time (i.e., is "lost").
+/// - `pattern_without_timestamp`: The pattern to use for formatting if the
+///   peer does not have a known last seen time (i.e., is "missing").
+///
+/// # Returns
+/// A formatted string representing the peer line in the notification message.
 fn format_peer_line(
     peer: &peer::WireGuardPeer,
     pattern_with_timestamp: &str,
@@ -157,8 +210,29 @@ fn format_peer_line(
         .replace("{unix}", &peer.last_seen_unix.to_string())
 }
 
-/// Appends a section to the notification message for a list of peer keys,
-/// using the provided section header and patterns for formatting each peer line.
+/// Appends a section to the notification message for a list of peer keys, using
+/// the specified header and formatting options.
+///
+/// This is a helper function used by both `format_generic_message` and
+/// `format_generic_reminder` to avoid code duplication when adding sections for
+/// different categories of peers (e.g., lost, missing, still lost, etc.).
+///
+/// # Parameters
+/// - `peers`: A hashmap of all peers, keyed by their public key, used
+///   to look up peer information for formatting.
+/// - `message`: The message string being built, to which the section will be appended.
+/// - `keys`: The list of peer public keys that belong to this section (e.g
+///   "lost" peers, "missing" peers, etc.).
+/// - `header`: The header string for this section, which will be added before listing the peers.
+/// - `peer_with_timestamp`: The pattern to use for formatting peers with a known last seen
+///   time (i.e., "lost" peers).
+/// - `peer_no_timestamp`: The pattern to use for formatting peers without a known last seen
+///   time (i.e., "missing" peers).
+/// - `bullet_point`: The string to use as a bullet point for listing peers in this
+///   section.
+/// - `disable_timestamps`: A boolean indicating whether to disable timestamps in the
+///   peer formatting, which is typically used for "returned" or "appeared" peers where
+///   the last seen time is not relevant.
 #[allow(clippy::too_many_arguments)]
 fn append_message_section(
     peers: &collections::HashMap<String, peer::WireGuardPeer>,

@@ -1,6 +1,11 @@
-//! The `notify` module contains all the logic related to sending notifications about
-//! WireGuard peer status changes, including building messages based on the notification
-//! context and delta, and dispatching notifications to all configured notifiers.
+//! Notification system for WG Monitor.
+//!
+//! This module provides the infrastructure for sending notifications and
+//! reminders based on various events and conditions.
+//!
+//! The notification system is designed to be flexible and extensible,
+//! allowing for different types of notifications and various backends for
+//! sending notifications (e.g., Batsign, Slack, custom commands).
 
 mod dispatch;
 mod format;

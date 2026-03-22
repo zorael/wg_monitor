@@ -1,22 +1,43 @@
-//! Handles the dispatching of notifications to all configured notifiers,
-//! including sending notifications about peer status changes and sending
-//! reminder notifications.
+//! Module responsible for dispatching notifications and reminders via notifiers.
 
 use std::time;
 
 use crate::logging;
 use crate::settings;
 
-/// Small helper that prints a message if the `verbose` setting is enabled.
-fn verbose_print(message: &str, settings: &settings::Settings) {
+/// Helper function to print verbose messages with separators if verbose
+/// mode is enabled.
+///
+/// # Parameters
+/// - `message`: The message to print if verbose mode is enabled.
+/// - `verbose`: A boolean indicating whether verbose mode is enabled.
+fn verbose_print(message: &str, verbose: bool) {
     const SEP: &str = "--------------------";
 
-    if settings.verbose && !message.is_empty() {
+    if verbose && !message.is_empty() {
         println!("{SEP}\n{}\n{SEP}", message);
     }
 }
 
-/// Retries sending any notifications pending in notifiers.
+/// Retries pending notifications that are due for retrying, and updates the
+/// report with the results of the retry attempts.
+///
+/// This function iterates through the provided notifiers, checks if their pending
+/// notifications are due for retrying based on the current time and the retry
+/// interval specified in settings, and attempts to resend the notifications if they
+/// are due. The results of each retry attempt are collected into a `DispatchReport`
+/// which is returned at the end.
+///
+/// # Parameters
+/// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to check
+///   for pending notifications and attempt retries on.
+/// - `settings`: The settings struct which contains the retry interval and other
+///   configuration needed for determining when to retry and how to log the results.
+///
+/// # Returns
+/// A `DispatchReport` struct containing the results of the retry attempts,
+/// including the total number of notifiers processed, how many were successful,
+/// failed, had no message to send, or were skipped due to timing reasons.
 pub fn retry_pending_notifications(
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
@@ -57,7 +78,7 @@ pub fn retry_pending_notifications(
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(&settings, "[{}] DRY RUN; RETRY not sent", n.name());
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
@@ -68,7 +89,7 @@ pub fn retry_pending_notifications(
                     n.name()
                 );
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
@@ -79,7 +100,7 @@ pub fn retry_pending_notifications(
                     n.name()
                 );
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
@@ -99,6 +120,29 @@ pub fn retry_pending_notifications(
 }
 
 /// Sends a notification via all notifiers.
+///
+/// This function iterates through the provided notifiers and attempts to send a
+/// notification using each notifier's `push_notification` method. The results
+/// of each send attempt are collected into a `DispatchReport` which is returned
+/// at the end. The function also handles the logic for updating the state of
+/// each notifier based on the result of the send attempt, such as marking
+/// successful notifications or handling failures appropriately.
+///
+/// # Parameters
+/// - `ctx`: The notification context containing information about the current
+///   state of peers and other relevant data needed for rendering the
+///   notification message.
+/// - `delta`: The changes detected since the last notification,
+///   used to determine what has changed and render the message accordingly.
+/// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to send
+///   the notification through.
+/// - `settings`: The settings struct which contains configuration needed for
+///   logging and determining how to handle the results of the send attempts.
+///
+/// # Returns
+/// A `DispatchReport` struct containing the results of the send attempts,
+/// including the total number of notifiers processed, how many were successful,
+/// failed, had no message to send, or were skipped due to timing reasons.
 pub fn send_notification(
     ctx: &super::Context,
     delta: &super::Delta,
@@ -116,21 +160,21 @@ pub fn send_notification(
                 println!();
                 logging::tsprintln!(&settings, "[{}] DRY RUN; notification not sent", n.name());
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
                 logging::tsprintln!(&settings, "[{}] Notification sent successfully", n.name());
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
                 logging::tseprintln!(&settings, "[{}] Failed to send notification: {e}", n.name());
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
@@ -146,7 +190,29 @@ pub fn send_notification(
     report
 }
 
-/// Sends a reminder via all notifiers.
+/// Sends reminders via all notifiers that are due for sending a reminder.
+///
+/// This function iterates through the provided notifiers, checks if they are due
+/// for sending a reminder based on the current time and the reminder interval
+/// specified in settings, and attempts to send a reminder if they are due. The
+/// results of each send attempt are collected into a `DispatchReport` which is
+/// returned at the end. The function also handles the logic for updating the state
+/// of each notifier based on the result of the send attempt, such as marking
+/// successful reminders or handling failures appropriately.
+///
+/// # Parameters
+/// - `ctx`: The notification context containing information about the current
+///   state of peers and other relevant data needed for rendering the
+///   reminder message.
+/// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to send
+///   the reminder through.
+/// - `settings`: The settings struct which contains configuration needed for
+///   logging and determining how to handle the results of the send attempts.
+///
+/// # Returns
+/// A `DispatchReport` struct containing the results of the send attempts,
+/// including the total number of notifiers processed, how many were successful,
+/// failed, had no message to send, or were skipped due to timing reasons.
 pub fn send_reminder(
     ctx: &super::Context,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
@@ -172,21 +238,21 @@ pub fn send_reminder(
                 println!();
                 logging::tsprintln!(&settings, "[{}] DRY RUN; reminder not sent", n.name());
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
                 logging::tsprintln!(&settings, "[{}] Reminder sent successfully", n.name());
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
                 logging::tseprintln!(&settings, "[{}] Failed to send reminder: {e}", n.name());
 
-                verbose_print(&message, settings);
+                verbose_print(&message, settings.verbose);
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
@@ -202,8 +268,22 @@ pub fn send_reminder(
     report
 }
 
-/// Sends either a notification or a reminder via one notifier, depending on
-/// whether a delta is provided.
+/// Helper function to send a notification or reminder via a single notifier,
+/// and update the notifier's state based on the result.
+///
+/// # Parameters
+/// - `ctx`: The notification context containing information about the current
+///   state of peers and other relevant data needed for rendering the
+///   notification or reminder message.
+/// - `delta`: The changes detected since the last notification, used to determine
+///   what has changed and render the message accordingly.
+///   This will be `None` if sending a reminder instead of a notification.
+/// - `n`: The notifier to send the notification or reminder through.
+///
+/// # Returns
+/// The result of the send attempt, which can indicate success, failure,
+/// a dry run, no message to send, or that the send was skipped due to
+/// timing reasons.
 fn send_via_notifier(
     ctx: &super::Context,
     delta: Option<&super::Delta>,

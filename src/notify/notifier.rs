@@ -1,24 +1,49 @@
-//! Defines the `Notifier` struct, which implements the `NotificationSender`
-//! trait and uses a backend to send notifications about WireGuard peer status changes.
+//! Logic related to sending notifications about WireGuard peer status changes,
+//! including building messages based on the notification context and delta,
+//! and dispatching notifications to all configured notifiers.
 
 use crate::backend;
 
-/// A `Notifier` that uses a specific backend to send notifications about
-/// WireGuard peer status changes.
+/// Notifier struct that holds the state and backend for sending notifications.
+///
+/// The `Notifier` is responsible for composing messages based on the
+/// notification context and delta, and for sending the notifications through
+/// the specified backend.
+///
+/// It also tracks the state related to pending notifications, reminder timing,
+/// and failure tracking to manage the notification flow effectively.
 pub struct Notifier<B: backend::Backend> {
     /// State related to pending notifications, reminder timing, and failure tracking.
     pub state: super::NotifierState,
 
-    /// The backend used to send notifications (e.g., Slack, Batsign).
+    /// The backend used to compose and send notifications.
+    ///
+    /// This can be any type that implements the `Backend` trait, such as
+    /// `BatsignBackend`, `SlackBackend`, or `CommandBackend`.
     backend: B,
 
-    /// Whether the notifier is in dry run mode, where it builds the messages
-    /// but does not actually send them, instead returning them as `DryRun` results.
+    /// Flag indicating whether the notifier is in dry run mode.
+    ///
+    /// If `true`, the notifier will compose messages but will not actually
+    /// send them, and will return them as `DryRun` results.
     dry_run: bool,
 }
 
 impl<B: backend::Backend> Notifier<B> {
-    /// Creates a new `Notifier`.
+    /// Creates a new `Notifier` instance with the specified backend and dry-run mode.
+    ///
+    /// The dry-run mode is stored in the `Notifier`.
+    ///
+    /// # Parameters
+    /// - `backend`: The backend to use for composing and sending notifications.
+    /// - `dry_run`: If `true`, the notifier will not actually send notifications,
+    ///   but will return the composed messages as `DryRun` results.
+    /// - `state`: The initial state for the notifier, which can be used to track
+    ///   pending notifications, reminder timing, and failure tracking.
+    ///
+    /// # Returns
+    /// A new `Notifier` instance initialized with the provided backend, dry run
+    /// mode, and state.
     pub fn new(backend: B, dry_run: bool) -> Self {
         Self {
             backend,
@@ -37,14 +62,38 @@ impl<B: backend::Backend> Notifier<B> {
 }
 
 impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
-    /// Returns the name of the notifier, which is typically the name of the
-    /// backend it uses (e.g., "slack" or "batsign") plus potentially any other
-    /// unique identifiers.
+    /// Returns the name of the notifier, which is derived from the backend's name.
     fn name(&self) -> &str {
         self.backend.name()
     }
 
-    /// Sends a notification.
+    /// Sends a notification based on the provided context and delta.
+    ///
+    /// The method composes a message using the backend's `compose_message`
+    /// method, and then sends it using the backend's `emit` method.
+    /// The result of the notification attempt is returned as a
+    /// `NotificationResult`, which can indicate success, failure, a dry run,
+    /// or no message to send.
+    ///
+    /// # Parameters
+    /// - `ctx`: The current notification context, which contains information
+    ///   about the peers and timing.
+    /// - `delta`: The delta representing the changes in peer status that
+    ///   triggered the notification.
+    ///
+    /// # Returns
+    /// A `NotificationResult` indicating the outcome of the notification
+    /// attempt, which can be:
+    ///
+    /// - `DryRun(message)`: The notification was not sent because dry run mode is
+    ///   enabled, but includes the message that would have been sent.
+    /// - `Success(message)`: The notification was successfully sent, including
+    ///   the message that was sent.
+    /// - `Failure(error, message)`: There was a failure in sending the notification,
+    ///   including an error message describing the failure and the message
+    ///   that was attempted to be sent.
+    /// - `NoMessage`: The notification was not sent because the rendered
+    ///   message ended up empty.
     fn push_notification(
         &mut self,
         ctx: &super::Context,
@@ -65,7 +114,30 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         }
     }
 
-    /// Sends a reminder notification.
+    /// Sends a reminder notification based on the provided context.
+    ///
+    /// The method composes a reminder message using the backend's
+    /// `compose_reminder` method, and then sends it using the backend's `emit` method.
+    /// The result of the reminder attempt is returned as a `NotificationResult`,
+    /// which can indicate success, failure, a dry run, or no message to send.
+    ///
+    /// # Parameters
+    /// - `ctx`: The current notification context, which contains information
+    ///   about the peers and timing.
+    ///
+    /// # Returns
+    /// A `NotificationResult` indicating the outcome of the reminder attempt,
+    /// which can be:
+    ///
+    /// - `DryRun(message)`: The reminder was not sent because dry run mode is
+    ///   enabled, but includes the message that would have been sent.
+    /// - `Success(message)`: The reminder was successfully sent, including
+    ///   the message that was sent.
+    /// - `Failure(error, message)`: There was a failure in sending the reminder,
+    ///   including an error message describing the failure and the message
+    ///   that was attempted to be sent.
+    /// - `NoMessage`: The reminder was not sent because the rendered
+    ///   message ended up empty.
     fn push_reminder(&mut self, ctx: &super::Context) -> super::NotificationResult {
         let reminder = match self.backend.compose_reminder(ctx) {
             Some(m) => m,

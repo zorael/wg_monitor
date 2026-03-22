@@ -1,4 +1,4 @@
-//! Module containing types used in the notification system.
+//! Types used in the notify module.
 
 mod context;
 mod delta;
