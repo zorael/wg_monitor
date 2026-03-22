@@ -1,36 +1,57 @@
-//! WireGuard peer presentation and management functionality.
+//! Defines the `WireGuardPeer` struct, which represents a WireGuard peer and
+//! includes methods for validating and shortening public keys, as well as a
+//! function for sorting peer keys based on their last seen timestamps.
 
 use std::cmp;
 use std::collections;
 use std::time;
 
 /// Represents a WireGuard peer, including its public key, human-readable name,
-/// and last seen timestamp.
+/// and timestamps for when it was last seen as active.
 #[derive(Clone, Debug)]
 pub struct WireGuardPeer {
-    /// The public key of the WireGuard peer, which serves as its unique identifier.
+    /// The WireGuard public key for the peer, which is a 44-character base64 string
+    /// that uniquely identifies the peer in the WireGuard network.
     pub public_key: String,
 
-    /// A human-readable name for the peer, which can be specified in the peer
-    /// list file or derived from the public key if no name is provided.
+    /// A human-readable name for the peer, which can be used for display purposes in
+    /// notifications and logs.
+    ///
+    /// This is not a required field in WireGuard itself, but it can be set
+    /// based on the configuration or other metadata to make it easier to
+    /// identify peers in notifications.
     pub human_name: String,
 
-    /// The last time the peer was seen as active, represented as an optional
-    /// `SystemTime`. This is updated based on the output of the `wg show`
-    /// command, and is used to determine if a peer is considered lost based on
-    /// the configured timeout.
+    /// The timestamp of the last time the peer was seen as active, represented
+    /// as an `Option<SystemTime>`.
+    ///
+    /// This can be `None` if the peer has never been seen or if the timestamp
+    /// has been reset.
     pub last_seen: Option<time::SystemTime>,
 
-    /// The timestamp of the last handshake with the peer, represented as an
-    /// `u64` UNIX timestamp.
+    /// The last seen timestamp represented as a UNIX timestamp (seconds since
+    /// the UNIX epoch). This is used for easier sorting and comparison of peers
+    /// based on their last seen times.
     pub last_seen_unix: u64,
 }
 
 impl WireGuardPeer {
-    /// Shortens a WireGuard public key for display purposes, returning the
-    /// first 7 characters, or the substring before a '/' or '+' if present in
-    /// the first 7 characters. If the very first letter (index 0) is a
-    /// '/' or '+', the match is ignored and the first 7 characters are returned.
+    /// Shortens a WireGuard public key for display purposes.
+    ///
+    /// The function takes a public key string and returns a shortened
+    /// version of it, which is useful for displaying in notifications without
+    /// showing the full key when no human-readable name has been set.
+    ///
+    /// The shortening logic looks for common delimiters ('/' and '+')
+    /// in the first 7 characters of the key. If a delimiter is found and it is
+    /// not the very first character, the substring before the delimiter is
+    /// returned. Otherwise, the first 7 characters are returned.
+    ///
+    /// # Parameters
+    /// - `public_key`: The full WireGuard public key to be shortened.
+    ///
+    /// # Returns
+    /// A shortened version of the public key, suitable for display in notifications.
     pub fn shorten_key(public_key: &str) -> String {
         fn check_for_delimiter(key: &str, delimiter: char) -> Option<String> {
             if let Some(pos) = key.find(delimiter)
@@ -62,8 +83,18 @@ impl WireGuardPeer {
         first_seven.to_string()
     }
 
-    /// Validates a WireGuard public key, returning true if it does not seem
-    /// obviously invalid. Does not perform an actual cryptographic validation.
+    /// "Validates" a WireGuard public key to ensure it is in the correct format.
+    ///
+    /// A valid WireGuard public key is a 44-character base64 string that ends
+    /// with an '=' character. The function checks the length of the key,
+    /// ensures it ends with '=', and verifies that all characters (except the
+    /// trailing '=') are valid base64 characters (alphanumeric, '+', '/').
+    ///
+    /// # Parameters
+    /// - `public_key`: The WireGuard public key to validate.
+    ///
+    /// # Returns
+    /// `true` if the public key seems valid, `false` otherwise.
     pub fn validate_public_key(public_key: &str) -> bool {
         const EXPECTED_LENGTH: usize = 44;
 
@@ -85,8 +116,10 @@ impl WireGuardPeer {
 }
 
 /// Sorts an array of peer public keys based on their last seen UNIX timestamps in the
-/// provided peers map. Peers that are present (have a non-0 timestamp) are sorted first,
-/// with newer timestamps appearing before older ones. Peers without a timestamp
+/// provided peers map.
+///
+/// Peers that are present (have a non-0 timestamp) are sorted first, with newer
+/// timestamps appearing before older ones. Peers without a timestamp
 /// (or rather, with a timestamp of 0) are sorted last.
 pub fn sort_keys(keys: &mut [String], peers: &collections::HashMap<String, WireGuardPeer>) {
     keys.sort_unstable_by_key(|k| {

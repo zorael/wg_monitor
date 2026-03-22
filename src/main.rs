@@ -1,4 +1,4 @@
-//! Monitors other peers in a [WireGuard VPN](https://www.wireguard.com)
+//! Monitors other peers in a [**WireGuard**](https://www.wireguard.com) VPN
 //! and sends a notification if contact with a peer is lost.
 //!
 //! The main purpose of this is to monitor Internet-connected locations for
@@ -6,7 +6,7 @@
 //! Each needs an always-on, always-connected computer to act as a WireGuard
 //! peer, for which something like a
 //! [Raspberry Pi Zero 2W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w)
-//! is cheap and more than sufficient.
+//! is cheap and more than sufficient. (May require [cross-compilation](#cross-compilation).)
 //!
 //! In a hub-and-spoke WireGuard configuration, this should be run on the hub
 //! server, ideally with an additional instance on (at least) one other
@@ -19,10 +19,30 @@
 //! this program. This timeout is **600 seconds** by default, but can be
 //! overridden by modifying a configuration file.
 //!
-//! Notifications are sent as
-//! [**Slack** notifications](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks),
-//! as short emails via [**Batsign**](https://batsign.me), and/or as invocations
-//! of an external command.
+//! Notifications can be sent as
+//! [**Slack**](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks)
+//! messages, as short emails via [**Batsign**](https://batsign.me), and/or by
+//! invocation of an [**external command**](#external-command)
+//! (like `notify-send` or `sendmail`).
+//!
+//! At any given time, peers can be in one of three states:
+//!
+//! - **present**: the peer has been seen within the timeout period.
+//! - **late**: the peer has been seen before but has not been seen within the
+//!   timeout period. It may be referred to as "lost" in some message strings.
+//! - **missing**: the peer has not been seen since the last restart of the VPN.
+//!
+//! As such, peer may be in the following transition states;
+//!
+//! - **became late**: the peer was present but is now late. This may be referred
+//!   to as "lost" in some message strings.
+//! - **went missing**: the peer was present but is now missing, which is usually
+//!   indicative of a restart of the VPN. This may be referred to as "lost due
+//!   to a network reset" in some message strings.
+//! - **no longer late**: the peer was late but is now present again. This may
+//!   be referred to as "returned" in some message strings.
+//! - **returned**: the peer was missing (never seen) but is now present.
+//!   This may be referred to as "just appeared" in some message strings.
 
 mod backend;
 mod cli;
@@ -41,7 +61,7 @@ use std::process;
 use std::thread;
 use std::time;
 
-/// Prints a small banner with program metadata.
+/// Prints the program banner with name, version, copyright and source repository.
 fn print_banner() {
     println!(
         "{} {} | copyright 2026 {}\n$ git clone {}",
@@ -52,7 +72,7 @@ fn print_banner() {
     );
 }
 
-/// Program entrypoint.
+/// Main entrypoint of the program.
 fn main() -> process::ExitCode {
     print_banner();
     println!();
@@ -222,8 +242,20 @@ fn main() -> process::ExitCode {
     run_loop(&mut ctx, &mut notifiers, settings)
 }
 
-/// Construct notifiers based on the passed settings, returning a vector of
-/// boxed trait objects.
+/// Builds notifiers for all configured backends and returns them as a vector
+/// of trait objects.
+///
+/// This function handles both the normal and dry-run cases, using dummy
+/// URLs/commands for the latter to allow testing of notification logic
+/// without actual external dependencies.
+///
+/// # Parameters
+/// - `settings`: The program settings, used to determine which backends are
+///   enabled and to access necessary configuration for each backend.
+///
+/// # Returns
+/// A vector of boxed `StatefulNotifier` trait objects, each wrapping a notifier
+/// for a configured backend.
 fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::StatefulNotifier>> {
     let mut notifiers: Vec<Box<dyn notify::StatefulNotifier>> = Vec::new();
     let agent = ureq::Agent::new_with_defaults();
@@ -323,7 +355,37 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     notifiers
 }
 
-/// Main loop of the program.
+/// Runs the main monitoring loop, which continuously checks the status of peers
+/// and sends notifications as needed.
+///
+/// This function will run indefinitely until the program is terminated. It performs
+/// the following steps in each iteration:
+///
+/// 1. Executes the `wg show` command to get the latest handshakes and updates
+///    the context with the new information.
+/// 2. Determines which peers are late or missing based on the last see
+///    timestamps and the configured timeout.
+/// 3. Computes the delta of changes since the last iteration.
+/// 4. If there are changes, sends notifications through the configured notifiers.
+/// 5. If there are no changes but there are late/missing peers,
+///    sends reminders as needed.
+/// 6. Retries any pending notifications that are due for a retry.
+/// 7. Sleeps for the configured check interval before the next iteration.
+///
+/// # Parameters
+/// - `ctx`: The notification context, which holds the current state of peers
+///   and other relevant information.
+/// - `notifiers`: A mutable slice of stateful notifiers to use for
+///   sending notifications
+/// - `settings`: The program settings, used to determine behavior such as
+///   intervals and debug output.
+///
+/// # Returns
+/// This function will never return under normal operation, as it runs an
+/// infinite loop. It will only return an exit code if the loop is somehow
+/// exited, which would typically indicate a shutdown or critical failure.
+/// In normal operation, the program should be terminated externally
+/// (via a signal) rather than exiting this function.
 fn run_loop(
     ctx: &mut notify::Context,
     notifiers: &mut [Box<dyn notify::StatefulNotifier>],
@@ -477,7 +539,18 @@ fn run_loop(
     }
 }
 
-/// Initializes all settings, except for CLI parsing, which must already have been done.
+/// Initializes the program settings by loading configuration from the specified
+/// configuration directory, applying any overrides from the command-line
+/// arguments, and performing necessary validation and setup.
+///
+/// # Parameters
+/// - `cli`: The parsed command-line arguments, used to determine the
+/// configuration directory and any overrides to apply to the settings.
+///
+/// # Returns
+/// On success, returns the initialized `Settings` object. On failure,
+/// returns an appropriate exit code indicating the type of failure that
+/// occurred during initialization.
 fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode> {
     let mut settings = settings::Settings::default();
 

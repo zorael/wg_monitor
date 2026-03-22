@@ -1,9 +1,12 @@
-//! WireGuard-related functionality for monitoring peers and handshakes.
+//! WireGuard-related functions for reading peer information and handshakes.
 //!
-//! This module provides functions to read the list of WireGuard peers from a file,
-//! validate the output of the `wg show latest-handshakes` command, update the
-//! last seen timestamps for peers based on the command output, and get the
-//! terminal output from running the command.
+//! This module provides functions for reading the list of WireGuard peers from a
+//! file, validating the output of the `wg show latest-handshakes` command, and
+//! updating the last seen timestamps for peers based on the command output. It
+//! also defines the `WireGuardPeer` struct, which represents a peer in the
+//! WireGuard network and includes methods for validating and shortening public
+//! keys, as well as a function for sorting peer keys based on their last seen
+//! timestamps.
 
 use std::collections;
 use std::fs;
@@ -15,8 +18,29 @@ use std::time;
 
 use crate::peer;
 
-/// Reads the list of WireGuard peers from a file, returning a HashMap of
-/// public keys to `WireGuardPeer` structs.
+/// Reads the list of WireGuard peers from a specified file path, returning a
+/// `HashMap` of public keys to `WireGuardPeer` structs.
+///
+/// The function expects the file to contain lines in one of the following formats:
+/// - `public_key human_name`: A line with a public key followed by a
+///   human-readable name, separated by whitespace.
+/// - `public_key`: A line with just a public key, in which case the
+///   human-readable name will be derived from the public key using the
+///   `shorten_key` method.
+///
+/// The function ignores empty lines and lines starting with `#`, which are
+/// treated as comments. If the `debug` flag is set to `true`, the function will
+/// print debug information about the peers being read and loaded from the file.
+///
+/// # Parameters
+/// - `path`: The file path to read the peers from.
+/// - `debug`: A boolean flag indicating whether to print debug information
+///   during the reading process.
+///
+/// # Returns
+/// A `Result` containing a `HashMap` of public keys to `WireGuardPeer` structs
+/// if successful, or an `io::Error` if there was an issue reading the file or
+/// parsing its contents.
 pub fn read_peer_list(
     path: &path::Path,
     debug: bool,
@@ -85,8 +109,11 @@ pub fn read_peer_list(
     Ok(peers)
 }
 
-/// Validates the list of peers, returning a vector of string error messages for
-/// any obvious issues found.
+/// Validates the output of the `wg show {iface} latest-handshakes` command,
+/// ensuring that each line contains a valid public key and a valid timestamp.
+///
+/// The function checks that each line is in the format `public_key\ttimestamp`,
+/// where
 pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
     let mut errors = Vec::new();
 
@@ -115,6 +142,19 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 
 /// Updates the last seen timestamps for peers based on the output of the
 /// `wg show {iface} latest-handshakes` command.
+///
+/// The function first resets the last seen timestamps for all peers, then
+/// parses the command output line by line. For each valid line, it updates the
+/// corresponding peer's last seen timestamp based on the provided UNIX timestamp.
+///
+/// If a peer is not present in the command output, its last seen timestamp
+/// will remain reset (`None` and `0`).
+///
+/// # Parameters
+/// - `terminal_output`: The output from the `wg show {iface} latest-handshakes`
+///   command, which should contain lines in the format `public_key\ttimestamp`.
+/// - `peers`: A mutable reference to a `HashMap` of public keys to `WireGuardPeer`
+///   structs, to be updated based on the command output.
 pub fn update_handshakes(
     terminal_output: &str,
     peers: &mut collections::HashMap<String, peer::WireGuardPeer>,
@@ -154,8 +194,16 @@ pub fn update_handshakes(
     }
 }
 
-/// Gets the terminal output from running the `wg show iface latest-handshakes` command,
-/// returning an error if the command fails or produces invalid output.
+/// Executes the `wg show {iface} latest-handshakes` command for the specified
+/// interface and returns its output as a `String`.
+///
+/// # Parameters
+/// - `interface`: The name of the WireGuard interface to query (e.g., "wg0").
+///
+/// # Returns
+/// A `Result` containing the command output as a `String` if successful, or an
+/// `io::Error` if there was an issue executing the command, or if the command
+/// returned a non-zero exit status.
 pub fn get_handshakes(interface: &str) -> io::Result<String> {
     let output = process::Command::new("/usr/bin/wg")
         .arg("show")

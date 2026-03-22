@@ -1,6 +1,8 @@
-//! Default values for various settings and configurations used throughout the program.
+//! Default values for the WireGuard monitor program, including interface name,
+//! timeouts, intervals, file names, and program metadata.
 //!
-//! This is just to gather them in one neat place.
+//! This is just to gather them in one place, and to avoid hardcoding these
+//! values in multiple places throughout the program.
 
 use std::time;
 

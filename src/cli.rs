@@ -11,6 +11,9 @@ use clap::Parser;
 
 use crate::defaults;
 
+// - Do not document the `Cli` struct itself, as the text would be included in the
+//   help message for the program.
+// - Do not use full stops in the documenting comments for the arguments.
 #[derive(Parser)]
 #[command(name = defaults::program_metadata::PROGRAM_NAME)]
 #[command(author = defaults::program_metadata::AUTHORS)]

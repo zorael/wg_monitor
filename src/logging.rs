@@ -1,8 +1,10 @@
-//! Logging utilities.
+//! Logging utilities for the WireGuard monitor program, including functions and
+//! macros for printing timestamped messages to standard output and standard
+//! error, with optional timestamps based on the program settings.
 
 use crate::utils;
 
-/// Prints a timestamp prefix in the format "[HH:MM:SS] " to standard output.
+/// Prints a timestamp prefix in the format "[HH:MM:SS] " to standard out.
 pub fn print_timestamp_prefix() {
     print!("[{}] ", utils::timestamp_now());
 }
@@ -14,7 +16,18 @@ pub fn eprint_timestamp_prefix() {
 
 /// Prints a timestamped message to standard out if timestamps are enabled in
 /// settings, otherwise just prints the message.
-//#[macro_export]
+///
+/// The message is formatted using the standard `println!` macro, and the
+/// timestamp is printed as a prefix if timestamps are not disabled in the
+/// provided settings.
+///
+/// # Parameters
+/// - `settings`: A reference to the program settings, which may include a flag
+///   to disable timestamps. If `settings.disable_timestamps` is `true`, the
+///   message will be printed without a timestamp prefix. If `false`, the
+///   message will be prefixed with a timestamp in the format "[HH:MM:SS] ".
+/// - `args`: The arguments to be formatted and printed, following the same
+///   syntax as the `println!` macro.
 macro_rules! tsprintln {
     ($settings:expr, $($args:tt)*) => {{
         if !$settings.disable_timestamps {
@@ -26,7 +39,18 @@ macro_rules! tsprintln {
 
 /// Prints a timestamped message to standard error if timestamps are enabled in
 /// settings, otherwise just prints the message.
-//#[macro_export]
+///
+/// The message is formatted using the standard `eprintln!` macro, and the
+/// timestamp is printed as a prefix if timestamps are not disabled in the
+/// provided settings.
+///
+/// # Parameters
+/// - `settings`: A reference to the program settings, which may include a flag
+///   to disable timestamps. If `settings.disable_timestamps` is `true`, the
+///   message will be printed without a timestamp prefix. If `false`, the
+///   message will be prefixed with a timestamp in the format "[HH:MM:SS] ".
+/// - `args`: The arguments to be formatted and printed, following the same
+///   syntax as the `eprintln!` macro.
 macro_rules! tseprintln {
     ($settings:expr, $($args:tt)*) => {{
         if !$settings.disable_timestamps {
