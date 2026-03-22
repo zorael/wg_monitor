@@ -1,10 +1,17 @@
-//! Batsign notification settings and related functionality.
+//! Types and implementations for Batsign runtime settings, which include
+//! message strings, enabled status, and notification URLs.
+//!
+//! This module defines the `BatsignSettings` struct, which holds the runtime
+//! settings for the Batsign notification backend, including message strings for
+//! notifications and reminders, whether Batsign notifications are enabled, and
+//! theblist of Batsign URLs to which notifications will be sent.
 
 use crate::file_config;
 use crate::settings;
 use crate::utils;
 
-/// Batsign runtime settings.
+/// Runtime settings for the Batsign notification backend, including message
+/// strings, enabled status, and notification URLs.
 #[derive(Debug, Default)]
 pub struct BatsignSettings {
     /// Message strings for Batsign notifications.
@@ -16,13 +23,23 @@ pub struct BatsignSettings {
     /// Whether Batsign notifications are enabled.
     pub enabled: bool,
 
-    /// List of Batsign URLs to send notifications to.
+    /// The Batsign URLs to which the notifications will be sent.
+    ///
+    /// Each URL is unique to the target email address and includes a token
+    /// for authentication.
     pub urls: Vec<String>,
 }
 
 impl BatsignSettings {
-    /// Applies Batsign settings from the config file, overriding the default
-    /// settings where values are available.
+    /// Applies settings from a `file_config::BatsignConfig` to the current
+    /// `BatsignSettings` instance, updating the message strings, enabled status,
+    /// and notification URLs based on the values provided in the file configuration.
+    ///
+    /// # Parameters
+    /// - `batsign_config`: The `file_config::BatsignConfig`
+    ///   containing the settings to apply to the current `BatsignSettings`
+    ///   instance. This includes message strings for notifications and reminders,
+    ///   the enabled status, and the list of Batsign URLs.
     pub fn apply_file(&mut self, batsign_config: &file_config::BatsignConfig) {
         self.strings.apply_file(&batsign_config.strings);
         self.reminder_strings
@@ -37,13 +54,24 @@ impl BatsignSettings {
         }
     }
 
-    /// Trims whitespace from the Batsign URLs and removes any empty ones.
+    /// Trims whitespace from the Batsign URLs in the settings, which can help
+    /// to avoid issues with URLs that have leading or trailing whitespace that
+    /// could cause problems when sending notifications.
     pub fn trim_urls(&mut self) {
         self.urls = utils::trim_vec_of_strings(&self.urls);
     }
 
-    /// Sanity check the Batsign settings, appending any errors as strings to
-    /// the passed vec.
+    /// Performs a sanity check on the Batsign settings, validating that if
+    /// Batsign notifications are enabled, there are at the same time URLs
+    /// configured, and that the URLs appear to be valid.
+    ///
+    /// If any issues are found, descriptive error messages are added to the
+    /// provided vector of strings.
+    ///
+    /// # Parameters
+    /// - `vec`: A mutable reference to a vector of strings to which any error
+    ///   messages will be added if issues are found with the Batsign settings.
+    ///   If the settings are valid, this vector will remain unchanged.
     pub fn sanity_check(&self, vec: &mut Vec<String>) {
         if !self.enabled {
             return;

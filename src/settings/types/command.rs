@@ -1,11 +1,17 @@
-//! Settings for the Command backend.
+//! Settings structures for the Command notification backend, which executes
+//! user-defined external commands to send notifications.
+//!
+//! This module defines the `CommandSettings` struct, which holds the runtime
+//! settings for the Command notification backend, including message strings
+//! for notifications and reminders, whether Command notifications are enabled,
+//! and the list of command strings to execute for notifications.
 
 use crate::file_config;
 use crate::settings;
 use crate::utils;
 
-/// Command settings structure. This mirrors the runtime settings struct used
-/// by the program for Command notifications.
+/// Runtime settings for the Command notification backend, including message
+/// strings, enabled status, and notification commands.
 #[derive(Debug, Default)]
 pub struct CommandSettings {
     /// Message strings for Command notifications.
@@ -17,13 +23,22 @@ pub struct CommandSettings {
     /// Whether Command notifications are enabled.
     pub enabled: bool,
 
-    /// The commands to execute for notifications.
+    /// The command strings to execute for notifications.
+    ///
+    /// Each command string is executed as a separate process.
     pub commands: Vec<String>,
 }
 
 impl CommandSettings {
-    /// Applies Command settings from the config file, overriding the default
-    /// settings where values are available.
+    /// Applies settings from a `file_config::CommandConfig` to the current
+    /// `CommandSettings` instance, updating the message strings, enabled status,
+    /// and notification commands based on the values provided in the file configuration.
+    ///
+    /// # Parameters
+    /// - `command_config`: The `file_config::CommandConfig` containing the
+    ///   settings to apply to the current `CommandSettings` instance. This
+    ///   includes message strings for notifications and reminders, the enabled
+    ///   status, and the list of command strings to execute for notifications.
     pub fn apply_file(&mut self, command_config: &file_config::CommandConfig) {
         self.strings.apply_file(&command_config.strings);
         self.reminder_strings
@@ -38,13 +53,24 @@ impl CommandSettings {
         }
     }
 
-    /// Trims whitespace from the Command strings and removes any empty ones.
+    /// Trims whitespace from the Command strings in the settings, which can
+    /// help to avoid issues with command strings that have leading or trailing
+    /// whitespace that could cause problems when executing the commands.
     pub fn trim_commands(&mut self) {
         self.commands = utils::trim_vec_of_strings(&self.commands);
     }
 
-    /// Sanity check the Command settings, appending any errors as strings to
-    /// the passed vec.
+    /// Performs a sanity check on the Command settings, validating that if
+    /// Command notifications are enabled, there are at the same time command
+    /// strings configured.
+    ///
+    /// If any issues are found, descriptive error messages are added to the
+    /// provided vector of strings.
+    ///
+    /// # Parameters
+    /// - `vec`: A mutable reference to a vector of strings where error messages
+    ///   will be added if any issues are found with the Command settings.
+    ///   If the settings are valid, this vector will remain unchanged.
     pub fn sanity_check(&self, vec: &mut Vec<String>) {
         if !self.enabled {
             return;

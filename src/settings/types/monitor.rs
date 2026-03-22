@@ -1,31 +1,47 @@
-//! Settings related to monitoring the WireGuard interface and connection status.
+//! Settings structures for monitoring the WireGuard interface and the
+//! connection status of its peers.
+//!
+//! This module defines the `MonitorSettings` struct, which holds the runtime
+//! settings for monitoring the WireGuard interface and connection status,
+//! including the interface name, check interval, timeout, reminder interval,
+//! and retry interval.
 
 use std::time;
 
 use crate::defaults;
 use crate::file_config;
 
-/// Settings for monitoring the WireGuard interface and connection status.
+/// Settings structure for monitoring the WireGuard interface and connection status.
 #[derive(Debug)]
 pub struct MonitorSettings {
-    /// WireGuard interface name to monitor.
+    /// The name of the WireGuard interface to monitor.
     pub interface: String,
 
-    /// Interval between checks of the WireGuard interface and connection status.
+    /// Interval for monitoring checks.
     pub check_interval: time::Duration,
 
-    /// Timeout after which a peer is considered lost.
+    /// Timeout for monitoring checks, after which a peer is considered lost.
     pub timeout: time::Duration,
 
-    /// Interval between reminders for lost peers.
+    /// Interval for reminder notifications for pending notifications.
+    /// This will be grown as consecutive reminders are sent for the same
+    /// pending notification. This allows for initially more frequent reminders,
+    /// and less frequent reminders as time goes on without the peer status
+    /// being resolved.
     pub reminder_interval: time::Duration,
 
-    /// Base retry interval for pending notifications.
+    /// Interval for retrying failed notifications, which can help to ensure that
+    /// notifications are eventually delivered even if there are temporary issues
+    /// with the notification backends.
     pub retry_interval: time::Duration,
 }
 
 impl Default for MonitorSettings {
-    /// Default values for the monitor settings.
+    /// Returns a `MonitorSettings` instance with default values for all fields,
+    /// which are defined in the `defaults` module.
+    ///
+    /// This provides a baseline configuration that can be overridden by values
+    /// from the file configuration.
     fn default() -> Self {
         Self {
             interface: defaults::INTERFACE.to_string(),
@@ -38,8 +54,14 @@ impl Default for MonitorSettings {
 }
 
 impl MonitorSettings {
-    /// Apply settings from the file configuration, overriding defaults where
-    /// values are available.
+    /// Applies settings from a `file_config::MonitorConfig` to the current
+    /// `MonitorSettings` instance, updating the interface name, check interval,
+    /// timeout, reminder interval, and retry interval based on the values provided
+    /// in the file configuration.
+    ///
+    /// # Parameters
+    /// - `monitor_config`: The `file_config::MonitorConfig` containing the
+    ///   settings to apply to the current `MonitorSettings` instance.
     pub fn apply_file(&mut self, monitor_config: &file_config::MonitorConfig) {
         if let Some(interface) = monitor_config.interface.clone() {
             self.interface = interface;
@@ -62,8 +84,17 @@ impl MonitorSettings {
         }
     }
 
-    /// Sanity check the monitor settings, appending any errors as strings to
-    /// the passed vec.
+    /// Performs a sanity check on the monitor settings, validating that the
+    /// interface name is not empty, and that the check interval, timeout,
+    /// reminder interval, and retry interval are not zero.
+    ///
+    /// If any issues are found, descriptive error messages are added to the
+    /// provided vector of strings.
+    ///
+    /// # Parameters
+    /// - `vec`: A mutable reference to a vector of strings where error messages
+    ///   will be added if any issues are found with the monitor settings.
+    ///   If the settings are valid, this vector will remain unchanged.
     pub fn sanity_check(&self, vec: &mut Vec<String>) {
         if self.interface.is_empty() {
             vec.push("Monitor interface is not configured.".to_string());
