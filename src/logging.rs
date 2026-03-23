@@ -14,46 +14,44 @@ pub fn eprint_timestamp_prefix() {
     eprint!("[{}] ", utils::timestamp_now());
 }
 
-/// Prints a timestamped message to standard out if timestamps are enabled in
-/// settings, otherwise just prints the message.
+/// Prints a timestamped message to standard out if the passed
+/// `disable_timestamps` flag is `false`, otherwise just prints the message.
 ///
 /// The message is formatted using the standard `println!` macro, and the
 /// timestamp is printed as a prefix if timestamps are not disabled in the
 /// provided settings.
 ///
 /// # Parameters
-/// - `settings`: A reference to the program settings, which may include a flag
-///   to disable timestamps. If `settings.disable_timestamps` is `true`, the
-///   message will be printed without a timestamp prefix. If `false`, the
-///   message will be prefixed with a timestamp in the format "[HH:MM:SS] ".
+/// - `disable_timestamps`: If this value is `true`, the message will be
+///   printed without a timestamp prefix. If `false`, the message will be
+///   prefixed with a timestamp in the format "[HH:MM:SS] ".
 /// - `args`: The arguments to be formatted and printed, following the same
 ///   syntax as the `println!` macro.
 macro_rules! tsprintln {
-    ($settings:expr, $($args:tt)*) => {{
-        if !$settings.disable_timestamps {
+    ($disable_timestamps:expr, $($args:tt)*) => {{
+        if !$disable_timestamps {
             $crate::logging::print_timestamp_prefix();
         }
         println!($($args)*);
     }};
 }
 
-/// Prints a timestamped message to standard error if timestamps are enabled in
-/// settings, otherwise just prints the message.
+/// Prints a timestamped message to standard error if the passed
+/// `disable_timestamps` flag is `false`, otherwise just prints the message.
 ///
 /// The message is formatted using the standard `eprintln!` macro, and the
 /// timestamp is printed as a prefix if timestamps are not disabled in the
 /// provided settings.
 ///
 /// # Parameters
-/// - `settings`: A reference to the program settings, which may include a flag
-///   to disable timestamps. If `settings.disable_timestamps` is `true`, the
-///   message will be printed without a timestamp prefix. If `false`, the
-///   message will be prefixed with a timestamp in the format "[HH:MM:SS] ".
+/// - `disable_timestamps`: If this value is `true`, the message will be
+///   printed without a timestamp prefix. If `false`, the message will be
+///   prefixed with a timestamp in the format "[HH:MM:SS] ".
 /// - `args`: The arguments to be formatted and printed, following the same
 ///   syntax as the `eprintln!` macro.
 macro_rules! tseprintln {
-    ($settings:expr, $($args:tt)*) => {{
-        if !$settings.disable_timestamps {
+    ($disable_timestamps:expr, $($args:tt)*) => {{
+        if !$disable_timestamps {
             $crate::logging::eprint_timestamp_prefix();
         }
         eprintln!($($args)*);

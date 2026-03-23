@@ -77,14 +77,18 @@ pub fn retry_pending_notifications(
         match send_via_notifier(ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
-                logging::tsprintln!(&settings, "[{}] DRY RUN; RETRY not sent", n.name());
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] DRY RUN; RETRY not sent",
+                    n.name()
+                );
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
                 logging::tsprintln!(
-                    &settings,
+                    &settings.disable_timestamps,
                     "[{}] Notification RETRIED successfully",
                     n.name()
                 );
@@ -95,7 +99,7 @@ pub fn retry_pending_notifications(
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
                 logging::tseprintln!(
-                    &settings,
+                    &settings.disable_timestamps,
                     "[{}] Failed to RETRY notification: {e}",
                     n.name()
                 );
@@ -158,21 +162,33 @@ pub fn send_notification(
         match send_via_notifier(ctx, Some(delta), n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
-                logging::tsprintln!(&settings, "[{}] DRY RUN; notification not sent", n.name());
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] DRY RUN; notification not sent",
+                    n.name()
+                );
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
-                logging::tsprintln!(&settings, "[{}] Notification sent successfully", n.name());
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Notification sent successfully",
+                    n.name()
+                );
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
-                logging::tseprintln!(&settings, "[{}] Failed to send notification: {e}", n.name());
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Failed to send notification: {e}",
+                    n.name()
+                );
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -236,21 +252,33 @@ pub fn send_reminder(
         match send_via_notifier(ctx, None, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
-                logging::tsprintln!(&settings, "[{}] DRY RUN; reminder not sent", n.name());
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] DRY RUN; reminder not sent",
+                    n.name()
+                );
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Success(message) => {
                 println!();
-                logging::tsprintln!(&settings, "[{}] Reminder sent successfully", n.name());
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Reminder sent successfully",
+                    n.name()
+                );
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
-                logging::tseprintln!(&settings, "[{}] Failed to send reminder: {e}", n.name());
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Failed to send reminder: {e}",
+                    n.name()
+                );
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
