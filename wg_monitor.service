@@ -2,6 +2,7 @@
 Description=WireGuard Monitor
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -10,7 +11,6 @@ ExecStart=/usr/local/bin/wg_monitor --disable-timestamps --verbose
 Restart=on-failure
 RestartPreventExitStatus=10 11 12 20 21 32 40 41 42 43 44
 RestartSec=30
-StartLimitIntervalSec=0
 
 [Install]
 WantedBy=multi-user.target
