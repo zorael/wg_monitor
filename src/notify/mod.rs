@@ -16,7 +16,7 @@ mod stateful;
 mod types;
 
 pub use dispatch::{retry_pending_notifications, send_notification, send_reminder};
-pub use format::{format_generic_message, format_generic_reminder};
+pub use format::{prepare_message_body, prepare_reminder_body};
 pub use notifier::Notifier;
 pub use sender::NotificationSender;
 pub use state::NotifierState;

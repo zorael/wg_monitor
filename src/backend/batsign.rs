@@ -8,7 +8,6 @@
 
 use crate::notify;
 use crate::settings;
-use crate::utils;
 
 /// Defines the Batsign backend for sending notifications to the Batsign service.
 ///
@@ -114,41 +113,8 @@ impl super::Backend for BatsignBackend {
     /// - `None` if an empty message was composed, typically meaning no message
     ///   should be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
-        let mut message = String::new();
-        let body = &notify::format_generic_message(ctx, delta, &self.strings);
-
-        if body.is_empty() && !ctx.is_first_run() {
-            // Nothing to send. If it's the first run, we still want to send the
-            // "first run" banner, even if there are no changes.
-            return None;
-        }
-
-        let header = match ctx.is_first_run() {
-            true => &self.strings.first_run_header,
-            false => &self.strings.header,
-        };
-
-        if !header.is_empty() {
-            message.push_str(&format!("Subject: {}\n", header));
-        }
-
-        if body.is_empty() && ctx.is_first_run() {
-            if header.is_empty() {
-                // Nothing to send on first run and no header,
-                // so just skip sending a message.
-                return None;
-            }
-
-            // Nothing to send, but send the first run header to alert that
-            // power is back.
-            let message = utils::unescape(&message).trim_end().to_string();
-            return Some(message);
-        }
-
-        message.push_str(body);
-
-        let message = utils::unescape(&message).trim_end().to_string();
-        Some(message)
+        let header_closure = |h: &str| format!("Subject: {}", h);
+        notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
     }
 
     /// Composes a reminder message to be sent to Batsign based on the notification
@@ -162,21 +128,8 @@ impl super::Backend for BatsignBackend {
     /// - `None` if an empty message was composed, typically meaning no message
     ///   should be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
-        let mut message = String::new();
-        let body = &notify::format_generic_reminder(ctx, &self.reminder_strings);
-
-        if body.is_empty() {
-            return None;
-        }
-
-        if !self.reminder_strings.header.is_empty() {
-            message.push_str(&format!("Subject: {}\n", &self.reminder_strings.header));
-        }
-
-        message.push_str(body);
-
-        let message = utils::unescape(&message).trim_end().to_string();
-        Some(message)
+        let header_closure = |h: &str| format!("Subject: {}", h);
+        notify::prepare_reminder_body(ctx, &self.reminder_strings, header_closure)
     }
 
     /// Sends a composed message to the Batsign service by making an HTTP POST
