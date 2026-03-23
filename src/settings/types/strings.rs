@@ -136,56 +136,56 @@ impl MessageStrings {
     /// - `config`: The `file_config::MessageStringsConfig` containing the
     ///   message string settings to apply to the current `MessageStrings` instance.
     pub fn apply_file(&mut self, config: &file_config::MessageStringsConfig) {
-        if let Some(header) = config.header.clone() {
-            self.header = header;
+        if let Some(header) = &config.header {
+            self.header = header.clone();
         }
 
-        if let Some(first_run_header) = config.first_run_header.clone() {
-            self.first_run_header = first_run_header;
+        if let Some(first_run_header) = &config.first_run_header {
+            self.first_run_header = first_run_header.clone();
         }
 
-        if let Some(first_run_missing) = config.first_run_missing.clone() {
-            self.first_run_missing = first_run_missing;
+        if let Some(first_run_missing) = &config.first_run_missing {
+            self.first_run_missing = first_run_missing.clone();
         }
 
-        if let Some(lost) = config.lost.clone() {
-            self.lost = lost;
+        if let Some(lost) = &config.lost {
+            self.lost = lost.clone();
         }
 
-        if let Some(forgot) = config.forgot.clone() {
-            self.forgot = forgot;
+        if let Some(forgot) = &config.forgot {
+            self.forgot = forgot.clone();
         }
 
-        if let Some(appeared) = config.appeared.clone() {
-            self.appeared = appeared;
+        if let Some(appeared) = &config.appeared {
+            self.appeared = appeared.clone();
         }
 
-        if let Some(returned) = config.returned.clone() {
-            self.returned = returned;
+        if let Some(returned) = &config.returned {
+            self.returned = returned.clone();
         }
 
-        if let Some(still_lost) = config.still_lost.clone() {
-            self.still_lost = still_lost;
+        if let Some(still_lost) = &config.still_lost {
+            self.still_lost = still_lost.clone();
         }
 
-        if let Some(still_missing) = config.still_missing.clone() {
-            self.still_missing = still_missing;
+        if let Some(still_missing) = &config.still_missing {
+            self.still_missing = still_missing.clone();
         }
 
-        if let Some(footer) = config.footer.clone() {
-            self.footer = footer;
+        if let Some(footer) = &config.footer {
+            self.footer = footer.clone();
         }
 
-        if let Some(bullet_point) = config.bullet_point.clone() {
-            self.bullet_point = bullet_point;
+        if let Some(bullet_point) = &config.bullet_point {
+            self.bullet_point = bullet_point.clone();
         }
 
-        if let Some(peer_with_timestamp) = config.peer_with_timestamp.clone() {
-            self.peer_with_timestamp = peer_with_timestamp;
+        if let Some(peer_with_timestamp) = &config.peer_with_timestamp {
+            self.peer_with_timestamp = peer_with_timestamp.clone();
         }
 
-        if let Some(peer_no_timestamp) = config.peer_no_timestamp.clone() {
-            self.peer_no_timestamp = peer_no_timestamp;
+        if let Some(peer_no_timestamp) = &config.peer_no_timestamp {
+            self.peer_no_timestamp = peer_no_timestamp.clone();
         }
     }
 }
@@ -257,32 +257,32 @@ impl ReminderStrings {
     /// - `config`: The `file_config::ReminderStringsConfig` containing the
     ///   reminder string settings to apply to the current `ReminderStrings` instance.
     pub fn apply_file(&mut self, config: &file_config::ReminderStringsConfig) {
-        if let Some(header) = config.header.clone() {
-            self.header = header;
+        if let Some(header) = &config.header {
+            self.header = header.clone();
         }
 
-        if let Some(still_lost) = config.still_lost.clone() {
-            self.still_lost = still_lost;
+        if let Some(still_lost) = &config.still_lost {
+            self.still_lost = still_lost.clone();
         }
 
-        if let Some(still_missing) = config.still_missing.clone() {
-            self.still_missing = still_missing;
+        if let Some(still_missing) = &config.still_missing {
+            self.still_missing = still_missing.clone();
         }
 
-        if let Some(footer) = config.footer.clone() {
-            self.footer = footer;
+        if let Some(footer) = &config.footer {
+            self.footer = footer.clone();
         }
 
-        if let Some(bullet_point) = config.bullet_point.clone() {
-            self.bullet_point = bullet_point;
+        if let Some(bullet_point) = &config.bullet_point {
+            self.bullet_point = bullet_point.clone();
         }
 
-        if let Some(peer_with_timestamp) = config.peer_with_timestamp.clone() {
-            self.peer_with_timestamp = peer_with_timestamp;
+        if let Some(peer_with_timestamp) = &config.peer_with_timestamp {
+            self.peer_with_timestamp = peer_with_timestamp.clone();
         }
 
-        if let Some(peer_no_timestamp) = config.peer_no_timestamp.clone() {
-            self.peer_no_timestamp = peer_no_timestamp;
+        if let Some(peer_no_timestamp) = &config.peer_no_timestamp {
+            self.peer_no_timestamp = peer_no_timestamp.clone();
         }
     }
 }

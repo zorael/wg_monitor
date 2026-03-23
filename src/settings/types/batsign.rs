@@ -49,8 +49,8 @@ impl BatsignSettings {
             self.enabled = enabled;
         }
 
-        if let Some(urls) = batsign_config.urls.clone() {
-            self.urls = urls;
+        if let Some(urls) = &batsign_config.urls {
+            self.urls = urls.clone();
         }
     }
 

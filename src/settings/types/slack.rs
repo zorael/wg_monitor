@@ -49,8 +49,8 @@ impl SlackSettings {
             self.enabled = enabled;
         }
 
-        if let Some(urls) = slack_config.urls.clone() {
-            self.urls = urls;
+        if let Some(urls) = &slack_config.urls {
+            self.urls = urls.clone();
         }
     }
 

@@ -63,8 +63,8 @@ impl MonitorSettings {
     /// - `monitor_config`: The `file_config::MonitorConfig` containing the
     ///   settings to apply to the current `MonitorSettings` instance.
     pub fn apply_file(&mut self, monitor_config: &file_config::MonitorConfig) {
-        if let Some(interface) = monitor_config.interface.clone() {
-            self.interface = interface;
+        if let Some(interface) = &monitor_config.interface {
+            self.interface = interface.clone();
         }
 
         if let Some(check_interval) = monitor_config.check_interval {

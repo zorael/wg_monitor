@@ -48,8 +48,8 @@ impl CommandSettings {
             self.enabled = enabled;
         }
 
-        if let Some(commands) = command_config.commands.clone() {
-            self.commands = commands;
+        if let Some(commands) = &command_config.commands {
+            self.commands = commands.clone();
         }
     }
 
