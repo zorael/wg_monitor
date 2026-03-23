@@ -249,7 +249,7 @@ Any parameter for which there is no value (as in, there are no late peers so the
 
 #### example scripts
 
-`notify-send` can be used to send desktop notifications. Here are some example glue-layer scripts that map the arguments passed by the external command backend into something `notify-send` can work with.
+[`notify-send`](https://man.archlinux.org/man/notify-send.1) can be used to send desktop notifications. Here are some example glue-layer scripts that map the arguments passed by the external command backend into something `notify-send` can work with.
 
 ##### [`notify-send-to-all-gui.sh`](notify-send-to-all-gui.sh)
 
@@ -332,7 +332,7 @@ systemd-run --machine=${user}@.host --user \
 
 The program is preferably run as a **systemd** service, to have it be automatically restarted upon restoration of power. To facilitate this, [a service unit file](wg_monitor.service) is provided in the repository.
 
-It will have to be copied (or symlinked) into `/etc/systemd/system`, after which you can use `systemctl edit` to create a drop-in file for the service that overrides the `ExecStart` directive to point to the actual location of the `wg_monitor` binary, *if* it is not already located in the default path of `/usr/local/bin/wg_monitor`.
+It will have to be copied (or symlinked) into `/etc/systemd/system`, after which you can use `systemctl edit` to create a drop-in file for the service that overrides the `ExecStart` directive to point to the actual location of the `wg_monitor` binary. This is not required if the binary is already located in the default path of `/usr/local/bin/wg_monitor`.
 
 ```sh
 sudo cp wg_monitor.service /etc/systemd/system
@@ -366,7 +366,7 @@ journalctl -b0 -fn100 -u wg_monitor.service
 
 ## ai
 
-**Visual Studio Code Copilot AI** was used for inline suggestions and to tab-complete some code and documentation. [**ChatGPT**](https://chatgpt.com) was used to answer questions and teach Rust. The project contains no code from "write me a function doing *xyz*" prompts.
+[**GitHub Copilot AI**](https://github.com/features/copilot/ai-code-editor) was used (in [**Visual Studio Code**](https://code.visualstudio.com)) for inline suggestions and to tab-complete some code and documentation. [**ChatGPT**](https://chatgpt.com) and [**Claude**](https://claude.ai) were used to answer questions and teach Rust. The project contains no code from "write me a function doing *xyz*" prompts.
 
 ## todo
 
