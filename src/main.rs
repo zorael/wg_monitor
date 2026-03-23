@@ -204,11 +204,16 @@ fn main() -> process::ExitCode {
     }
 
     logging::tsprintln!(&settings, "Initialization complete.");
+    println!();
 
     if settings.debug {
-        println!("\n{:#?}\n", settings);
-    } else {
+        settings.print();
         println!();
+        println!("{:#?}", peers);
+        println!();
+    }
+
+    if settings.verbose || settings.debug {
         println!(
             "{} {} monitored, {} {} configured.",
             peers.len(),
