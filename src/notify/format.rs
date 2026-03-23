@@ -33,7 +33,7 @@ use crate::utils;
 ///
 /// # Returns
 /// A formatted notification message as a `String`.
-pub fn format_generic_message(
+fn format_generic_message(
     ctx: &super::Context,
     delta: &super::Delta,
     strings: &settings::MessageStrings,
@@ -137,10 +137,7 @@ pub fn format_generic_message(
 ///
 /// # Returns
 /// A formatted reminder message as a `String`.
-pub fn format_generic_reminder(
-    ctx: &super::Context,
-    strings: &settings::ReminderStrings,
-) -> String {
+fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStrings) -> String {
     let mut message = String::new();
 
     let mut add_section = |keys: &[String], header: &str| {
@@ -265,4 +262,110 @@ fn append_message_section(
     }
 
     message.push('\n');
+}
+
+/// Prepares the message body for a notification by formatting it based on the
+/// provided `Context`, `Delta`, and message strings, and applying a header
+/// closure to the appropriate header string.
+///
+/// The function unescapes and trims the final message before returning it.
+///
+/// # Parameters
+/// - `ctx`: The notification context containing the current state of peers and
+///   timing information.
+/// - `delta`: The delta containing the changes in peer status since the last check.
+/// - `strings`: The message strings to use for formatting the notification.
+/// - `header_closure`: A closure that takes a header string and returns a
+///   formatted header string, which allows for backend-specific header
+///   formatting (such as prepending "Subject: " for email bodies).
+///
+/// # Returns
+/// - `Some(message)` if a message to send was composed.
+/// - `None` if an empty message was composed, typically meaning no message
+///   should be sent (such as on first run with no peers to report and with an
+///   empty header string).
+pub fn prepare_message_body(
+    ctx: &super::Context,
+    delta: &super::Delta,
+    strings: &settings::MessageStrings,
+    header_closure: impl Fn(&str) -> String,
+) -> Option<String> {
+    let mut message = String::new();
+    let body = &format_generic_message(ctx, delta, strings);
+
+    if body.is_empty() && !ctx.is_first_run() {
+        // Nothing to send. If it's the first run, we still want to send the
+        // "first run" banner, even if there are no changes.
+        return None;
+    }
+
+    let header = match ctx.is_first_run() {
+        true => &strings.first_run_header,
+        false => &strings.header,
+    };
+
+    if !header.is_empty() {
+        message.push_str(&header_closure(header));
+        message.push('\n');
+    }
+
+    if body.is_empty() && ctx.is_first_run() {
+        if header.is_empty() {
+            // Nothing to send on first run and no header,
+            // so just skip sending a message.
+            return None;
+        }
+
+        // Nothing to send, but send the first run header to alert that
+        // power is back.
+        let message = utils::unescape(&message).trim_end().to_string();
+        return Some(message);
+    }
+
+    message.push_str(body);
+
+    let message = utils::unescape(&message).trim_end().to_string();
+    Some(message)
+}
+
+/// Prepares the message body for a reminder notification by formatting it based
+/// on the provided `Context` and message strings, and applying a header closure
+/// to the appropriate header string.
+///
+/// The function unescapes and trims the final message before returning it.
+///
+/// # Parameters
+/// - `ctx`: The reminder context containing the current state of peers and
+///   timing information.
+/// - `strings`: The message strings to use for formatting the reminder notification.
+/// - `header_closure`: A closure that takes a header string and returns a
+///   formatted header string, which allows for backend-specific header
+///   formatting (such as prepending "Subject: " for email bodies).
+///
+/// # Returns
+/// - `Some(message)` if a message to send was composed.
+/// - `None` if an empty message was composed, typically meaning no message
+///   should be sent (such as on first run with no peers to report and with an
+///   empty header string).
+pub fn prepare_reminder_body(
+    ctx: &super::Context,
+    strings: &settings::ReminderStrings,
+    header_closure: impl Fn(&str) -> String,
+) -> Option<String> {
+    let mut message = String::new();
+    let body = &format_generic_reminder(ctx, strings);
+
+    if body.is_empty() {
+        return None;
+    }
+
+    if !strings.header.is_empty() {
+        message.push_str(&header_closure(&strings.header));
+        message.push('\n');
+    }
+
+    message.push_str(body);
+
+    let message = utils::unescape(&message).trim_end().to_string();
+    Some(message)
 }
