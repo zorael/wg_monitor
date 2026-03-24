@@ -209,6 +209,7 @@ pub fn get_handshakes(interface: &str) -> io::Result<String> {
         .arg("show")
         .arg(interface)
         .arg("latest-handshakes")
+        .env("LC_ALL", "C") // Ensure consistent output format regardless of locale
         .output()?;
 
     if !output.status.success() {
