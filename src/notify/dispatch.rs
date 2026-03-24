@@ -317,48 +317,26 @@ fn send_via_notifier(
     delta: Option<&super::Delta>,
     n: &mut Box<dyn super::StatefulNotifier>,
 ) -> super::NotificationResult {
-    match delta {
-        Some(d) => {
-            let result = n.push_notification(ctx, d);
+    let result = match delta {
+        Some(d) => n.push_notification(ctx, d),
+        None => n.push_reminder(ctx),
+    };
 
-            match &result {
-                super::NotificationResult::DryRun(_) => {
-                    n.state_mut().on_successful_notification(&ctx.now);
-                }
-                super::NotificationResult::Success(_) => {
-                    n.state_mut().on_successful_notification(&ctx.now);
-                }
-                super::NotificationResult::Failure(_, _) => {
-                    n.state_mut().on_failure(ctx, delta, &ctx.now);
-                }
-                super::NotificationResult::NoMessage => {
-                    n.state_mut().on_successful_notification(&ctx.now);
-                }
-                super::NotificationResult::Skipped => {}
+    match &result {
+        super::NotificationResult::DryRun(_)
+        | super::NotificationResult::Success(_)
+        | super::NotificationResult::NoMessage => {
+            if delta.is_some() {
+                n.state_mut().on_successful_notification(&ctx.now);
+            } else {
+                n.state_mut().on_successful_reminder(&ctx.now);
             }
-
-            result
         }
-        None => {
-            let result = n.push_reminder(ctx);
-
-            match &result {
-                super::NotificationResult::DryRun(_) => {
-                    n.state_mut().on_successful_reminder(&ctx.now);
-                }
-                super::NotificationResult::Success(_) => {
-                    n.state_mut().on_successful_reminder(&ctx.now);
-                }
-                super::NotificationResult::Failure(_, _) => {
-                    n.state_mut().on_failure(ctx, None, &ctx.now);
-                }
-                super::NotificationResult::NoMessage => {
-                    n.state_mut().on_successful_reminder(&ctx.now);
-                }
-                super::NotificationResult::Skipped => {}
-            }
-
-            result
+        super::NotificationResult::Failure(_, _) => {
+            n.state_mut().on_failure(ctx, delta, &ctx.now);
         }
+        super::NotificationResult::Skipped => {}
     }
+
+    result
 }
