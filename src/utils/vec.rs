@@ -29,7 +29,7 @@ pub fn trim_vec_of_strings(vec: &[String]) -> Vec<String> {
 mod tests {
     /// Tests for the `trim_vec_of_strings` function, ensuring that it correctly
     /// trims whitespace from each string and filters out empty strings.
-    #[test]
+    #[cfg(test)]
     fn test_trim_vec_of_strings() {
         let input = vec![
             "  https://example.com/webhook1  ".to_string(),
@@ -130,6 +130,7 @@ pub fn append_difference_into(vec: &mut Vec<String>, one: &[String], other: &[St
     vec.extend(elements.cloned());
 }
 
+#[cfg(test)]
 mod tests_vec {
     /// Tests for the `get_vec_difference` function, ensuring that it correctly
     /// computes the differences between two vectors of strings and returns the

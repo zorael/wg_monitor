@@ -270,6 +270,7 @@ fn format_key_timestamp_pairs(
         .join(",")
 }
 
+#[cfg(test)]
 mod test {
     #[allow(unused_imports)]
     use super::*;
