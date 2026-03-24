@@ -29,7 +29,7 @@ pub fn trim_vec_of_strings(vec: &[String]) -> Vec<String> {
 mod tests {
     /// Tests for the `trim_vec_of_strings` function, ensuring that it correctly
     /// trims whitespace from each string and filters out empty strings.
-    #[cfg(test)]
+    #[test]
     fn test_trim_vec_of_strings() {
         let input = vec![
             "  https://example.com/webhook1  ".to_string(),
