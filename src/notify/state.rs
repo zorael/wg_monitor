@@ -234,8 +234,7 @@ impl NotifierState {
     /// retry timing.
     ///
     /// # Parameters
-    /// - `now`: The current time to record as the last reminder sent time and to
-    ///   reset the failure tracking.
+    /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
         self.pending = None;
         self.last_notification_sent = None;
@@ -258,7 +257,7 @@ impl NotifierState {
     /// pending, reminder, and failure tracking is reset for future notifications.
     ///
     /// # Parameters
-    /// - `now`: The current time to record as the last notification sent time.
+    /// - `now`: The current time.
     pub fn on_successful_notification(&mut self, now: &time::SystemTime) {
         self.reset();
         self.last_notification_sent = Some(*now);

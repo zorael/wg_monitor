@@ -17,9 +17,6 @@ use crate::notify;
 /// for CommandBackend).
 pub trait Backend {
     /// Returns the unique identifier of the backend instance.
-    ///
-    /// # Returns
-    /// A numeric identifier that uniquely identifies this backend instance.
     #[allow(dead_code)]
     fn id(&self) -> usize;
 
@@ -27,9 +24,6 @@ pub trait Backend {
     ///
     /// The name is used for logging and identification purposes, and may include
     /// additional information such as unique identifiers.
-    ///
-    /// # Returns
-    /// A string slice representing the name of this backend instance.
     fn name(&self) -> &str;
 
     /// Composes a notification message based on the notification context and
