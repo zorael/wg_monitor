@@ -285,23 +285,6 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     let mut notifiers: Vec<Box<dyn notify::StatefulNotifier>> = Vec::new();
     let agent = ureq::Agent::new_with_defaults();
 
-    /// Helper function to build and push notifiers for a passed backend type.
-    fn build_and_push_notifiers<B, F>(
-        vec: &mut Vec<Box<dyn notify::StatefulNotifier>>,
-        elements: &[String],
-        mut make_backend_fn: F,
-        dry_run: bool,
-    ) where
-        B: backend::Backend + 'static,
-        F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
-    {
-        for (i, element) in elements.iter().enumerate() {
-            let backend = make_backend_fn(i, element);
-            let boxed = Box::new(notify::Notifier::new(backend, dry_run));
-            vec.push(boxed);
-        }
-    }
-
     // Helper closure to build a Slack backend instance.
     let make_slack_backend = |i: usize, url: &String| {
         backend::SlackBackend::new(
@@ -416,14 +399,6 @@ fn run_loop(
     notifiers: &mut [Box<dyn notify::StatefulNotifier>],
     settings: settings::Settings,
 ) -> process::ExitCode {
-    /// Perform some cleanup and sleep at the end of each loop duration.
-    fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
-        ctx.rotate();
-        ctx.resume = false;
-        ctx.loop_iteration += 1;
-        thread::sleep(duration);
-    }
-
     let mut delta = notify::Delta::with_capacity(ctx.peers.len());
     let mut should_skip_next = settings.skip_first;
 
@@ -703,4 +678,75 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
     }
 
     Ok(settings)
+}
+
+/// Helper function to build and push notifiers for a passed backend type into a
+/// passed vector.
+///
+/// This is only called from within the main loop in `build_notifiers`, but as
+/// it doesn't actually use any variables from that scope, it can be a
+/// standalone function.
+///
+/// This function iterates over the provided elements (URLs or commands), uses
+/// the provided `make_backend_fn` to create backend instances for each element,
+/// wraps them in `Notifier` instances, and pushes them into the provided vector
+/// of notifiers. The `dry_run` parameter is passed to the `Notifier`
+/// constructor to allow for appropriate behavior in dry-run mode.
+///
+/// # Parameters
+/// - `vec`: The mutable vector of boxed `StatefulNotifier` trait objects to push
+///   the new notifiers into.
+/// - `elements`: A slice of strings representing the configuration elements for
+///   the backend (e.g., URLs for Slack/Batsign or commands for Command backend).
+/// - `make_backend_fn`: A closure that takes an index and a reference to a
+///   string and returns an instance of the backend type `B`.
+/// - `dry_run`: A boolean indicating whether the notifiers being created are
+///   for dry-run mode, which may affect how the notifiers behave when sending
+///   notifications.
+fn build_and_push_notifiers<B, F>(
+    vec: &mut Vec<Box<dyn notify::StatefulNotifier>>,
+    elements: &[String],
+    mut make_backend_fn: F,
+    dry_run: bool,
+) where
+    B: backend::Backend + 'static,
+    F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
+{
+    for (i, element) in elements.iter().enumerate() {
+        let backend = make_backend_fn(i, element);
+        let boxed = Box::new(notify::Notifier::new(backend, dry_run));
+        vec.push(boxed);
+    }
+}
+
+/// Perform some cleanup and sleep at the end of each loop duration.
+///
+/// This is only called from within the main loop in `run_loop`, but as it doesn't
+/// actually use any variables from that scope, it can be a standalone function.
+/// It is run at the end of each loop iteration to handle common tasks.
+///
+/// This function performs the following steps:
+///
+/// 1. Rotates the peer states in the context, which involves moving late peers
+///    to missing and resetting the late/missing keys for the next iteration.
+/// 2. Sets the `resume` flag in the context to false, which is something that
+///    is only used in the first iteration, if the `--resume` flag is set.
+///    Since this function will be called at the end of each loop, it follows
+///    that the `resume` flag should be false from hereon after, in all cases.
+/// 3. Increments the loop iteration count.
+/// 4. Sleeps for the specified duration, which is typically the configured
+///    check interval, to control how long the program waits between iterations
+///    of the main loop. It can also be other values.
+///
+/// # Parameters:
+/// - `ctx`: The notification context, which is used to rotate the peer states
+///   and update the loop iteration count.
+/// - `duration`: The duration to sleep for at the end of the loop, which is
+///   typically the configured check interval. This allows the main loop to
+///   sleep for the appropriate amount of time between iterations.
+fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
+    ctx.rotate();
+    ctx.resume = false;
+    ctx.loop_iteration += 1;
+    thread::sleep(duration);
 }
