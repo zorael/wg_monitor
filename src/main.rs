@@ -91,8 +91,8 @@ fn main() -> process::ExitCode {
     }
 
     let settings = match init_settings(&cli) {
-        Ok(s) => s,
-        Err(code) => return code,
+        InitSettingsResult::Success(s) => *s, // dereference to move out of the Box
+        InitSettingsResult::EarlyExitCode(code) => return code,
     };
 
     if cli.show {
@@ -548,10 +548,12 @@ fn run_loop(
 ///   configuration directory and any overrides to apply to the settings.
 ///
 /// # Returns
-/// On success, returns the initialized `Settings` object. On failure,
-/// returns an appropriate exit code indicating the type of failure that
-/// occurred during initialization.
-fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode> {
+/// An `InitSettingsResult` which is either a `Success` containing the initialized
+/// `Settings` instance, boxed in a `Box<settings::Settings>` for memory reasons,
+/// or an `EarlyExitCode` containing a `process::ExitCode` to exit with if
+/// initialization fails, alternatively if the `--save` flag was passed to
+/// generate configuration and resources.
+fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
     let mut settings = settings::Settings::default();
 
     if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
@@ -559,7 +561,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             &settings.disable_timestamps,
             "Error resolving default configuration directory: {e}"
         );
-        return Err(process::ExitCode::from(
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
             defaults::exit_codes::FAILED_TO_RESOLVE_CONFIG_DIR,
         ));
     }
@@ -571,7 +573,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             Create it or run with `--save` to generate default configuration and resources.",
             settings.paths.config_dir.display()
         );
-        return Err(process::ExitCode::from(
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
             defaults::exit_codes::CONFIG_DIR_DOES_NOT_EXIST,
         ));
     }
@@ -586,7 +588,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
                 "Failed to read configuration file {}: {e}",
                 settings.paths.config_file.display()
             );
-            return Err(process::ExitCode::from(
+            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
                 defaults::exit_codes::FAILED_TO_READ_CONFIG_FILE,
             ));
         }
@@ -599,7 +601,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             Create it or run with `--save` to generate default configuration and resources.",
             settings.paths.config_file.display()
         );
-        return Err(process::ExitCode::from(
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
             defaults::exit_codes::CONFIG_FILE_DOES_NOT_EXIST,
         ));
     }
@@ -625,7 +627,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
                         settings.paths.config_dir.display()
                     );
 
-                    return Err(process::ExitCode::from(
+                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
                         defaults::exit_codes::FAILED_TO_CREATE_CONFIG_DIR,
                     ));
                 }
@@ -641,7 +643,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
                 settings.paths.config_file.display()
             );
 
-            return Err(process::ExitCode::from(
+            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
                 defaults::exit_codes::FAILED_TO_WRITE_CONFIG_FILE,
             ));
         };
@@ -662,7 +664,7 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
                         settings.paths.peer_list.display()
                     );
 
-                    return Err(process::ExitCode::from(
+                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
                         defaults::exit_codes::FAILED_TO_WRITE_PEER_LIST_FILE,
                     ));
                 }
@@ -674,10 +676,12 @@ fn init_settings(cli: &cli::Cli) -> Result<settings::Settings, process::ExitCode
             "Configuration and resources written successfully to {}.",
             settings.paths.config_dir.display()
         );
-        return Err(process::ExitCode::SUCCESS);
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::SUCCESS);
     }
 
-    Ok(settings)
+    // Box the resulting settings to avoid issues with the size of the Settings struct
+    // making the InitSettingsResult enum too large to compile.
+    InitSettingsResult::Success(Box::new(settings))
 }
 
 /// Helper function to build and push notifiers for a passed backend type into a
@@ -749,4 +753,21 @@ fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
     ctx.resume = false;
     ctx.loop_iteration += 1;
     thread::sleep(duration);
+}
+
+/// Return type for the `init_settings` function.
+///
+/// This enum is used to convey the result of initializing the program settings,
+/// which can either be a successful initialization with a `Box<settings::Settings>`
+/// instance, or an early exit with a specific `process::ExitCode`.
+enum InitSettingsResult {
+    /// Indicates that settings were successfully initialized, containing the
+    /// initialized `Settings` instance. It has to be `Box`ed to avoid issues
+    /// with the size of the `Settings` struct making the enum too large to compile.
+    Success(Box<settings::Settings>),
+
+    /// Indicates that initialization failed and the program should exit early
+    /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
+    /// and is such not necessarily an error exit code.
+    EarlyExitCode(process::ExitCode),
 }
