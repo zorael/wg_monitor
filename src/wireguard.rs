@@ -129,7 +129,7 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
             continue;
         };
 
-        if timestamp.parse::<u64>().ok().is_none() {
+        if timestamp.parse::<u64>().is_err() {
             errors.push(format!(
                 "[!] Invalid timestamp for key '{key}': '{timestamp}'"
             ));
