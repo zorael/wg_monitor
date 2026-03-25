@@ -197,14 +197,14 @@ impl PeerKey {
     }
 }
 
-impl std::fmt::Display for PeerKey {
+impl fmt::Display for PeerKey {
     /// Formats the `PeerKey` for display purposes by passing it the inner string.
     ///
     /// # Parameters
     /// - `f`: The formatter to write the output to.
     ///
     /// # Returns
-    /// A `std::fmt::Result` indicating whether the formatting was successful.
+    /// An `fmt::Result` indicating whether the formatting was successful.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
