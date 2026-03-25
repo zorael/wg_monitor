@@ -3,11 +3,7 @@
 //!
 //! This module provides functions for reading the list of WireGuard peers from a
 //! file, validating the output of the `wg show latest-handshakes` command, and
-//! updating the last seen timestamps for peers based on the command output. It
-//! also defines the `WireGuardPeer` struct, which represents a peer in the
-//! WireGuard network and includes methods for validating and shortening public
-//! keys, as well as a function for sorting peer keys based on their last seen
-//! timestamps.
+//! updating the last seen timestamps for peers based on the command output.
 
 use std::collections;
 use std::fs;
