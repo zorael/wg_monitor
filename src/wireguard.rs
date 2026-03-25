@@ -19,7 +19,7 @@ use std::time;
 use crate::peer;
 
 /// Reads the list of WireGuard peers from a specified file path, returning a
-/// `HashMap` of public keys to `WireGuardPeer` structs.
+/// `HashMap` of `peer::PeerKey` keys to `peer::WireGuardPeer` values.
 ///
 /// The function expects the file to contain lines in one of the following formats:
 /// - `public_key human_name`: A line with a public key followed by a
@@ -38,13 +38,13 @@ use crate::peer;
 ///   during the reading process.
 ///
 /// # Returns
-/// A `Result` containing a `HashMap` of public keys to `WireGuardPeer` structs
-/// if successful, or an `io::Error` if there was an issue reading the file or
-/// parsing its contents.
+/// A `Result` containing a `HashMap` of `peer::PeerKey` keys to `peer::WireGuardPeer`
+/// values if successful, or an `io::Error` if there was an issue reading the
+/// file or parsing its contents.
 pub fn read_peer_list(
     path: &path::Path,
     debug: bool,
-) -> io::Result<collections::HashMap<String, peer::WireGuardPeer>> {
+) -> io::Result<collections::HashMap<peer::PeerKey, peer::WireGuardPeer>> {
     if debug {
         println!("[i] Reading peers from file: '{}'\n", path.display());
     }
@@ -53,53 +53,32 @@ pub fn read_peer_list(
     let reader = io::BufReader::new(file);
     let mut peers = collections::HashMap::new();
 
-    for line in reader.lines() {
-        let line = line?.trim().to_string();
+    for whole_line in reader.lines() {
+        let whole_line = whole_line?.trim().to_string();
 
-        if line.is_empty() || line.starts_with('#') {
+        if whole_line.is_empty() || whole_line.starts_with('#') {
             continue;
         }
 
         if debug {
-            println!("{line}");
+            println!("{whole_line}");
         }
 
-        if let Some((key, human_name)) = line.split_once(' ') {
-            if !peer::WireGuardPeer::validate_public_key(key) {
-                eprintln!("[!] Invalid public key in peers file: '{}'", key);
-                continue;
-            }
+        let (key, human_name) = match whole_line.split_once(' ') {
+            Some((k, h)) => (k, Some(h)),
+            None => (whole_line.as_str(), None),
+        };
 
-            let peer = peer::WireGuardPeer {
-                public_key: key.to_string(),
-                human_name: human_name.trim().to_string(),
-                last_seen: None,
-                last_seen_unix: 0,
-            };
+        let Some(peer) = peer::WireGuardPeer::new(key, human_name) else {
+            eprintln!("[!] Invalid public key in peers file: '{}'", key);
+            continue;
+        };
 
-            if debug {
-                println!("{:#?}\n", peer);
-            }
-
-            peers.insert(key.to_string(), peer);
-        } else if peer::WireGuardPeer::validate_public_key(&line) {
-            let key = line.to_string();
-            let peer = peer::WireGuardPeer {
-                public_key: key.clone(),
-                human_name: peer::WireGuardPeer::shorten_key(&key),
-                last_seen: None,
-                last_seen_unix: 0,
-            };
-
-            if debug {
-                println!("{:#?}\n", peer);
-            }
-
-            peers.insert(key, peer);
-        } else {
-            // Invalid line format, skip it
-            eprintln!("[!] Invalid line in peers file: '{}'", line);
+        if debug {
+            println!("{:#?}\n", peer);
         }
+
+        peers.insert(peer.public_key.clone(), peer);
     }
 
     if debug {
@@ -112,8 +91,14 @@ pub fn read_peer_list(
 /// Validates the output of the `wg show {iface} latest-handshakes` command,
 /// ensuring that each line contains a valid public key and a valid timestamp.
 ///
-/// The function checks that each line is in the format `public_key\ttimestamp`,
-/// where
+/// The function checks that each line is in the format `public_key\ttimestamp`.
+///
+/// # Parameters:
+/// - `terminal_output`: The output from the `wg show {iface} latest-handshakes` command.
+///
+/// # Returns:
+/// A vector of error messages for any lines that are invalid. If the vector is
+/// empty, it means all lines were valid.
 pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
     let mut errors = Vec::new();
 
@@ -153,11 +138,11 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 /// # Parameters
 /// - `terminal_output`: The output from the `wg show {iface} latest-handshakes`
 ///   command, which should contain lines in the format `public_key\ttimestamp`.
-/// - `peers`: A mutable reference to a `HashMap` of public keys to `WireGuardPeer`
-///   structs, to be updated based on the command output.
+/// - `peers`: A mutable reference to a `HashMap` of `peer::PeerKey` keys to
+///   `peer::WireGuardPeer` values, to be updated based on the command output.
 pub fn update_handshakes(
     terminal_output: &str,
-    peers: &mut collections::HashMap<String, peer::WireGuardPeer>,
+    peers: &mut collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
 ) {
     for peer in peers.values_mut() {
         // Reset all peers prior to updating, so that any peers not present
@@ -177,7 +162,12 @@ pub fn update_handshakes(
             continue;
         };
 
-        let Some(peer) = peers.get_mut(key) else {
+        let key = match peer::PeerKey::new(key) {
+            Some(k) => k,
+            None => continue,
+        };
+
+        let Some(peer) = peers.get_mut(&key) else {
             continue;
         };
 

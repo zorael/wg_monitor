@@ -73,7 +73,7 @@ fn format_generic_message(
         return message.trim_end().to_string();
     }
 
-    let mut add_section = |keys: &[String], header: &str, disable_timestamps: bool| {
+    let mut add_section = |keys: &[peer::PeerKey], header: &str, disable_timestamps: bool| {
         append_message_section(
             &ctx.peers,
             &mut message,
@@ -140,7 +140,7 @@ fn format_generic_message(
 fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStrings) -> String {
     let mut message = String::new();
 
-    let mut add_section = |keys: &[String], header: &str| {
+    let mut add_section = |keys: &[peer::PeerKey], header: &str| {
         append_message_section(
             &ctx.peers,
             &mut message,
@@ -202,7 +202,7 @@ fn format_peer_line(
 
     String::from(pattern)
         .replace("{peer}", &peer.human_name)
-        .replace("{key}", &peer.public_key)
+        .replace("{key}", peer.public_key.as_str())
         .replace("{when}", &when)
         .replace("{unix}", &peer.last_seen_unix.to_string())
 }
@@ -215,7 +215,7 @@ fn format_peer_line(
 /// different categories of peers (e.g., lost, missing, still lost, etc.).
 ///
 /// # Parameters
-/// - `peers`: A hashmap of all peers, keyed by their public key, used
+/// - `peers`: A hashmap of all peers, keyed by `peer::PeerKey` instances, used
 ///   to look up peer information for formatting.
 /// - `message`: The message string being built, to which the section will be appended.
 /// - `keys`: The list of peer public keys that belong to this section (e.g
@@ -232,9 +232,9 @@ fn format_peer_line(
 ///   the last seen time is not relevant.
 #[allow(clippy::too_many_arguments)]
 fn append_message_section(
-    peers: &collections::HashMap<String, peer::WireGuardPeer>,
+    peers: &collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
     message: &mut String,
-    keys: &[String],
+    keys: &[peer::PeerKey],
     header: &str,
     peer_with_timestamp: &str,
     peer_no_timestamp: &str,

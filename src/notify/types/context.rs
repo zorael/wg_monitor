@@ -15,19 +15,19 @@ pub struct Context {
     ///
     /// Can be used by notification backends to access peer information when
     /// composing notifications.
-    pub peers: collections::HashMap<String, peer::WireGuardPeer>,
+    pub peers: collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
 
     /// Current peers that are late (seen but timed out).
-    pub late_keys: Vec<String>,
+    pub late_keys: Vec<peer::PeerKey>,
 
     /// Current peers that are missing (not seen at all).
-    pub missing_keys: Vec<String>,
+    pub missing_keys: Vec<peer::PeerKey>,
 
     /// Peers that were previously late in the last check.
-    pub previous_late_keys: Vec<String>,
+    pub previous_late_keys: Vec<peer::PeerKey>,
 
     /// Peers that were previously missing in the last check.
-    pub previous_missing_keys: Vec<String>,
+    pub previous_missing_keys: Vec<peer::PeerKey>,
 
     /// The current time, which can be used in notifications to indicate when
     /// the notification is being sent, or to calculate durations since the
@@ -79,12 +79,12 @@ impl Context {
     /// Creates a new `Context` by inheriting the peer information from a previous state.
     ///
     /// # Parameters
-    /// - `peers`: A hashmap of peers to inherit, keyed by their public key.
+    /// - `peers`: A hashmap of peers to inherit, keyed by their public keys.
     ///
     /// # Returns
     /// A new `Context` instance with the specified peers and default values
     /// for other fields.
-    pub fn inherit(peers: collections::HashMap<String, peer::WireGuardPeer>) -> Self {
+    pub fn inherit(peers: collections::HashMap<peer::PeerKey, peer::WireGuardPeer>) -> Self {
         let mut sized = Self::with_capacity(peers.len());
         sized.peers = peers;
         sized

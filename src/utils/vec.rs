@@ -49,66 +49,66 @@ mod tests {
     }
 }
 
-/// Computes the differences between two vectors of strings, returning a tuple
-/// containing two vectors: the first vector contains elements that are in the
+/// Computes the differences between two vectors, returning a tuple containing
+/// two further vectors: the first vector contains elements that are in the
 /// first input vector but not in the second, and the second vector contains
 /// elements that are in the second input vector but not in the first.
 ///
-/// This function is useful for comparing lists of strings, such as notification
-/// URLs or peer lists, to determine which items have been added or removed.
+/// This function is useful for comparing lists to determine which items have
+/// been added or removed.
 ///
 /// # Parameters
-/// - `one`: A reference to the first vector of strings to compare.
-/// - `other`: A reference to the second vector of strings to compare against.
+/// - `one`: A reference to the first vector to compare.
+/// - `other`: A reference to the second vector to compare against.
 ///
 /// # Returns
-/// A tuple containing two vectors of strings:
+/// A tuple containing two vectors:
 /// - The first vector contains elements that are in `one` but not in `other`.
 /// - The second vector contains elements that are in `other` but not in `one`.
-pub fn get_vec_difference(one: &[String], other: &[String]) -> (Vec<String>, Vec<String>) {
+pub fn get_vec_difference<T: Clone + PartialEq>(one: &[T], other: &[T]) -> (Vec<T>, Vec<T>) {
     let only_one = get_elements_not_in_other_vec(one, other);
     let only_other = get_elements_not_in_other_vec(other, one);
     (only_one, only_other)
 }
 
-/// Returns a vector of strings containing the elements that are in the first
-/// input vector but not in the second input vector.
+/// Returns a vector containing the elements that are in the first input vector
+/// but not in the second input vector.
 ///
 /// This function is a helper for `get_vec_difference` and is used to compute
 /// the unique elements in one vector compared to another.
 ///
 /// # Parameters
-/// - `one`: A reference to the first vector of strings to compare.
-/// - `other`: A reference to the second vector of strings to compare against.
+/// - `one`: A reference to the first vector to compare.
+/// - `other`: A reference to the second vector to compare against.
 ///
 /// # Returns
-/// A vector of strings containing the elements that are in `one` but not in `other`.
-pub fn get_elements_not_in_other_vec(one: &[String], other: &[String]) -> Vec<String> {
+/// A vector containing the elements that are in `one` but not in `other`.
+pub fn get_elements_not_in_other_vec<T: Clone + PartialEq>(one: &[T], other: &[T]) -> Vec<T> {
     one.iter().filter(|k| !other.contains(k)).cloned().collect()
 }
 
-/// Appends the differences between two vectors of strings into the provided
+/// Appends the differences between two vectors into the provided
 /// destination vectors. The first destination vector will receive elements that
 /// are in the first source vector but not in the second, and the second
 /// destination vector will receive elements that are in the second source vector
 /// but not in the first.
 ///
-/// This function is useful for updating lists of strings based on changes between
+/// This function is useful for updating lists of items based on changes between
 /// two source vectors, such as when managing notification URLs or peer lists that
 /// may have been modified.
 ///
 /// # Parameters
-/// - `source_one`: A reference to the first source vector of strings to compare.
-/// - `source_other`: A reference to the second source vector of strings to compare against.
-/// - `dest_one`: A mutable reference to the first destination vector of strings where
+/// - `source_one`: A reference to the first source vector to compare.
+/// - `source_other`: A reference to the second source vector to compare against.
+/// - `dest_one`: A mutable reference to the first destination vector where
 ///   elements that are in `source_one` but not in `source_other` will be appended.
-/// - `dest_other`: A mutable reference to the second destination vector of strings where
+/// - `dest_other`: A mutable reference to the second destination vector where
 ///   elements that are in `source_other` but not in `source_one` will be appended.
-pub fn append_vec_difference(
-    source_one: &[String],
-    source_other: &[String],
-    dest_one: &mut Vec<String>,
-    dest_other: &mut Vec<String>,
+pub fn append_vec_difference<T: Clone + PartialEq>(
+    source_one: &[T],
+    source_other: &[T],
+    dest_one: &mut Vec<T>,
+    dest_other: &mut Vec<T>,
 ) {
     append_difference_into(dest_one, source_one, source_other);
     append_difference_into(dest_other, source_other, source_one);
@@ -121,11 +121,11 @@ pub fn append_vec_difference(
 /// the unique elements in one vector compared to another into a destination vector.
 ///
 /// # Parameters
-/// - `dest`: A mutable reference to the destination vector of strings where
+/// - `dest`: A mutable reference to the destination vector where
 ///   elements that are in `one` but not in `other` will be appended.
-/// - `one`: A reference to the first vector of strings to compare.
-/// - `other`: A reference to the second vector of strings to compare against.
-pub fn append_difference_into(vec: &mut Vec<String>, one: &[String], other: &[String]) {
+/// - `one`: A reference to the first vector to compare.
+/// - `other`: A reference to the second vector to compare against.
+pub fn append_difference_into<T: Clone + PartialEq>(vec: &mut Vec<T>, one: &[T], other: &[T]) {
     let elements = one.iter().filter(|k| !other.contains(k));
     vec.extend(elements.cloned());
 }
@@ -133,8 +133,8 @@ pub fn append_difference_into(vec: &mut Vec<String>, one: &[String], other: &[St
 #[cfg(test)]
 mod tests_vec {
     /// Tests for the `get_vec_difference` function, ensuring that it correctly
-    /// computes the differences between two vectors of strings and returns the
-    /// expected results in the form of two vectors: one for elements unique to
+    /// computes the differences between two vectors and returns the
+    /// expected results in the form of two other vectors: one for elements unique to
     /// the first vector and one for elements unique to the second vector.
     #[test]
     fn test_get_vec_difference() {
@@ -155,7 +155,7 @@ mod tests_vec {
     }
 
     /// Tests for the `append_vec_difference` function, ensuring that it correctly
-    /// appends the differences between two vectors of strings into the provided
+    /// appends the differences between two vectors into the provided
     /// destination vectors, resulting in the expected contents of the destination
     /// vectors after the function is called.
     #[test]

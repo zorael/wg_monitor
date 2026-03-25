@@ -4,15 +4,17 @@
 
 use std::cmp;
 use std::collections;
+use std::rc;
 use std::time;
 
 /// Represents a WireGuard peer, including its public key, human-readable name,
 /// and timestamps for when it was last seen as active.
 #[derive(Clone, Debug)]
 pub struct WireGuardPeer {
-    /// The WireGuard public key for the peer, which is a 44-character base64 string
-    /// that uniquely identifies the peer in the WireGuard network.
-    pub public_key: String,
+    /// A `PeerKey` newtype of the the WireGuard public key for the peer,
+    /// which is a 44-character base64 string that uniquely identifies the peer
+    /// in the WireGuard network.
+    pub public_key: PeerKey,
 
     /// A human-readable name for the peer, which can be used for display purposes in
     /// notifications and logs.
@@ -36,6 +38,32 @@ pub struct WireGuardPeer {
 }
 
 impl WireGuardPeer {
+    /// Creates a new `WireGuardPeer` instance from a public key string and an
+    /// optional human-readable name.
+    ///
+    /// # Parameters
+    /// - `public_key`: The WireGuard public key for the peer, which must pass
+    ///   validation in `PeerKey::new`, else this function will return `None`.
+    /// - `human_name`: An optional human-readable name for the peer.
+    ///   If `None` is provided, the human name will be derived from the public
+    ///   key using the `shorten_key` method.
+    ///
+    /// # Returns
+    /// An `Option<WireGuardPeer>` which is `Some(WireGuardPeer)` if the
+    /// provided public key is valid, or `None` if the public key is invalid.
+    pub fn new(public_key: &str, human_name: Option<&str>) -> Option<Self> {
+        let key = PeerKey::new(public_key)?;
+
+        Some(Self {
+            public_key: key,
+            human_name: human_name
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| Self::shorten_key(public_key)),
+            last_seen: None,
+            last_seen_unix: 0,
+        })
+    }
+
     /// Shortens a WireGuard public key for display purposes.
     ///
     /// The function takes a public key string and returns a shortened
@@ -120,9 +148,50 @@ impl WireGuardPeer {
 /// Peers that are present (have a non-0 timestamp) are sorted first, with newer
 /// timestamps appearing before older ones. Peers without a timestamp
 /// (or rather, with a timestamp of 0) are sorted last.
-pub fn sort_keys(keys: &mut [String], peers: &collections::HashMap<String, WireGuardPeer>) {
+pub fn sort_keys(keys: &mut [PeerKey], peers: &collections::HashMap<PeerKey, WireGuardPeer>) {
     keys.sort_unstable_by_key(|k| {
         let timestamp = peers.get(k).map(|p| p.last_seen_unix).unwrap_or(0);
         (timestamp == 0, cmp::Reverse(timestamp))
     });
+}
+
+/// Newtype of `Rc<str>` representing a WireGuard peer's public key, which is
+/// used as a key in hashmaps and for display purposes.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PeerKey(rc::Rc<str>);
+
+impl PeerKey {
+    /// Creates a new `PeerKey` from a string slice, validating that the input
+    /// is a valid WireGuard public key.
+    ///
+    /// # Parameters
+    /// - `key`: The string slice representing the WireGuard public key to be
+    ///   converted into a `PeerKey`.
+    ///
+    /// # Returns
+    /// An `Option<PeerKey>` which is `Some(PeerKey)` if the input string is a
+    /// valid WireGuard public key, or `None` if it is invalid.
+    pub fn new(key: &str) -> Option<Self> {
+        if WireGuardPeer::validate_public_key(key) {
+            Some(Self(rc::Rc::from(key)))
+        } else {
+            None
+        }
+    }
+
+    /// Returns the string slice representation of the `PeerKey`.
+    ///
+    /// # Returns
+    /// A string slice that represents the WireGuard public key contained in
+    /// this `PeerKey`.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for PeerKey {
+    /// Formats the `PeerKey` for display purposes by passing it the inner string.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
 }

@@ -249,7 +249,7 @@ impl super::Backend for CommandBackend {
 /// ```
 ///
 /// # Parameters
-/// - `peers`: A map of peer keys to their corresponding `WireGuardPeer
+/// - `peers`: A map of `peer::PeerKey` to their corresponding `peer::WireGuardPeer`
 ///   information, which includes the last seen timestamp for each peer.
 /// - `keys`: A slice of keys for which to format the key-timestamp pairs.
 ///   Each key must exist in the `peers` map, or this function will panic.
@@ -261,8 +261,8 @@ impl super::Backend for CommandBackend {
 /// If any key in the `keys` slice does not exist in the `peers` map,
 /// this function will panic with a message indicating the missing key.
 fn format_key_timestamp_pairs(
-    peers: &collections::HashMap<String, peer::WireGuardPeer>,
-    keys: &[String],
+    peers: &collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
+    keys: &[peer::PeerKey],
 ) -> String {
     keys.iter()
         .map(|key| format!("{key}:{}", peers[key].last_seen_unix))
@@ -281,31 +281,19 @@ mod test {
     fn test_format_key_timestamp_pairs() {
         let mut peers = collections::HashMap::new();
 
-        peers.insert(
-            "key1".to_string(),
-            peer::WireGuardPeer {
-                public_key: "key1".to_string(),
-                human_name: "Peer 1".to_string(),
-                last_seen: None,
-                last_seen_unix: 1234567890,
-            },
-        );
+        let mut peer1 = peer::WireGuardPeer::new("key1", Some("Peer 1")).unwrap();
+        peer1.last_seen_unix = 1234567890;
+        peers.insert(peer1.public_key.clone(), peer1.clone());
 
-        peers.insert(
-            "key2".to_string(),
-            peer::WireGuardPeer {
-                public_key: "key2".to_string(),
-                human_name: "Peer 2".to_string(),
-                last_seen: None,
-                last_seen_unix: 9876543210,
-            },
-        );
+        let mut peer2 = peer::WireGuardPeer::new("key2", Some("Peer 2")).unwrap();
+        peer2.last_seen_unix = 9876543210;
+        peers.insert(peer2.public_key.clone(), peer2.clone());
 
-        let keys = vec!["key1".to_string(), "key2".to_string()];
+        let keys = vec![peer1.public_key.clone(), peer2.public_key.clone()];
         let result = format_key_timestamp_pairs(&peers, &keys);
         assert_eq!(result, "key1:1234567890,key2:9876543210");
 
-        let keys: Vec<String> = Vec::new();
+        let keys: Vec<peer::PeerKey> = Vec::new();
         let result = format_key_timestamp_pairs(&peers, &keys);
         assert_eq!(result, "");
     }

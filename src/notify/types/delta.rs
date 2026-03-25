@@ -17,19 +17,19 @@ use crate::utils;
 pub struct Delta {
     /// Public keys of peers that were lost (time since last seen exceeds the
     /// timeout threshold) since the last check.
-    pub became_late_keys: Vec<String>,
+    pub became_late_keys: Vec<peer::PeerKey>,
 
     /// Public keys of peers that went missing (not seen at all) since the last check.
     /// This is indicative of a VPN restart.
-    pub went_missing_keys: Vec<String>,
+    pub went_missing_keys: Vec<peer::PeerKey>,
 
     /// Public keys of peers that returned (time since last seen is now within
     /// the timeout threshold) since the last check.
-    pub no_longer_late_keys: Vec<String>,
+    pub no_longer_late_keys: Vec<peer::PeerKey>,
 
     /// Public keys of peers that appeared after being missing (not seen at all)
     /// since the last check.
-    pub returned_keys: Vec<String>,
+    pub returned_keys: Vec<peer::PeerKey>,
 }
 
 impl Delta {
