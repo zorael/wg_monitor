@@ -161,12 +161,8 @@ pub fn update_handshakes(
             continue;
         };
 
-        let key = match super::PeerKey::new(key) {
-            Some(k) => k,
-            None => continue,
-        };
-
-        let Some(peer) = peers.get_mut(&key) else {
+        // Borrow magic to avoid creating a new PeerKey instance just to look it up
+        let Some(peer) = peers.get_mut(key) else {
             continue;
         };
 

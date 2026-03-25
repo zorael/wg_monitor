@@ -2,6 +2,7 @@
 //! includes methods for validating and shortening public keys, as well as a
 //! function for sorting peer keys based on their last seen timestamps.
 
+use std::borrow;
 use std::cmp;
 use std::collections;
 use std::fmt;
@@ -200,5 +201,12 @@ impl std::fmt::Display for PeerKey {
     /// A `std::fmt::Result` indicating whether the formatting was successful.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl borrow::Borrow<str> for PeerKey {
+    /// Allows borrowing a `str` from a `PeerKey`.
+    fn borrow(&self) -> &str {
+        &self.0
     }
 }
