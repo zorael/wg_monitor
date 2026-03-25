@@ -7,8 +7,8 @@
 //! (became late, went missing, no longer late, returned).
 
 use crate::notify;
-use crate::peer;
 use crate::utils;
+use crate::wireguard;
 
 /// Delta struct representing the changes in peer status between two checks,
 /// key in composing notification messages based on what changed since the
@@ -17,19 +17,19 @@ use crate::utils;
 pub struct Delta {
     /// Public keys of peers that were lost (time since last seen exceeds the
     /// timeout threshold) since the last check.
-    pub became_late_keys: Vec<peer::PeerKey>,
+    pub became_late_keys: Vec<wireguard::PeerKey>,
 
     /// Public keys of peers that went missing (not seen at all) since the last check.
     /// This is indicative of a VPN restart.
-    pub went_missing_keys: Vec<peer::PeerKey>,
+    pub went_missing_keys: Vec<wireguard::PeerKey>,
 
     /// Public keys of peers that returned (time since last seen is now within
     /// the timeout threshold) since the last check.
-    pub no_longer_late_keys: Vec<peer::PeerKey>,
+    pub no_longer_late_keys: Vec<wireguard::PeerKey>,
 
     /// Public keys of peers that appeared after being missing (not seen at all)
     /// since the last check.
-    pub returned_keys: Vec<peer::PeerKey>,
+    pub returned_keys: Vec<wireguard::PeerKey>,
 }
 
 impl Delta {
@@ -97,10 +97,10 @@ impl Delta {
 
         // Sort keys so that notifications present them in a descending order of
         // disappearance time, with missing peers last.
-        peer::sort_keys(&mut self.no_longer_late_keys, &ctx.peers);
-        peer::sort_keys(&mut self.became_late_keys, &ctx.peers);
-        peer::sort_keys(&mut self.returned_keys, &ctx.peers);
-        peer::sort_keys(&mut self.went_missing_keys, &ctx.peers);
+        wireguard::sort_keys(&mut self.no_longer_late_keys, &ctx.peers);
+        wireguard::sort_keys(&mut self.became_late_keys, &ctx.peers);
+        wireguard::sort_keys(&mut self.returned_keys, &ctx.peers);
+        wireguard::sort_keys(&mut self.went_missing_keys, &ctx.peers);
     }
 
     /// Prints the non-empty key vectors in the `Delta` with a specified prefix

@@ -5,7 +5,7 @@ use std::collections;
 use std::mem;
 use std::time;
 
-use crate::peer;
+use crate::wireguard;
 
 #[derive(Clone, Debug)]
 /// Context struct for notification message-composing, containing the current
@@ -15,19 +15,19 @@ pub struct Context {
     ///
     /// Can be used by notification backends to access peer information when
     /// composing notifications.
-    pub peers: collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
+    pub peers: collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
 
     /// Current peers that are late (seen but timed out).
-    pub late_keys: Vec<peer::PeerKey>,
+    pub late_keys: Vec<wireguard::PeerKey>,
 
     /// Current peers that are missing (not seen at all).
-    pub missing_keys: Vec<peer::PeerKey>,
+    pub missing_keys: Vec<wireguard::PeerKey>,
 
     /// Peers that were previously late in the last check.
-    pub previous_late_keys: Vec<peer::PeerKey>,
+    pub previous_late_keys: Vec<wireguard::PeerKey>,
 
     /// Peers that were previously missing in the last check.
-    pub previous_missing_keys: Vec<peer::PeerKey>,
+    pub previous_missing_keys: Vec<wireguard::PeerKey>,
 
     /// The current time, which can be used in notifications to indicate when
     /// the notification is being sent, or to calculate durations since the
@@ -84,7 +84,7 @@ impl Context {
     /// # Returns
     /// A new `Context` instance with the specified peers and default values
     /// for other fields.
-    pub fn inherit(peers: collections::HashMap<peer::PeerKey, peer::WireGuardPeer>) -> Self {
+    pub fn inherit(peers: collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>) -> Self {
         let mut sized = Self::with_capacity(peers.len());
         sized.peers = peers;
         sized

@@ -7,9 +7,9 @@
 
 use std::collections;
 
-use crate::peer;
 use crate::settings;
 use crate::utils;
+use crate::wireguard;
 
 /// Builds a generic notification message based on the provided `Context` and
 /// `Delta`, using the specified message strings for formatting.
@@ -73,7 +73,7 @@ fn format_generic_message(
         return message.trim_end().to_string();
     }
 
-    let mut add_section = |keys: &[peer::PeerKey], header: &str, disable_timestamps: bool| {
+    let mut add_section = |keys: &[wireguard::PeerKey], header: &str, disable_timestamps: bool| {
         append_message_section(
             &ctx.peers,
             &mut message,
@@ -140,7 +140,7 @@ fn format_generic_message(
 fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStrings) -> String {
     let mut message = String::new();
 
-    let mut add_section = |keys: &[peer::PeerKey], header: &str| {
+    let mut add_section = |keys: &[wireguard::PeerKey], header: &str| {
         append_message_section(
             &ctx.peers,
             &mut message,
@@ -183,7 +183,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
 /// # Returns
 /// A formatted string representing the peer line in the notification message.
 fn format_peer_line(
-    peer: &peer::WireGuardPeer,
+    peer: &wireguard::WireGuardPeer,
     pattern_with_timestamp: &str,
     pattern_without_timestamp: &str,
 ) -> String {
@@ -215,7 +215,7 @@ fn format_peer_line(
 /// different categories of peers (e.g., lost, missing, still lost, etc.).
 ///
 /// # Parameters
-/// - `peers`: A hashmap of all peers, keyed by `peer::PeerKey` instances, used
+/// - `peers`: A hashmap of all peers, keyed by `wireguard::PeerKey` instances, used
 ///   to look up peer information for formatting.
 /// - `message`: The message string being built, to which the section will be appended.
 /// - `keys`: The list of peer public keys that belong to this section (e.g
@@ -232,9 +232,9 @@ fn format_peer_line(
 ///   the last seen time is not relevant.
 #[allow(clippy::too_many_arguments)]
 fn append_message_section(
-    peers: &collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
+    peers: &collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
     message: &mut String,
-    keys: &[peer::PeerKey],
+    keys: &[wireguard::PeerKey],
     header: &str,
     peer_with_timestamp: &str,
     peer_no_timestamp: &str,

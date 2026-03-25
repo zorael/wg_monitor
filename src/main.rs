@@ -50,7 +50,6 @@ mod defaults;
 mod file_config;
 mod logging;
 mod notify;
-mod peer;
 mod settings;
 mod utils;
 mod wireguard;
@@ -468,8 +467,8 @@ fn run_loop(
             }
         }
 
-        peer::sort_keys(&mut ctx.missing_keys, &ctx.peers);
-        peer::sort_keys(&mut ctx.late_keys, &ctx.peers);
+        wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
+        wireguard::sort_keys(&mut ctx.late_keys, &ctx.peers);
 
         delta.compute_from(ctx);
 

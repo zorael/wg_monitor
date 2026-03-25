@@ -1,4 +1,5 @@
-//! WireGuard-related functions for reading peer information and handshakes.
+//! WireGuard-related functions for reading peer information and handshakes,
+//! specifically in the context of the output of the `wg` command.
 //!
 //! This module provides functions for reading the list of WireGuard peers from a
 //! file, validating the output of the `wg show latest-handshakes` command, and
@@ -16,10 +17,8 @@ use std::path;
 use std::process;
 use std::time;
 
-use crate::peer;
-
 /// Reads the list of WireGuard peers from a specified file path, returning a
-/// `HashMap` of `peer::PeerKey` keys to `peer::WireGuardPeer` values.
+/// `HashMap` of `super::PeerKey` keys to `super::WireGuardPeer` values.
 ///
 /// The function expects the file to contain lines in one of the following formats:
 /// - `public_key human_name`: A line with a public key followed by a
@@ -44,7 +43,7 @@ use crate::peer;
 pub fn read_peer_list(
     path: &path::Path,
     debug: bool,
-) -> io::Result<collections::HashMap<peer::PeerKey, peer::WireGuardPeer>> {
+) -> io::Result<collections::HashMap<super::PeerKey, super::WireGuardPeer>> {
     if debug {
         println!("[i] Reading peers from file: '{}'\n", path.display());
     }
@@ -69,7 +68,7 @@ pub fn read_peer_list(
             None => (whole_line.as_str(), None),
         };
 
-        let Some(peer) = peer::WireGuardPeer::new(key, human_name) else {
+        let Some(peer) = super::WireGuardPeer::new(key, human_name) else {
             eprintln!("[!] Invalid public key in peers file: '{}'", key);
             continue;
         };
@@ -142,7 +141,7 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 ///   `peer::WireGuardPeer` values, to be updated based on the command output.
 pub fn update_handshakes(
     terminal_output: &str,
-    peers: &mut collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
+    peers: &mut collections::HashMap<super::PeerKey, super::WireGuardPeer>,
 ) {
     for peer in peers.values_mut() {
         // Reset all peers prior to updating, so that any peers not present
@@ -162,7 +161,7 @@ pub fn update_handshakes(
             continue;
         };
 
-        let key = match peer::PeerKey::new(key) {
+        let key = match super::PeerKey::new(key) {
             Some(k) => k,
             None => continue,
         };
@@ -188,7 +187,7 @@ pub fn update_handshakes(
 /// interface and returns its output as a `String`.
 ///
 /// # Parameters
-/// - `interface`: The name of the WireGuard interface to query (e.g., "wg0").
+/// - `interface`: The name of the WireGuard interface to query (like "wg0").
 ///
 /// # Returns
 /// A `Result` containing the command output as a `String` if successful, or an

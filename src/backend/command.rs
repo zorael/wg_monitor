@@ -13,7 +13,7 @@ use std::collections;
 use std::process;
 
 use crate::notify;
-use crate::peer;
+use crate::wireguard;
 use crate::settings;
 
 /// Defines the Command backend for sending notifications by executing
@@ -261,8 +261,8 @@ impl super::Backend for CommandBackend {
 /// If any key in the `keys` slice does not exist in the `peers` map,
 /// this function will panic with a message indicating the missing key.
 fn format_key_timestamp_pairs(
-    peers: &collections::HashMap<peer::PeerKey, peer::WireGuardPeer>,
-    keys: &[peer::PeerKey],
+    peers: &collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
+    keys: &[wireguard::PeerKey],
 ) -> String {
     keys.iter()
         .map(|key| format!("{key}:{}", peers[key].last_seen_unix))
@@ -281,11 +281,11 @@ mod test {
     fn test_format_key_timestamp_pairs() {
         let mut peers = collections::HashMap::new();
 
-        let mut peer1 = peer::WireGuardPeer::new("key1", Some("Peer 1")).unwrap();
+        let mut peer1 = wireguard::WireGuardPeer::new("key1", Some("Peer 1")).unwrap();
         peer1.last_seen_unix = 1234567890;
         peers.insert(peer1.public_key.clone(), peer1.clone());
 
-        let mut peer2 = peer::WireGuardPeer::new("key2", Some("Peer 2")).unwrap();
+        let mut peer2 = wireguard::WireGuardPeer::new("key2", Some("Peer 2")).unwrap();
         peer2.last_seen_unix = 9876543210;
         peers.insert(peer2.public_key.clone(), peer2.clone());
 
@@ -293,7 +293,7 @@ mod test {
         let result = format_key_timestamp_pairs(&peers, &keys);
         assert_eq!(result, "key1:1234567890,key2:9876543210");
 
-        let keys: Vec<peer::PeerKey> = Vec::new();
+        let keys: Vec<wireguard::PeerKey> = Vec::new();
         let result = format_key_timestamp_pairs(&peers, &keys);
         assert_eq!(result, "");
     }
