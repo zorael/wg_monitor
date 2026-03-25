@@ -294,8 +294,11 @@ mod test {
 
         let keys = vec![peer1.public_key.clone(), peer2.public_key.clone()];
         let result = format_key_timestamp_pairs(&peers, &keys);
-        assert_eq!(result, "CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi0=:1234567890,\
-                            XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg0=:9876543210");
+        assert_eq!(
+            result,
+            "CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi0=:1234567890,\
+            XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg0=:9876543210"
+        );
 
         let keys: Vec<wireguard::PeerKey> = Vec::new();
         let result = format_key_timestamp_pairs(&peers, &keys);
