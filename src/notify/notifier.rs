@@ -97,7 +97,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     fn push_notification(
         &mut self,
         ctx: &super::Context,
-        delta: &super::Delta,
+        delta: &super::KeyDelta,
     ) -> super::NotificationResult {
         let message = match self.backend.compose_message(ctx, delta) {
             Some(m) => m,

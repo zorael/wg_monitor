@@ -397,7 +397,7 @@ fn run_loop(
     notifiers: &mut [Box<dyn notify::StatefulNotifier>],
     settings: settings::Settings,
 ) -> process::ExitCode {
-    let mut delta = notify::Delta::with_capacity(ctx.peers.len());
+    let mut delta = notify::KeyDelta::with_capacity(ctx.peers.len());
     let mut should_skip_next = settings.skip_first;
 
     // If `resume` is set, we want to skip the first run. The easiest way is to
@@ -472,7 +472,7 @@ fn run_loop(
         delta.compute_from(ctx);
 
         // --skip-first logic is here
-        // Only skip after we've computed the delta
+        // Only skip after we've computed the key delta
         if should_skip_next {
             if ctx.is_first_run() {
                 // If you --skip-first the first run, reminds will never be sent

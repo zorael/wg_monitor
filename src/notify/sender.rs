@@ -12,10 +12,10 @@ pub trait NotificationSender {
     /// A string slice representing the name of this notification sender.
     fn name(&self) -> &str;
 
-    /// Sends a notification based on the provided context and delta.
+    /// Sends a notification based on the provided context and key delta.
     ///
     /// The context contains information about the current state of peers and
-    /// timing, while the delta represents the changes in peer status that
+    /// timing, while the key delta represents the changes in peer status that
     /// triggered the notification.
     ///
     /// The method returns a `NotificationResult` indicating the outcome of the
@@ -25,7 +25,7 @@ pub trait NotificationSender {
     /// # Parameters
     /// - `ctx`: The current notification context, which contains information
     ///   about the peers and timing.
-    /// - `delta`: The delta representing the changes in peer status that
+    /// - `delta`: The key delta representing the changes in peer status that
     ///   triggered the notification.
     /// # Returns
     /// A `NotificationResult` indicating the outcome of the notification attempt, which can be:
@@ -39,7 +39,7 @@ pub trait NotificationSender {
     fn push_notification(
         &mut self,
         ctx: &super::Context,
-        delta: &super::Delta,
+        delta: &super::KeyDelta,
     ) -> super::NotificationResult;
 
     /// Sends a reminder notification based on the provided context.

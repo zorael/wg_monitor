@@ -21,4 +21,4 @@ pub use notifier::Notifier;
 pub use sender::NotificationSender;
 pub use state::NotifierState;
 pub use stateful::StatefulNotifier;
-pub use types::{Context, Delta, DispatchReport, NotificationResult, PendingNotification};
+pub use types::{Context, DispatchReport, KeyDelta, NotificationResult, PendingNotification};

@@ -102,7 +102,7 @@ impl super::Backend for BatsignBackend {
     }
 
     /// Composes a message to be sent to Batsign based on the notification
-    /// context and delta.
+    /// context and key delta.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
@@ -112,7 +112,7 @@ impl super::Backend for BatsignBackend {
     /// - `Some(message)` if a message to send was composed.
     /// - `None` if an empty message was composed, typically meaning no message
     ///   should be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| format!("Subject: {}", h);
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
     }
@@ -150,7 +150,7 @@ impl super::Backend for BatsignBackend {
     fn emit(
         &mut self,
         _ctx: &notify::Context,
-        _delta: Option<&notify::Delta>,
+        _delta: Option<&notify::KeyDelta>,
         message: &str,
     ) -> Result<Option<String>, String> {
         match self.agent.post(&self.url).send(message) {

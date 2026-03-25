@@ -37,7 +37,7 @@ pub trait Backend {
     /// - `Some(message)` if a message should be sent
     /// - `None` if the composed message was empty, which typically means no
     ///   message should be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String>;
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String>;
 
     /// Composes a reminder message based on the notification context.
     ///
@@ -69,7 +69,7 @@ pub trait Backend {
     fn emit(
         &mut self,
         ctx: &notify::Context,
-        delta: Option<&notify::Delta>,
+        delta: Option<&notify::KeyDelta>,
         message: &str,
     ) -> Result<Option<String>, String>;
 }

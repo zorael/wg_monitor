@@ -149,7 +149,7 @@ pub fn retry_pending_notifications(
 /// failed, had no message to send, or were skipped due to timing reasons.
 pub fn send_notification(
     ctx: &super::Context,
-    delta: &super::Delta,
+    delta: &super::KeyDelta,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
 ) -> super::DispatchReport {
@@ -314,7 +314,7 @@ pub fn send_reminder(
 /// timing reasons.
 fn send_via_notifier(
     ctx: &super::Context,
-    delta: Option<&super::Delta>,
+    delta: Option<&super::KeyDelta>,
     n: &mut Box<dyn super::StatefulNotifier>,
 ) -> super::NotificationResult {
     let result = match delta {

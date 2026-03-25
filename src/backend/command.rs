@@ -101,7 +101,7 @@ impl super::Backend for CommandBackend {
     }
 
     /// Composes a message to be used as argument when executing the command,
-    /// based on the notification context and delta.
+    /// based on the notification context and key delta.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
@@ -111,7 +111,7 @@ impl super::Backend for CommandBackend {
     /// - `Some(message)` if a message to send was composed.
     /// - `None` if an empty message was composed, typically meaning no message
     ///   should be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
     }
@@ -171,7 +171,7 @@ impl super::Backend for CommandBackend {
     fn emit(
         &mut self,
         ctx: &notify::Context,
-        delta: Option<&notify::Delta>,
+        delta: Option<&notify::KeyDelta>,
         message: &str,
     ) -> Result<Option<String>, String> {
         let lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.lost_keys);

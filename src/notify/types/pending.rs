@@ -5,7 +5,7 @@
 pub enum PendingNotification {
     Notification {
         context: super::Context,
-        delta: super::Delta,
+        delta: super::KeyDelta,
     },
     Reminder {
         context: super::Context,

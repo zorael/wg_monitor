@@ -14,7 +14,7 @@ use crate::wireguard;
 /// key in composing notification messages based on what changed since the
 /// last check.
 #[derive(Debug, Clone)]
-pub struct Delta {
+pub struct KeyDelta {
     /// Public keys of peers that were lost (time since last seen exceeds the
     /// timeout threshold) since the last check.
     pub now_lost: Vec<wireguard::PeerKey>,
@@ -32,15 +32,15 @@ pub struct Delta {
     pub was_missing: Vec<wireguard::PeerKey>,
 }
 
-impl Delta {
-    /// Creates a new `Delta` with the specified capacity for the key vectors.
+impl KeyDelta {
+    /// Creates a new `KeyDelta` with the specified capacity for the key vectors.
     ///
     /// # Parameters
     /// - `capacity`: The capacity to use for the key vectors, which can help
     ///   avoid unnecessary allocations if the number of peers is known in advance.
     ///
     /// # Returns
-    /// A new `Delta` instance with the specified capacity for the key vectors,
+    /// A new `KeyDelta` instance with the specified capacity for the key vectors,
     /// initialized with empty vectors.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
@@ -51,7 +51,7 @@ impl Delta {
         }
     }
 
-    /// Clears all the key vectors in the `Delta`, effectively resetting it to an
+    /// Clears all the key vectors in the `KeyDelta`, effectively resetting it to an
     /// empty state while retaining the allocated capacity.
     pub fn clear(&mut self) {
         self.now_lost.clear();
@@ -60,7 +60,7 @@ impl Delta {
         self.was_missing.clear();
     }
 
-    /// Returns whether all the key vectors in the `Delta` are empty, indicating
+    /// Returns whether all the key vectors in the `KeyDelta` are empty, indicating
     /// that there are no changes in peer status since the last check.
     ///
     /// # Returns
@@ -72,7 +72,7 @@ impl Delta {
             && self.was_missing.is_empty()
     }
 
-    /// Computes the `Delta` from the given `Context`, determining which peers
+    /// Computes the `KeyDelta` from the given `Context`, determining which peers
     /// changed status since the last check and categorizing them into the
     /// appropriate vectors.
     ///
@@ -103,7 +103,7 @@ impl Delta {
         wireguard::sort_keys(&mut self.was_missing, &ctx.peers);
     }
 
-    /// Prints the non-empty key vectors in the `Delta` with a specified prefix
+    /// Prints the non-empty key vectors in the `KeyDelta` with a specified prefix
     /// for each line, useful for debugging or logging the changes in peer status.
     ///
     /// # Parameters

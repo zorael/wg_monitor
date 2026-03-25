@@ -87,7 +87,7 @@ impl super::Backend for SlackBackend {
     }
 
     /// Composes a message to be sent to a Slack channel based on the notification
-    /// context and delta.
+    /// context and key delta.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
@@ -97,7 +97,7 @@ impl super::Backend for SlackBackend {
     /// - `Some(message)` if a message to send was composed.
     /// - `None` if an empty message was composed, typically meaning no message
     ///   should be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::Delta) -> Option<String> {
+    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
             .map(|message| serde_json::json!({ "text": message }).to_string())
@@ -137,7 +137,7 @@ impl super::Backend for SlackBackend {
     fn emit(
         &mut self,
         _ctx: &notify::Context,
-        _delta: Option<&notify::Delta>,
+        _delta: Option<&notify::KeyDelta>,
         message: &str,
     ) -> Result<Option<String>, String> {
         let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");

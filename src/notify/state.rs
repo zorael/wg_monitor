@@ -51,7 +51,7 @@ impl NotifierState {
     /// - `delta`: An optional delta representing the changes in peer status that
     ///   triggered the notification. If `None`, this indicates that the pending
     ///   notification is a reminder rather than a new alert.
-    pub fn save_pending(&mut self, ctx: &super::Context, delta: Option<&super::Delta>) {
+    pub fn save_pending(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.pending = match delta {
             Some(d) => Some(super::PendingNotification::Notification {
                 context: ctx.clone(),
@@ -209,7 +209,7 @@ impl NotifierState {
     pub fn on_failure(
         &mut self,
         ctx: &super::Context,
-        delta: Option<&super::Delta>,
+        delta: Option<&super::KeyDelta>,
         now: &time::SystemTime,
     ) {
         self.save_pending(ctx, delta);

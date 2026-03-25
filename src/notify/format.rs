@@ -1,5 +1,5 @@
 //! This module contains functions for formatting notification messages based
-//! on the `Context` and `Delta` of peer status changes, using customizable message
+//! on the `Context` and `KeyDelta` of peer status changes, using customizable message
 //! strings defined in the settings.
 //!
 //! It provides generic formatting logic that can be reused across different
@@ -12,7 +12,7 @@ use crate::utils;
 use crate::wireguard;
 
 /// Builds a generic notification message based on the provided `Context` and
-/// `Delta`, using the specified message strings for formatting.
+/// `KeyDelta`, using the specified message strings for formatting.
 ///
 /// The message is composed of sections for peers that became lost, went missing,
 /// returned, etc., with appropriate headers and formatting based on the provided
@@ -35,7 +35,7 @@ use crate::wireguard;
 /// A formatted notification message as a `String`.
 fn format_generic_message(
     ctx: &super::Context,
-    delta: &super::Delta,
+    delta: &super::KeyDelta,
     strings: &settings::MessageStrings,
 ) -> String {
     let mut message = String::new();
@@ -266,7 +266,7 @@ fn append_message_section(
 }
 
 /// Prepares the message body for a notification by formatting it based on the
-/// provided `Context`, `Delta`, and message strings, and applying a header
+/// provided `Context`, `KeyDelta`, and message strings, and applying a header
 /// closure to the appropriate header string.
 ///
 /// The function unescapes and trims the final message before returning it.
@@ -274,7 +274,7 @@ fn append_message_section(
 /// # Parameters
 /// - `ctx`: The notification context containing the current state of peers and
 ///   timing information.
-/// - `delta`: The delta containing the changes in peer status since the last check.
+/// - `delta`: The key delta containing the changes in peer status since the last check.
 /// - `strings`: The message strings to use for formatting the notification.
 /// - `header_closure`: A closure that takes a header string and returns a
 ///   formatted header string, which allows for backend-specific header
@@ -287,7 +287,7 @@ fn append_message_section(
 ///   empty header string).
 pub fn prepare_message_body(
     ctx: &super::Context,
-    delta: &super::Delta,
+    delta: &super::KeyDelta,
     strings: &settings::MessageStrings,
     header_closure: impl Fn(&str) -> String,
 ) -> Option<String> {
