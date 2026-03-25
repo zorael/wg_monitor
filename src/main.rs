@@ -63,7 +63,7 @@ use std::time;
 /// Prints the program banner with name, version, copyright and source repository.
 fn print_banner() {
     println!(
-        "{} {} | copyright (c) 2026 {}\n$ git clone {}",
+        "{} v{} | copyright (c) 2026 {}\n$ git clone {}",
         defaults::program_metadata::PROGRAM_NAME,
         defaults::program_metadata::VERSION,
         defaults::program_metadata::AUTHORS,
