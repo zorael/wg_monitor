@@ -729,8 +729,10 @@ fn build_and_push_notifiers<B, F>(
 ///
 /// This function performs the following steps:
 ///
-/// 1. Rotates the peer states in the context, which involves moving lost peers
-///    to missing and resetting the lost/missing keys for the next iteration.
+/// 1. Rotates the peer states in the context, which involves moving elements in
+///    the currently lost and missing peer vectors to the previously lost and
+///    missing peer vectors, and then resetting both current vectors for the
+///    next iteration.
 /// 2. Sets the `resume` flag in the context to false, which is something that
 ///    is only used in the first iteration, if the `--resume` flag is set.
 ///    Since this function will be called at the end of each loop, it follows
