@@ -36,7 +36,6 @@ pub fn unescape(input: &str) -> String {
         .replace("\\t", "\t")
         .replace("\\{", "{")
         .replace("\\}", "}")
-        .to_string()
 }
 
 /// Returns the singular or plural form of a word based on the provided number.
