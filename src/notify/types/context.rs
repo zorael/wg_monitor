@@ -84,7 +84,9 @@ impl Context {
     /// # Returns
     /// A new `Context` instance with the specified peers and default values
     /// for other fields.
-    pub fn inherit(peers: collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>) -> Self {
+    pub fn inherit(
+        peers: collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
+    ) -> Self {
         let mut sized = Self::with_capacity(peers.len());
         sized.peers = peers;
         sized

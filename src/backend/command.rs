@@ -13,8 +13,8 @@ use std::collections;
 use std::process;
 
 use crate::notify;
-use crate::wireguard;
 use crate::settings;
+use crate::wireguard;
 
 /// Defines the Command backend for sending notifications by executing
 /// an external command.
