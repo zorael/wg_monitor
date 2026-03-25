@@ -5,7 +5,7 @@
 //!
 //! The notification system is designed to be flexible and extensible,
 //! allowing for different types of notifications and various backends for
-//! sending notifications (e.g., Batsign, Slack, custom commands).
+//! sending notifications (like Batsign, Slack, custom commands).
 
 mod dispatch;
 mod format;

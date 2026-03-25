@@ -2,7 +2,7 @@
 //! notification backends.
 //!
 //! This module also re-exports the specific backend implementations
-//! (e.g., `SlackBackend`, `BatsignBackend`, `CommandBackend`) so that they
+//! (like `SlackBackend`, `BatsignBackend`, `CommandBackend`) so that they
 //! can be easily used by other parts of the application.
 
 use crate::notify;
@@ -12,8 +12,8 @@ use crate::notify;
 /// the notification context and delta, as well as emitting the notifications.
 ///
 /// Backends are responsible for formatting messages according to their specific
-/// requirements (e.g., JSON for Slack) and for sending the notifications through
-/// the appropriate channels (e.g., HTTP requests for Slack, command execution
+/// requirements (such as JSON for Slack) and for sending the notifications through
+/// the appropriate channels (like HTTP requests for Slack, command execution
 /// for CommandBackend).
 pub trait Backend {
     /// Returns the unique identifier of the backend instance.

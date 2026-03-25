@@ -23,7 +23,7 @@ use crate::wireguard;
 /// # Note:
 /// The returned String may be empty if there are no peers to report, or if the
 /// message strings are configured in such a way that no message should be sent
-/// (e.g., no headers for some peers to list).
+/// (such as no headers for some peers to list).
 ///
 /// # Parameters
 /// - `ctx`: The notification context containing the current state of peers
@@ -212,13 +212,13 @@ fn format_peer_line(
 ///
 /// This is a helper function used by both `format_generic_message` and
 /// `format_generic_reminder` to avoid code duplication when adding sections for
-/// different categories of peers (e.g., lost, missing, still lost, etc.).
+/// different categories of peers (such as lost, missing, still lost, etc.).
 ///
 /// # Parameters
 /// - `peers`: A hashmap of all peers, keyed by `wireguard::PeerKey` instances, used
 ///   to look up peer information for formatting.
 /// - `message`: The message string being built, to which the section will be appended.
-/// - `keys`: The list of peer public keys that belong to this section (e.g
+/// - `keys`: The list of peer public keys that belong to this section (such as
 ///   "lost" peers, "missing" peers, etc.).
 /// - `header`: The header string for this section, which will be added before listing the peers.
 /// - `peer_with_timestamp`: The pattern to use for formatting peers with a known last seen

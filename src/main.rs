@@ -700,7 +700,7 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
 /// - `vec`: The mutable vector of boxed `StatefulNotifier` trait objects to push
 ///   the new notifiers into.
 /// - `elements`: A slice of strings representing the configuration elements for
-///   the backend (e.g., URLs for Slack/Batsign or commands for Command backend).
+///   the backend (such as URLs for Slack/Batsign or commands for Command backend).
 /// - `make_backend_fn`: A closure that takes an index and a reference to a
 ///   string and returns an instance of the backend type `B`.
 /// - `dry_run`: A boolean indicating whether the notifiers being created are

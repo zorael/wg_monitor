@@ -4,6 +4,7 @@
 
 use std::cmp;
 use std::collections;
+use std::fmt;
 use std::rc;
 use std::time;
 
@@ -191,7 +192,13 @@ impl PeerKey {
 
 impl std::fmt::Display for PeerKey {
     /// Formats the `PeerKey` for display purposes by passing it the inner string.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    ///
+    /// # Parameters
+    /// - `f`: The formatter to write the output to.
+    ///
+    /// # Returns
+    /// A `std::fmt::Result` indicating whether the formatting was successful.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
