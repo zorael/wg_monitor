@@ -15,7 +15,6 @@ use std::io;
 use std::io::BufRead;
 use std::path;
 use std::process;
-use std::time;
 
 /// Reads the list of WireGuard peers from a specified file path, returning a
 /// `HashMap` of `super::PeerKey` keys to `super::WireGuardPeer` values.
@@ -167,14 +166,8 @@ pub fn update_handshakes(
         };
 
         match timestamp.parse::<u64>() {
-            Ok(0) | Err(_) => {
-                peer.last_seen_unix = 0;
-                peer.last_seen = None;
-            }
-            Ok(seconds) => {
-                peer.last_seen_unix = seconds;
-                peer.last_seen = Some(time::UNIX_EPOCH + time::Duration::from_secs(seconds));
-            }
+            Ok(0) | Err(_) => peer.reset_last_seen(),
+            Ok(seconds) => peer.set_last_seen(seconds),
         };
     }
 }

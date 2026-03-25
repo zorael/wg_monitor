@@ -142,6 +142,12 @@ impl WireGuardPeer {
         self.last_seen = None;
         self.last_seen_unix = 0;
     }
+
+    /// Sets the last seen timestamps for the peer based on a provided UNIX timestamp.
+    pub fn set_last_seen(&mut self, seconds: u64) {
+        self.last_seen_unix = seconds;
+        self.last_seen = Some(time::UNIX_EPOCH + time::Duration::from_secs(seconds));
+    }
 }
 
 /// Sorts an array of peer public keys based on their last seen UNIX timestamps in the
