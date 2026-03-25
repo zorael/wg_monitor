@@ -139,20 +139,20 @@ impl super::Backend for CommandBackend {
     /// 1. The composed message to be sent
     /// 2. The path to the peer list file
     /// 3. The number of times the main loop has run (starting at 0, unless --resume was passed)
-    /// 4. A comma-separated string of late keys in the format "key:timestamp"
+    /// 4. A comma-separated string of lost keys in the format "key:timestamp"
     /// 5. A comma-separated string of missing keys in the format "key:timestamp"
-    /// 6. A comma-separated string of previous late keys in the format "key:timestamp"
+    /// 6. A comma-separated string of previous lost keys in the format "key:timestamp"
     /// 7. A comma-separated string of previous missing keys in the format "key:timestamp"
-    /// 8. If a delta is provided, a comma-separated string of keys that became
-    ///    late in the format "key:timestamp"
-    /// 9. If a delta is provided, a comma-separated string of keys that went
+    /// 8. If a delta is provided, a comma-separated string of keys that are now
+    ///    lost in the format "key:timestamp"
+    /// 9. If a delta is provided, a comma-separated string of keys that are now
     ///    missing in the format "key:timestamp"
-    /// 10. If a delta is provided, a comma-separated string of keys that are
-    ///     no longer late in the format "key:timestamp"
+    /// 10. If a delta is provided, a comma-separated string of keys that were
+    ///     lost (but are no longer) in the format "key:timestamp"
     /// 11. If a delta is provided, a comma-separated string of keys that
-    ///     returned in the format "key:timestamp"
+    ///     were missing (but are no longer) in the format "key:timestamp"
     ///
-    /// Any parameter for which there is no value (as in, no late keys), the
+    /// Any parameter for which there is no value (as in, no lost keys), the
     /// argument passed but is simply empty.
     ///
     /// # Parameters
@@ -174,34 +174,32 @@ impl super::Backend for CommandBackend {
         delta: Option<&notify::Delta>,
         message: &str,
     ) -> Result<Option<String>, String> {
-        let late_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.late_keys);
+        let lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.lost_keys);
         let missing_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.missing_keys);
-        let previous_late_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.previous_late_keys);
+        let previous_lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.previous_lost_keys);
         let previous_missing_keys =
             format_key_timestamp_pairs(&ctx.peers, &ctx.previous_missing_keys);
         let loop_iteration = ctx.loop_iteration.to_string();
 
         let output = match delta {
             Some(d) => {
-                let became_late_keys = format_key_timestamp_pairs(&ctx.peers, &d.became_late_keys);
-                let went_missing_keys =
-                    format_key_timestamp_pairs(&ctx.peers, &d.went_missing_keys);
-                let no_longer_late_keys =
-                    format_key_timestamp_pairs(&ctx.peers, &d.no_longer_late_keys);
-                let returned_keys = format_key_timestamp_pairs(&ctx.peers, &d.returned_keys);
+                let now_lost_keys = format_key_timestamp_pairs(&ctx.peers, &d.now_lost);
+                let was_lost_keys = format_key_timestamp_pairs(&ctx.peers, &d.was_lost);
+                let now_missing_keys = format_key_timestamp_pairs(&ctx.peers, &d.now_missing);
+                let was_missing_keys = format_key_timestamp_pairs(&ctx.peers, &d.was_missing);
 
                 process::Command::new(&self.command)
                     .arg(message)
                     .arg(&ctx.peer_list_file_path)
                     .arg(loop_iteration)
-                    .arg(late_keys)
+                    .arg(lost_keys)
                     .arg(missing_keys)
-                    .arg(previous_late_keys)
+                    .arg(previous_lost_keys)
                     .arg(previous_missing_keys)
-                    .arg(became_late_keys)
-                    .arg(went_missing_keys)
-                    .arg(no_longer_late_keys)
-                    .arg(returned_keys)
+                    .arg(now_lost_keys)
+                    .arg(now_missing_keys)
+                    .arg(was_lost_keys)
+                    .arg(was_missing_keys)
                     .output()
                     .map_err(|e| e.to_string())?
             }
@@ -209,9 +207,9 @@ impl super::Backend for CommandBackend {
                 .arg(message)
                 .arg(&ctx.peer_list_file_path)
                 .arg(loop_iteration)
-                .arg(late_keys)
+                .arg(lost_keys)
                 .arg(missing_keys)
-                .arg(previous_late_keys)
+                .arg(previous_lost_keys)
                 .arg(previous_missing_keys)
                 .output()
                 .map_err(|e| e.to_string())?,

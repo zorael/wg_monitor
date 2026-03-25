@@ -17,14 +17,14 @@ pub struct Context {
     /// composing notifications.
     pub peers: collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
 
-    /// Current peers that are late (seen but timed out).
-    pub late_keys: Vec<wireguard::PeerKey>,
+    /// Current peers that are lost (seen but timed out).
+    pub lost_keys: Vec<wireguard::PeerKey>,
 
     /// Current peers that are missing (not seen at all).
     pub missing_keys: Vec<wireguard::PeerKey>,
 
-    /// Peers that were previously late in the last check.
-    pub previous_late_keys: Vec<wireguard::PeerKey>,
+    /// Peers that were previously lost in the last check.
+    pub previous_lost_keys: Vec<wireguard::PeerKey>,
 
     /// Peers that were previously missing in the last check.
     pub previous_missing_keys: Vec<wireguard::PeerKey>,
@@ -65,9 +65,9 @@ impl Context {
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             peers: collections::HashMap::with_capacity(capacity),
-            late_keys: Vec::with_capacity(capacity),
+            lost_keys: Vec::with_capacity(capacity),
             missing_keys: Vec::with_capacity(capacity),
-            previous_late_keys: Vec::with_capacity(capacity),
+            previous_lost_keys: Vec::with_capacity(capacity),
             previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
             loop_iteration: 0,
@@ -92,13 +92,13 @@ impl Context {
         sized
     }
 
-    /// Rotates the peer state by moving the current late and missing keys to
-    /// the previous fields, and clearing the current late and missing keys
+    /// Rotates the peer state by moving the current lost and missing keys to
+    /// the previous fields, and clearing the current lost and missing keys
     /// for the next check.
     pub fn rotate(&mut self) {
-        mem::swap(&mut self.late_keys, &mut self.previous_late_keys);
+        mem::swap(&mut self.lost_keys, &mut self.previous_lost_keys);
         mem::swap(&mut self.missing_keys, &mut self.previous_missing_keys);
-        self.late_keys.clear();
+        self.lost_keys.clear();
         self.missing_keys.clear();
     }
 

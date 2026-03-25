@@ -4,7 +4,7 @@
 //!
 //! This struct is computed from the `Context` and contains vectors of public
 //! keys for peers that changed status, categorized by the type of change
-//! (became late, went missing, no longer late, returned).
+//! (now lost, now missing, was lost, was missing).
 
 use crate::notify;
 use crate::utils;
@@ -17,19 +17,19 @@ use crate::wireguard;
 pub struct Delta {
     /// Public keys of peers that were lost (time since last seen exceeds the
     /// timeout threshold) since the last check.
-    pub became_late_keys: Vec<wireguard::PeerKey>,
-
-    /// Public keys of peers that went missing (not seen at all) since the last check.
-    /// This is indicative of a VPN restart.
-    pub went_missing_keys: Vec<wireguard::PeerKey>,
+    pub now_lost: Vec<wireguard::PeerKey>,
 
     /// Public keys of peers that returned (time since last seen is now within
     /// the timeout threshold) since the last check.
-    pub no_longer_late_keys: Vec<wireguard::PeerKey>,
+    pub was_lost: Vec<wireguard::PeerKey>,
+
+    /// Public keys of peers that went missing (not seen at all) since the last check.
+    /// This is indicative of a VPN restart.
+    pub now_missing: Vec<wireguard::PeerKey>,
 
     /// Public keys of peers that appeared after being missing (not seen at all)
     /// since the last check.
-    pub returned_keys: Vec<wireguard::PeerKey>,
+    pub was_missing: Vec<wireguard::PeerKey>,
 }
 
 impl Delta {
@@ -44,20 +44,20 @@ impl Delta {
     /// initialized with empty vectors.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            became_late_keys: Vec::with_capacity(capacity),
-            went_missing_keys: Vec::with_capacity(capacity),
-            no_longer_late_keys: Vec::with_capacity(capacity),
-            returned_keys: Vec::with_capacity(capacity),
+            now_lost: Vec::with_capacity(capacity),
+            was_lost: Vec::with_capacity(capacity),
+            now_missing: Vec::with_capacity(capacity),
+            was_missing: Vec::with_capacity(capacity),
         }
     }
 
     /// Clears all the key vectors in the `Delta`, effectively resetting it to an
     /// empty state while retaining the allocated capacity.
     pub fn clear(&mut self) {
-        self.became_late_keys.clear();
-        self.went_missing_keys.clear();
-        self.no_longer_late_keys.clear();
-        self.returned_keys.clear();
+        self.now_lost.clear();
+        self.was_lost.clear();
+        self.now_missing.clear();
+        self.was_missing.clear();
     }
 
     /// Returns whether all the key vectors in the `Delta` are empty, indicating
@@ -66,10 +66,10 @@ impl Delta {
     /// # Returns
     /// `true` if all key vectors are empty, and `false` if any of them contain keys.
     pub fn is_empty(&self) -> bool {
-        self.became_late_keys.is_empty()
-            && self.went_missing_keys.is_empty()
-            && self.no_longer_late_keys.is_empty()
-            && self.returned_keys.is_empty()
+        self.now_lost.is_empty()
+            && self.was_lost.is_empty()
+            && self.now_missing.is_empty()
+            && self.was_missing.is_empty()
     }
 
     /// Computes the `Delta` from the given `Context`, determining which peers
@@ -82,25 +82,25 @@ impl Delta {
         self.clear();
 
         utils::append_vec_difference(
-            &ctx.previous_late_keys,
-            &ctx.late_keys,
-            &mut self.no_longer_late_keys,
-            &mut self.became_late_keys,
+            &ctx.previous_lost_keys,
+            &ctx.lost_keys,
+            &mut self.was_lost,
+            &mut self.now_lost,
         );
 
         utils::append_vec_difference(
             &ctx.previous_missing_keys,
             &ctx.missing_keys,
-            &mut self.returned_keys,
-            &mut self.went_missing_keys,
+            &mut self.was_missing,
+            &mut self.now_missing,
         );
 
         // Sort keys so that notifications present them in a descending order of
         // disappearance time, with missing peers last.
-        wireguard::sort_keys(&mut self.no_longer_late_keys, &ctx.peers);
-        wireguard::sort_keys(&mut self.became_late_keys, &ctx.peers);
-        wireguard::sort_keys(&mut self.returned_keys, &ctx.peers);
-        wireguard::sort_keys(&mut self.went_missing_keys, &ctx.peers);
+        wireguard::sort_keys(&mut self.now_lost, &ctx.peers);
+        wireguard::sort_keys(&mut self.was_lost, &ctx.peers);
+        wireguard::sort_keys(&mut self.now_missing, &ctx.peers);
+        wireguard::sort_keys(&mut self.was_missing, &ctx.peers);
     }
 
     /// Prints the non-empty key vectors in the `Delta` with a specified prefix
@@ -110,17 +110,17 @@ impl Delta {
     /// - `prefix`: A string prefix to prepend to each line of output, which can
     ///   help visually distinguish this output in terminal output.
     pub fn print_nonempty_prefixed(&self, prefix: &str) {
-        if !self.no_longer_late_keys.is_empty() {
-            println!("{prefix}no longer late: {:?}", self.no_longer_late_keys);
+        if !self.now_lost.is_empty() {
+            println!("{prefix}now lost: {:?}", self.now_lost);
         }
-        if !self.became_late_keys.is_empty() {
-            println!("{prefix}became late: {:?}", self.became_late_keys);
+        if !self.was_lost.is_empty() {
+            println!("{prefix}was lost: {:?}", self.was_lost);
         }
-        if !self.returned_keys.is_empty() {
-            println!("{prefix}returned: {:?}", self.returned_keys);
+        if !self.now_missing.is_empty() {
+            println!("{prefix}now missing: {:?}", self.now_missing);
         }
-        if !self.went_missing_keys.is_empty() {
-            println!("{prefix}went missing: {:?}", self.went_missing_keys);
+        if !self.was_missing.is_empty() {
+            println!("{prefix}was missing: {:?}", self.was_missing);
         }
     }
 }

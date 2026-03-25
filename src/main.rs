@@ -28,21 +28,20 @@
 //! At any given time, peers can be in one of three states:
 //!
 //! - **present**: the peer has been seen within the timeout period.
-//! - **late**: the peer has been seen before but has not been seen within the
+//! - **lost**: the peer has been seen before but has not been seen within the
 //!   timeout period. It may be referred to as "lost" in some message strings.
 //! - **missing**: the peer has not been seen since the last restart of the VPN.
 //!
 //! As such, peer may be in the following transition states;
 //!
-//! - **became late**: the peer was present but is now late. This may be referred
-//!   to as "lost" in some message strings.
-//! - **went missing**: the peer was present but is now missing, which is usually
+//! - **now lost**: the peer was present but is now lost.
+//! - **now missing**: the peer was present but is now missing, which is usually
 //!   indicative of a restart of the VPN. This may be referred to as "lost due
 //!   to a network reset" in some message strings.
-//! - **no longer late**: the peer was late but is now present again. This may
+//! - **was lost**: the peer was lost but is now present again. This may
 //!   be referred to as "returned" in some message strings.
-//! - **returned**: the peer was missing (never seen) but is now present.
-//!   This may be referred to as "just appeared" in some message strings.
+//! - **was missing**: the peer was missing (had never been seen) but is now present.
+//!   This may be referred to as "appeared" in some message strings.
 
 mod backend;
 mod cli;
@@ -370,11 +369,11 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
 ///
 /// 1. Executes the `wg show` command to get the latest handshakes and updates
 ///    the context with the new information.
-/// 2. Determines which peers are late or missing based on the last see
+/// 2. Determines which peers are lost or missing based on the last seen
 ///    timestamps and the configured timeout.
 /// 3. Computes the delta of changes since the last iteration.
 /// 4. If there are changes, sends notifications through the configured notifiers.
-/// 5. If there are no changes but there are late/missing peers,
+/// 5. If there are no changes but there are lost/missing peers,
 ///    sends reminders as needed.
 /// 6. Retries any pending notifications that are due for a retry.
 /// 7. Sleeps for the configured check interval before the next iteration.
@@ -449,10 +448,10 @@ fn run_loop(
                     }
 
                     if settings.debug {
-                        println!("... age is greater than timeout, marking as late");
+                        println!("... age is greater than timeout, marking as lost");
                     }
 
-                    ctx.late_keys.push(key.clone());
+                    ctx.lost_keys.push(key.clone());
                 }
                 None => {
                     if settings.debug {
@@ -468,7 +467,7 @@ fn run_loop(
         }
 
         wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
-        wireguard::sort_keys(&mut ctx.late_keys, &ctx.peers);
+        wireguard::sort_keys(&mut ctx.lost_keys, &ctx.peers);
 
         delta.compute_from(ctx);
 
@@ -516,9 +515,9 @@ fn run_loop(
             continue;
         }
 
-        // !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() means
-        // "there is at least one peer missing or late"
-        if !ctx.missing_keys.is_empty() || !ctx.late_keys.is_empty() {
+        // !ctx.missing_keys.is_empty() || !ctx.lost_keys.is_empty() means
+        // "there is at least one peer missing or lost"
+        if !ctx.missing_keys.is_empty() || !ctx.lost_keys.is_empty() {
             let report = notify::send_reminder(ctx, notifiers, &settings);
 
             if settings.debug && report.total != report.skipped {
@@ -526,7 +525,7 @@ fn run_loop(
             }
         }
 
-        // Either there are no peers missing/late or there are but no
+        // Either there are no peers missing/lost or there are but no
         // reminders were due, so check for pending notifications.
         let report = notify::retry_pending_notifications(notifiers, &settings);
 
@@ -730,8 +729,8 @@ fn build_and_push_notifiers<B, F>(
 ///
 /// This function performs the following steps:
 ///
-/// 1. Rotates the peer states in the context, which involves moving late peers
-///    to missing and resetting the late/missing keys for the next iteration.
+/// 1. Rotates the peer states in the context, which involves moving lost peers
+///    to missing and resetting the lost/missing keys for the next iteration.
 /// 2. Sets the `resume` flag in the context to false, which is something that
 ///    is only used in the first iteration, if the `--resume` flag is set.
 ///    Since this function will be called at the end of each loop, it follows

@@ -14,7 +14,7 @@ use crate::wireguard;
 /// Builds a generic notification message based on the provided `Context` and
 /// `Delta`, using the specified message strings for formatting.
 ///
-/// The message is composed of sections for peers that became late, went missing,
+/// The message is composed of sections for peers that became lost, went missing,
 /// returned, etc., with appropriate headers and formatting based on the provided
 /// message strings. The formatting logic takes into account whether this is the
 /// first run, whether the program is resuming, and whether timestamps should be
@@ -42,7 +42,7 @@ fn format_generic_message(
 
     if ctx.is_first_run() && !ctx.resume {
         if strings.first_run_missing.is_empty()
-            || (ctx.missing_keys.is_empty() && ctx.late_keys.is_empty())
+            || (ctx.missing_keys.is_empty() && ctx.lost_keys.is_empty())
         {
             return message.trim_end().to_string();
         }
@@ -54,7 +54,7 @@ fn format_generic_message(
 
         let bp = &strings.bullet_point;
 
-        for key in ctx.missing_keys.iter().chain(ctx.late_keys.iter()) {
+        for key in ctx.lost_keys.iter().chain(ctx.missing_keys.iter()) {
             if let Some(peer) = ctx.peers.get(key) {
                 let line = format_peer_line(
                     peer,
@@ -87,7 +87,7 @@ fn format_generic_message(
     };
 
     if ctx.resume {
-        add_section(&ctx.late_keys, &strings.still_lost, false);
+        add_section(&ctx.lost_keys, &strings.still_lost, false);
         add_section(&ctx.missing_keys, &strings.still_missing, false);
 
         if !strings.footer.is_empty() {
@@ -97,19 +97,20 @@ fn format_generic_message(
         return message.trim_end().to_string();
     }
 
-    let late_sans_new_late_keys =
-        utils::get_elements_not_in_other_vec(&ctx.late_keys, &delta.became_late_keys);
+    let lost_sans_now_lost_keys =
+        utils::get_elements_not_in_other_vec(&ctx.lost_keys, &delta.now_lost);
 
-    let missing_sans_new_missing_keys =
-        utils::get_elements_not_in_other_vec(&ctx.missing_keys, &delta.went_missing_keys);
+    let missing_sans_now_missing_keys =
+        utils::get_elements_not_in_other_vec(&ctx.missing_keys, &delta.now_missing);
 
-    add_section(&delta.became_late_keys, &strings.lost, false);
-    add_section(&delta.went_missing_keys, &strings.forgot, false);
-    add_section(&delta.no_longer_late_keys, &strings.returned, true);
-    add_section(&delta.returned_keys, &strings.appeared, true);
-    add_section(&late_sans_new_late_keys, &strings.still_lost, false);
+    // Revisit this order.
+    add_section(&delta.now_lost, &strings.lost, false);
+    add_section(&delta.was_lost, &strings.returned, true);
+    add_section(&delta.now_missing, &strings.forgot, false);
+    add_section(&delta.was_missing, &strings.appeared, true);
+    add_section(&lost_sans_now_lost_keys, &strings.still_lost, false);
     add_section(
-        &missing_sans_new_missing_keys,
+        &missing_sans_now_missing_keys,
         &strings.still_missing,
         false,
     );
@@ -127,7 +128,7 @@ fn format_generic_message(
 ///
 /// This is similar to `format_generic_message` but is used for reminder
 /// notifications, which typically only report peers that are still lost or
-/// missing since the last check, without reporting peers that just became late
+/// missing since the last check, without reporting peers that just became lost
 /// or went missing.
 ///
 /// # Parameters
@@ -153,7 +154,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
         );
     };
 
-    add_section(&ctx.late_keys, &strings.still_lost);
+    add_section(&ctx.lost_keys, &strings.still_lost);
     add_section(&ctx.missing_keys, &strings.still_missing);
 
     if !strings.footer.is_empty() {
