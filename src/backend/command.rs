@@ -281,17 +281,21 @@ mod test {
     fn test_format_key_timestamp_pairs() {
         let mut peers = collections::HashMap::new();
 
-        let mut peer1 = wireguard::WireGuardPeer::new("key1", Some("Peer 1")).unwrap();
+        let key1_str = "CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi0=";
+        let key2_str = "XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg0=";
+
+        let mut peer1 = wireguard::WireGuardPeer::new(key1_str, Some("Peer 1")).unwrap();
         peer1.last_seen_unix = 1234567890;
         peers.insert(peer1.public_key.clone(), peer1.clone());
 
-        let mut peer2 = wireguard::WireGuardPeer::new("key2", Some("Peer 2")).unwrap();
+        let mut peer2 = wireguard::WireGuardPeer::new(key2_str, Some("Peer 2")).unwrap();
         peer2.last_seen_unix = 9876543210;
         peers.insert(peer2.public_key.clone(), peer2.clone());
 
         let keys = vec![peer1.public_key.clone(), peer2.public_key.clone()];
         let result = format_key_timestamp_pairs(&peers, &keys);
-        assert_eq!(result, "key1:1234567890,key2:9876543210");
+        assert_eq!(result, "CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi0=:1234567890,\
+                            XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg0=:9876543210");
 
         let keys: Vec<wireguard::PeerKey> = Vec::new();
         let result = format_key_timestamp_pairs(&peers, &keys);
