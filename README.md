@@ -236,16 +236,16 @@ The order of arguments is as follows:
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
 3. The number of time the main loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
-4. A comma-separated string of late keys in the format "`key:timestamp`"
+4. A comma-separated string of lost keys in the format "`key:timestamp`"
 5. A comma-separated string of missing keys in the format "`key:timestamp`"
-6. A comma-separated string of keys that were late the previous loop in the format "`key:timestamp`"
+6. A comma-separated string of keys that were lost the previous loop in the format "`key:timestamp`"
 7. A comma-separated string of keys that were missing the previous loop in the format "`key:timestamp`"
-8. In non-reminder notifications, a comma-separated string of keys that became late in the format "`key:timestamp`"
-9. In non-reminder notifications, a comma-separated string of keys that went missing in the format "`key:timestamp`"
-10. In non-reminder notifications, a comma-separated string of keys that are no longer late in the format "`key:timestamp`"
-11. In non-reminder notifications, a comma-separated string of keys that returned in the format "`key:timestamp`"
+8. In non-reminder notifications, a comma-separated string of keys that are now lost in the format "`key:timestamp`"
+9. In non-reminder notifications, a comma-separated string of keys that are now missing in the format "`key:timestamp`"
+10. In non-reminder notifications, a comma-separated string of keys that were lost (but are no longer) in the format "`key:timestamp`"
+11. In non-reminder notifications, a comma-separated string of keys that were missing (but are no longer) in the format "`key:timestamp`"
 
-Any parameter for which there is no value (as in, there are no late peers so there are no late keys), the argument is passed but is simply an empty string `""`.
+Any parameter for which there is no value (as in, there are no lost peers so there are no lost keys), the argument is passed but is simply an empty string `""`.
 
 #### example scripts
 
