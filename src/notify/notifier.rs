@@ -149,4 +149,16 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
             Err(e) => super::NotificationResult::Failure(e, reminder),
         }
     }
+
+    /// Performs a sanity check on the backend.
+    ///
+    /// What this does is implementation-defined.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the sanity check passed without any issues.
+    /// - `Err(Vec<String>)` if there were issues found during the sanity check,
+    ///   containing a vector of descriptive error messages for each issue found.
+    fn sanity_check(&self) -> Result<(), Vec<String>> {
+        self.backend.sanity_check()
+    }
 }
