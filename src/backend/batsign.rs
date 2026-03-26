@@ -104,7 +104,7 @@ impl super::Backend for BatsignBackend {
     /// - `delta`: The changes detected since the last notification.
     ///
     /// # Returns
-    /// - `Some(message)` if a message to send was composed.
+    /// - `Some(String)` if a message to send was composed.
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
@@ -119,7 +119,7 @@ impl super::Backend for BatsignBackend {
     /// - `ctx`: The notification context.
     ///
     /// # Returns
-    /// - `Some(message)` if a message to send was composed.
+    /// - `Some(String)` if a message to send was composed.
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
@@ -165,7 +165,7 @@ impl super::Backend for BatsignBackend {
 /// - `url`: The Batsign URL from which to extract the email address.
 ///
 /// # Returns
-/// - `Some(email)` if an email address was successfully extracted from the URL.
+/// - `Some(&str)` if an email address was successfully extracted from the URL.
 /// - `None` if the URL does not contain a valid email address in the
 ///   expected format.
 fn get_email_from_batsign_url(url: &str) -> Option<&str> {

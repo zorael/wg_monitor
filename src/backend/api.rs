@@ -30,7 +30,7 @@ pub trait Backend {
     /// - `delta`: The state change that triggered the notification.
     ///
     /// # Returns
-    /// - `Some(message)` if a message should be sent
+    /// - `Some(String)` if a message should be sent
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String>;
@@ -44,7 +44,7 @@ pub trait Backend {
     /// - `ctx`: Current notification context.
     ///
     /// # Returns
-    /// - `Some(message)` if a message to send was composed.
+    /// - `Some(String)` if a message to send was composed.
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String>;
@@ -62,9 +62,9 @@ pub trait Backend {
     ///
     /// # Returns
     /// - `Ok(None)` if the message was sent successfully.
-    /// - `Ok(Some(output))` if a message was sent and the backend produced
+    /// - `Ok(Some(String))` if a message was sent and the backend produced
     ///   informational output.
-    /// - `Err(error)` if the send attempt failed.
+    /// - `Err(String)` if the send attempt failed.
     fn emit(
         &mut self,
         ctx: &notify::Context,

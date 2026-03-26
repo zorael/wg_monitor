@@ -41,7 +41,7 @@ pub struct SlackBackend {
 }
 
 impl SlackBackend {
-    /// Creates a new instance of `SlackBackend`..
+    /// Creates a new instance of `SlackBackend`.
     ///
     /// # Parameters
     /// - `id`: Unique numeric identifier for this backend instance, used

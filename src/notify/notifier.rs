@@ -38,8 +38,6 @@ impl<B: backend::Backend> Notifier<B> {
     /// - `backend`: The backend to use for composing and sending notifications.
     /// - `dry_run`: If `true`, the notifier will not actually send notifications,
     ///   but will return the composed messages as `DryRun` results.
-    /// - `state`: The initial state for the notifier, which can be used to track
-    ///   pending notifications, reminder timing, and failure tracking.
     ///
     /// # Returns
     /// A new `Notifier` instance initialized with the provided backend, dry run

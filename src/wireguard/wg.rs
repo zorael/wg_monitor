@@ -137,7 +137,7 @@ pub fn update_handshakes(
 ) {
     for peer in peers.values_mut() {
         // Reset all peers prior to updating, so that any peers not present
-        // in the command output will be marked as lost (last_seen None, unix 0).
+        // in the command output will be marked as missing (last seen None, unix 0).
         // This should only happen when a peer is removed from the VPN.
         peer.reset_last_seen();
     }

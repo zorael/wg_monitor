@@ -13,7 +13,7 @@ use std::time;
 /// and timestamps for when it was last seen as active.
 #[derive(Clone, Debug)]
 pub struct WireGuardPeer {
-    /// A `PeerKey` newtype of the the WireGuard public key for the peer,
+    /// A `PeerKey` newtype of the WireGuard public key for the peer,
     /// which is a 44-character base64 string that uniquely identifies the peer
     /// in the WireGuard network.
     pub public_key: PeerKey,
