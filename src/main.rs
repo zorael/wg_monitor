@@ -219,6 +219,27 @@ fn main() -> process::ExitCode {
         }
     }
 
+    if let Err(sanity_check_failures) = sanity_check_notifiers(&notifiers) {
+        logging::tseprintln!(
+            &settings.disable_timestamps,
+            "Incomplete or invalid notifier configuration:"
+        );
+
+        for error in sanity_check_failures {
+            eprintln!("  * {error}");
+        }
+
+        if settings.dry_run {
+            logging::tsprintln!(
+                &settings.disable_timestamps,
+                "Continuing anyway because --dry-run is set.",
+            );
+            println!();
+        } else {
+            return process::ExitCode::from(defaults::exit_codes::INVALID_NOTIFIER_CONFIGURATION);
+        }
+    }
+
     logging::tsprintln!(&settings.disable_timestamps, "Initialization complete.");
     println!();
 
@@ -361,6 +382,30 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     notifiers
 }
 
+/// Performs a sanity check on all notifiers, validating their backends' settings.
+///
+/// If any issues are found, a vector of descriptive error messages is returned.
+///
+/// # Parameters
+/// - `notifiers`: A slice of boxed `StatefulNotifier` trait objects to check.
+///
+/// # Returns
+/// - `Ok(())` if all notifiers passed their sanity checks without any issues.
+/// - `Err(Vec<String>)` if there were issues found during the sanity checks.
+fn sanity_check_notifiers(
+    notifiers: &[Box<dyn notify::StatefulNotifier>],
+) -> Result<(), Vec<String>> {
+    let mut vec = Vec::new();
+
+    for notifier in notifiers.iter() {
+        if let Err(mut errors) = notifier.sanity_check() {
+            vec.append(&mut errors);
+        }
+    }
+
+    if vec.is_empty() { Ok(()) } else { Err(vec) }
+}
+
 /// Runs the main monitoring loop, which continuously checks the status of peers
 /// and sends notifications as needed.
 ///
@@ -382,7 +427,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
 /// - `ctx`: The notification context, which holds the current state of peers
 ///   and other relevant information.
 /// - `notifiers`: A mutable slice of stateful notifiers to use for
-///   sending notifications
+///   sending notifications.
 /// - `settings`: The program settings, used to determine behavior such as
 ///   intervals and debug output.
 ///

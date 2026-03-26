@@ -71,4 +71,14 @@ pub trait Backend {
         delta: Option<&notify::KeyDelta>,
         message: &str,
     ) -> Result<Option<String>, String>;
+
+    /// Performs a sanity check on the backend's configuration.
+    ///
+    /// What this does is implementation-defined.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the sanity check passed without any issues.
+    /// - `Err(Vec<String>)` if there were issues found during the sanity check,
+    ///   containing a vector of descriptive error messages for each issue found.
+    fn sanity_check(&self) -> Result<(), Vec<String>>;
 }

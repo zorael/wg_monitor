@@ -152,4 +152,21 @@ impl super::Backend for SlackBackend {
             Err(e) => Err(e.to_string()),
         }
     }
+
+    /// Performs a sanity check on the backend's configuration, specifically
+    /// on the URL.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the sanity check passed without any issues.
+    /// - `Err(Vec<String>)` if there were issues found during the sanity check,
+    ///   containing a vector of descriptive error messages for each issue found.
+    fn sanity_check(&self) -> Result<(), Vec<String>> {
+        let mut vec = Vec::new();
+
+        if self.url.trim().is_empty() {
+            vec.push("Slack webhook URL must not be empty".to_string());
+        }
+
+        if vec.is_empty() { Ok(()) } else { Err(vec) }
+    }
 }

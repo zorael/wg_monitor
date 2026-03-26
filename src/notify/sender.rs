@@ -52,4 +52,14 @@ pub trait NotificationSender {
     /// - `NoMessage`: The reminder was not sent because the rendered message ended up empty
     /// - `Skipped`: The reminder was skipped due to timing reasons.
     fn push_reminder(&mut self, ctx: &super::Context) -> super::NotificationResult;
+
+    /// Performs a sanity check on the notifier's backend.
+    ///
+    /// What this does is implementation-defined.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the sanity check passed without any issues.
+    /// - `Err(Vec<String>)` if there were issues found during the sanity check,
+    ///   containing a vector of descriptive error messages for each issue found.
+    fn sanity_check(&self) -> Result<(), Vec<String>>;
 }
