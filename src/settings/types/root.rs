@@ -11,7 +11,6 @@ use std::path;
 use crate::cli;
 use crate::defaults;
 use crate::file_config;
-use crate::logging;
 
 /// Root settings struct that aggregates all other settings types.
 ///
@@ -140,11 +139,6 @@ impl Settings {
     /// Prints the settings in a human-readable format.
     pub fn print(&self) {
         println!("{:#?}", self);
-
-        if self.dry_run {
-            println!();
-            logging::tsprintln!(self.disable_timestamps, "DRY RUN IN EFFECT");
-        }
     }
 
     /// Resolves the paths to the configuration file and peer list file based on

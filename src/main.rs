@@ -220,16 +220,16 @@ fn main() -> process::ExitCode {
     }
 
     logging::tsprintln!(&settings.disable_timestamps, "Initialization complete.");
-    println!();
 
     if settings.debug {
+        println!();
         settings.print();
         println!();
         println!("{:#?}", peers);
-        println!();
     }
 
     if settings.verbose || settings.debug {
+        println!();
         println!(
             "{} {} monitored, {} {} configured.",
             peers.len(),
@@ -248,10 +248,10 @@ fn main() -> process::ExitCode {
             humantime::format_duration(settings.monitor.retry_interval),
         );
         println!();
+    }
 
-        if settings.dry_run {
-            logging::tsprintln!(&settings.disable_timestamps, "DRY RUN");
-        }
+    if settings.dry_run {
+        logging::tsprintln!(&settings.disable_timestamps, "DRY RUN");
     }
 
     // All done, create the initial context
