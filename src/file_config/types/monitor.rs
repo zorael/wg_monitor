@@ -32,7 +32,7 @@ pub struct MonitorConfig {
     ///
     /// This is the interval at which reminder notifications are sent.
     /// It will be grown as consecutive reminders are sent for the same pending
-    /// notification. This allows for more frequent reminders at the beginning,
+    /// notification, providing frequent reminders at the beginning,
     /// and less frequent reminders as time goes on without the pending
     /// notification being resolved.
     #[serde(with = "humantime_serde")]

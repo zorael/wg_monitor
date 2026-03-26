@@ -2,9 +2,7 @@
 //! strings, enabled status, and notification URLs.
 //!
 //! This module defines the `SlackSettings` struct, which holds the runtime
-//! settings for the Slack notification backend, including message strings for
-//! notifications and reminders, whether Slack notifications are enabled, and
-//! the list of Slack webhook URLs to which notifications will be sent.
+//! settings for the Slack notification backend.
 
 use crate::file_config;
 use crate::settings;
@@ -32,14 +30,11 @@ pub struct SlackSettings {
 
 impl SlackSettings {
     /// Applies settings from a `file_config::SlackConfig` to the current
-    /// `SlackSettings` instance, updating the message strings, enabled status,
-    /// and notification URLs based on the values provided in the file configuration.
+    /// `SlackSettings` instance.
     ///
     /// # Parameters
     /// - `slack_config`: The `file_config::SlackConfig`
-    ///   containing the settings to apply to the current `SlackSettings`
-    ///   instance. This includes message strings for notifications and reminders,
-    ///   the enabled status, and the list of Slack webhook URLs.
+    ///   containing the settings to apply to the current `SlackSettings` instance.
     pub fn apply_file(&mut self, slack_config: &file_config::SlackConfig) {
         self.strings.apply_file(&slack_config.strings);
         self.reminder_strings

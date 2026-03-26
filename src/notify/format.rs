@@ -3,10 +3,12 @@
 //! strings defined in the settings.
 //!
 //! It provides generic formatting logic that can be reused across different
-//! types of notifications and reminders.
+//! types of notifications and reminders. Each backend has its own configuration
+//! for message strings, but they all utilize the same core formatting functions.
 
 use std::collections;
 
+use crate::defaults;
 use crate::settings;
 use crate::utils;
 use crate::wireguard;
@@ -16,18 +18,15 @@ use crate::wireguard;
 ///
 /// The message is composed of sections for peers that became lost, went missing,
 /// returned, etc., with appropriate headers and formatting based on the provided
-/// message strings. The formatting logic takes into account whether this is the
-/// first run, whether the program is resuming, and whether timestamps should be
-/// included for each peer.
+/// message strings.
 ///
 /// # Note:
-/// The returned String may be empty if there are no peers to report, or if the
+/// The returned `String` may be empty if there are no peers to report, or if the
 /// message strings are configured in such a way that no message should be sent
-/// (such as no headers for some peers to list).
+/// (such as empty headers for some peer state where peer would have been listed).
 ///
 /// # Parameters
-/// - `ctx`: The notification context containing the current state of peers
-///   and timing information.
+/// - `ctx`: The notification context containing the current state of peers.
 /// - `delta`: The delta containing the changes in peer status since the last check.
 /// - `strings`: The message strings to use for formatting the notification.
 ///
@@ -127,13 +126,12 @@ fn format_generic_message(
 /// message strings for reminders.
 ///
 /// This is similar to `format_generic_message` but is used for reminder
-/// notifications, which typically only report peers that are still lost or
-/// missing since the last check, without reporting peers that just became lost
-/// or went missing.
+/// notifications, which only report peers that are still lost or
+/// missing since the last check, in cases where there are no peers that changed
+/// status since the last notification.
 ///
 /// # Parameters
-/// - `ctx`: The notification context containing the current state of peers
-///   and timing information.
+/// - `ctx`: The notification context containing the current state of peers.
 /// - `strings`: The message strings to use for formatting the reminder notification.
 ///
 /// # Returns
@@ -169,9 +167,9 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
 /// information and the provided patterns for peers with and without timestamps.
 ///
 /// The pattern can include placeholders `{peer}`, `{key}`, `{when}`,
-/// and `{unix}` which will be replaced with the peer's human-readable name,
-/// public key, last seen time (formatted), and last seen time (unix timestamp)
-/// respectively.
+/// `{unix}` and `{version}`, which will be replaced with the peer's human-readable name,
+/// public key, last seen time (formatted), last seen time (unix timestamp),
+/// and the program version respectively.
 ///
 /// # Parameters
 /// - `peer`: The `WireGuardPeer` whose information is to be formatted into a
@@ -206,6 +204,7 @@ fn format_peer_line(
         .replace("{key}", peer.public_key.as_str())
         .replace("{when}", &when)
         .replace("{unix}", &peer.last_seen_unix.to_string())
+        .replace("{version}", defaults::program_metadata::VERSION)
 }
 
 /// Appends a section to the notification message for a list of peer keys, using
@@ -218,19 +217,19 @@ fn format_peer_line(
 /// # Parameters
 /// - `peers`: A hashmap of all peers, keyed by `wireguard::PeerKey` instances, used
 ///   to look up peer information for formatting.
-/// - `message`: The message string being built, to which the section will be appended.
+/// - `message`: The message string being composed, to which the section will be appended.
 /// - `keys`: The list of peer public keys that belong to this section (such as
 ///   "lost" peers, "missing" peers, etc.).
 /// - `header`: The header string for this section, which will be added before listing the peers.
 /// - `peer_with_timestamp`: The pattern to use for formatting peers with a known last seen
-///   time (i.e., "lost" peers).
+///   time ("lost" peers and "forgotten" peers).
 /// - `peer_no_timestamp`: The pattern to use for formatting peers without a known last seen
-///   time (i.e., "missing" peers).
+///   time ("missing" peers, "returning" peers and "appearing" peers).
 /// - `bullet_point`: The string to use as a bullet point for listing peers in this
 ///   section.
 /// - `disable_timestamps`: A boolean indicating whether to disable timestamps in the
-///   peer formatting, which is typically used for "returned" or "appeared" peers where
-///   the last seen time is not relevant.
+///   peer formatting, which is used to select between use of `peer_with_timestamp`
+///   and `peer_no_timestamp` patterns for formatting peers in this section.
 #[allow(clippy::too_many_arguments)]
 fn append_message_section(
     peers: &collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
@@ -266,14 +265,13 @@ fn append_message_section(
 }
 
 /// Prepares the message body for a notification by formatting it based on the
-/// provided `Context`, `KeyDelta`, and message strings, and applying a header
+/// provided `Context`, `KeyDelta` and message strings, applying a header
 /// closure to the appropriate header string.
 ///
 /// The function unescapes and trims the final message before returning it.
 ///
 /// # Parameters
-/// - `ctx`: The notification context containing the current state of peers and
-///   timing information.
+/// - `ctx`: The notification context containing the current state of peers.
 /// - `delta`: The key delta containing the changes in peer status since the last check.
 /// - `strings`: The message strings to use for formatting the notification.
 /// - `header_closure`: A closure that takes a header string and returns a
@@ -281,10 +279,11 @@ fn append_message_section(
 ///   formatting (such as prepending "Subject: " for email bodies).
 ///
 /// # Returns
-/// - `Some(message)` if a message to send was composed.
-/// - `None` if an empty message was composed, typically meaning no message
-///   should be sent (such as on first run with no peers to report and with an
-///   empty header string).
+/// - `Some(String)` if a message to send was composed.
+/// - `None` if an empty message was composed. This can happen if strings are
+///   configured so that the section header strings for peers to be listed
+///   were empty, disabling that section from being output. In this case,
+///   no message will be sent.
 pub fn prepare_message_body(
     ctx: &super::Context,
     delta: &super::KeyDelta,
@@ -336,18 +335,18 @@ pub fn prepare_message_body(
 /// The function unescapes and trims the final message before returning it.
 ///
 /// # Parameters
-/// - `ctx`: The reminder context containing the current state of peers and
-///   timing information.
+/// - `ctx`: The reminder context containing the current state of peers.
 /// - `strings`: The message strings to use for formatting the reminder notification.
 /// - `header_closure`: A closure that takes a header string and returns a
 ///   formatted header string, which allows for backend-specific header
 ///   formatting (such as prepending "Subject: " for email bodies).
 ///
 /// # Returns
-/// - `Some(message)` if a message to send was composed.
-/// - `None` if an empty message was composed, typically meaning no message
-///   should be sent (such as on first run with no peers to report and with an
-///   empty header string).
+/// - `Some(String)` if a message to send was composed.
+/// - `None` if an empty message was composed. This can happen if strings are
+///   configured so that the section header strings for peers to be listed
+///   were empty, disabling that section from being output. In this case,
+///   no message will be sent.
 pub fn prepare_reminder_body(
     ctx: &super::Context,
     strings: &settings::ReminderStrings,

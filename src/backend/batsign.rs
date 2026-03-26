@@ -12,9 +12,7 @@ use crate::settings;
 /// Defines the Batsign backend for sending notifications to the Batsign service.
 ///
 /// Batsign is a free service that allows you to send notifications to your email
-/// address by making HTTP POST requests to a unique URL. The `BatsignBackend`
-/// composes messages based on the notification context and delta, and sends them
-/// to the specified Batsign URL.
+/// address by making HTTP POST requests to a unique URL.
 pub struct BatsignBackend {
     /// Unique identifier for the Batsign backend instance, used for
     /// logging and identification purposes.
@@ -23,8 +21,9 @@ pub struct BatsignBackend {
     /// HTTP agent used to send requests to the Batsign service.
     agent: ureq::Agent,
 
-    /// Batsign URL to which the notification will be sent. This URL is unique
-    /// to the target email address and includes a token for authentication.
+    /// Batsign URL to which the notification will be sent.
+    ///
+    /// This URL is unique to the target email address and includes a token for authentication.
     url: String,
 
     /// Message strings for Batsign notifications.
@@ -36,8 +35,8 @@ pub struct BatsignBackend {
     /// Cached name of the backend instance, which can be used to avoid recomputing
     /// the name on every call to `name()`.
     ///
-    /// The name is in the format "batsign#{id}:{email}", where {id} is the
-    /// unique numeric identifier of the instance, and {email} is extracted
+    /// The name is in the format "`batsign#{id}:{email}`", where `{id}` is the
+    /// unique numeric identifier of the instance, and `{email}` is extracted
     /// from the Batsign URL.
     cached_name: String,
 }
@@ -83,25 +82,21 @@ impl BatsignBackend {
 
 impl super::Backend for BatsignBackend {
     /// Returns the unique identifier of the backend instance.
-    ///
-    /// # Returns
-    /// A numeric identifier that uniquely identifies this backend instance.
     #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }
 
-    /// Returns the name of this backend instance. It is in the format
-    /// "batsign#{id}:{email}", where {id} is the unique numeric identifier
-    /// of the instance, and {email} is extracted from the Batsign URL.
+    /// Returns the name of this backend instance.
     ///
-    /// # Returns
-    /// A string slice representing the name of this backend instance.
+    /// It is in the format
+    /// "`batsign#{id}:{email}`", where `{id}` is the unique numeric identifier
+    /// of the instance, and `{email}` is extracted from the Batsign URL.
     fn name(&self) -> &str {
         &self.cached_name
     }
 
-    /// Composes a message to be sent to Batsign based on the notification
+    /// Composes a message to be sent via Batsign based on the notification
     /// context and key delta.
     ///
     /// # Parameters
@@ -110,14 +105,14 @@ impl super::Backend for BatsignBackend {
     ///
     /// # Returns
     /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| format!("Subject: {}", h);
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
     }
 
-    /// Composes a reminder message to be sent to Batsign based on the notification
+    /// Composes a reminder message to be sent via Batsign based on the notification
     /// context.
     ///
     /// # Parameters
@@ -125,8 +120,8 @@ impl super::Backend for BatsignBackend {
     ///
     /// # Returns
     /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
         let header_closure = |h: &str| format!("Subject: {}", h);
         notify::prepare_reminder_body(ctx, &self.reminder_strings, header_closure)
@@ -146,7 +141,7 @@ impl super::Backend for BatsignBackend {
     ///
     /// # Returns
     /// - `Ok(None)` if the message was sent successfully.
-    /// - `Err(error)` if the send attempt failed.
+    /// - `Err(String)` if the send attempt failed.
     fn emit(
         &mut self,
         _ctx: &notify::Context,
@@ -164,7 +159,7 @@ impl super::Backend for BatsignBackend {
 }
 
 /// Extracts the email address from a Batsign URL, which is in the format
-/// "https://batsign.me/at/{email}/{token}".
+/// "`https://batsign.me/at/{email}/{token}`".
 ///
 /// # Parameters
 /// - `url`: The Batsign URL from which to extract the email address.

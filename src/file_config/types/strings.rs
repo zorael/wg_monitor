@@ -1,11 +1,12 @@
-//! Strings configuration structures for the file-based configuration system.
+//! String structs for the file-based configuration system.
 
 use serde::{Deserialize, Serialize};
 
 use crate::settings;
 
-/// Message string configuration structure. This mirrors the runtime settings
-/// struct used by the program for message strings.
+/// Message string configuration struct.
+///
+/// This mirrors the runtime settings struct used by the program for message strings.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct MessageStringsConfig {
@@ -13,6 +14,7 @@ pub struct MessageStringsConfig {
     pub header: Option<String>,
 
     /// Message header for the first run (first loop) of the program.
+    ///
     /// This is used instead of `header` at such times.
     pub first_run_header: Option<String>,
 
@@ -23,7 +25,7 @@ pub struct MessageStringsConfig {
     pub lost: Option<String>,
 
     /// Section header for peers that were present but are now missing, usually
-    /// due to a restart of the VPN.
+    /// (always?) due to a restart of the VPN.
     pub forgot: Option<String>,
 
     /// Section header for peers that appeared for the first time since the last check.
@@ -45,13 +47,17 @@ pub struct MessageStringsConfig {
     pub bullet_point: Option<String>,
 
     /// Message string for a peer with a timestamp, used in notifications
-    /// when the timestamp of the last seen time is known. This translates to
-    /// "lost" peers.
+    /// when the timestamp of the last seen time is known.
+    ///
+    /// This translates to "lost" peers.
     pub peer_with_timestamp: Option<String>,
 
     /// Message string for a peer without a timestamp, used in notifications
-    /// when the timestamp of the last seen time is zero. This translates to
-    /// "missing" peers.
+    /// when the timestamp of the last seen time is zero.
+    ///
+    /// This translates to "missing" peers, peers that just returned and
+    /// peers that just appeared, since in all such cases the delta of the
+    /// peer's last seen time is less than or equal to the check interval.
     pub peer_no_timestamp: Option<String>,
 }
 
@@ -97,13 +103,15 @@ pub struct ReminderStringsConfig {
     pub bullet_point: Option<String>,
 
     /// Message string for a peer with a timestamp, used in notifications
-    /// when the timestamp of the last seen time is known. This translates to
-    /// "lost" peers.
+    /// when the timestamp of the last seen time is known.
+    ///
+    /// This translates to "lost" peers.
     pub peer_with_timestamp: Option<String>,
 
     /// Message string for a peer without a timestamp, used in notifications
-    /// when the timestamp of the last seen time is zero. This translates to
-    /// "missing" peers.
+    /// when the timestamp of the last seen time is zero.
+    ///
+    /// This translates to "missing" peers.
     pub peer_no_timestamp: Option<String>,
 }
 

@@ -25,14 +25,13 @@ fn verbose_print(message: &str, verbose: bool) {
 /// This function iterates through the provided notifiers, checks if their pending
 /// notifications are due for retrying based on the current time and the retry
 /// interval specified in settings, and attempts to resend the notifications if they
-/// are due. The results of each retry attempt are collected into a `DispatchReport`
-/// which is returned at the end.
+/// are indeed due. The results of each retry attempt are collected into a
+/// `DispatchReport`, which is returned.
 ///
 /// # Parameters
 /// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to check
 ///   for pending notifications and attempt retries on.
-/// - `settings`: The settings struct which contains the retry interval and other
-///   configuration needed for determining when to retry and how to log the results.
+/// - `settings`: The settings struct which contains the retry interval.
 ///
 /// # Returns
 /// A `DispatchReport` struct containing the results of the retry attempts,
@@ -127,21 +126,21 @@ pub fn retry_pending_notifications(
 ///
 /// This function iterates through the provided notifiers and attempts to send a
 /// notification using each notifier's `push_notification` method. The results
-/// of each send attempt are collected into a `DispatchReport` which is returned
-/// at the end. The function also handles the logic for updating the state of
+/// of each send attempt are collected into a `DispatchReport` which is returned.
+/// The function also handles the logic for updating the state of
 /// each notifier based on the result of the send attempt, such as marking
-/// successful notifications or handling failures appropriately.
+/// successful notifications or handling failures.
 ///
 /// # Parameters
 /// - `ctx`: The notification context containing information about the current
 ///   state of peers and other relevant data needed for rendering the
 ///   notification message.
 /// - `delta`: The changes detected since the last notification,
-///   used to determine what has changed and render the message accordingly.
+///   used to determine what has changed.
 /// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to send
 ///   the notification through.
 /// - `settings`: The settings struct which contains configuration needed for
-///   logging and determining how to handle the results of the send attempts.
+///   determining how to handle the results of the send attempts.
 ///
 /// # Returns
 /// A `DispatchReport` struct containing the results of the send attempts,
@@ -211,10 +210,11 @@ pub fn send_notification(
 /// This function iterates through the provided notifiers, checks if they are due
 /// for sending a reminder based on the current time and the reminder interval
 /// specified in settings, and attempts to send a reminder if they are due. The
-/// results of each send attempt are collected into a `DispatchReport` which is
-/// returned at the end. The function also handles the logic for updating the state
+/// results of each send attempt are collected into a `DispatchReport`, which is returned.
+///
+/// The function also handles the logic for updating the state
 /// of each notifier based on the result of the send attempt, such as marking
-/// successful reminders or handling failures appropriately.
+/// successful reminders or handling failures.
 ///
 /// # Parameters
 /// - `ctx`: The notification context containing information about the current
@@ -228,7 +228,7 @@ pub fn send_notification(
 /// # Returns
 /// A `DispatchReport` struct containing the results of the send attempts,
 /// including the total number of notifiers processed, how many were successful,
-/// failed, had no message to send, or were skipped due to timing reasons.
+/// failed, had no message to send, or were skipped due to timing.
 pub fn send_reminder(
     ctx: &super::Context,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
@@ -310,8 +310,7 @@ pub fn send_reminder(
 ///
 /// # Returns
 /// The result of the send attempt, which can indicate success, failure,
-/// a dry run, no message to send, or that the send was skipped due to
-/// timing reasons.
+/// a dry run, no message to send, or that the send was skipped due to timing.
 fn send_via_notifier(
     ctx: &super::Context,
     delta: Option<&super::KeyDelta>,

@@ -1,6 +1,6 @@
-//! Logging utilities for the WireGuard monitor program, including functions and
-//! macros for printing timestamped messages to standard output and standard
-//! error, with optional timestamps based on the program settings.
+//! Logging utilities for the WireGuard monitor program.
+//!
+//! This is just macro magic.
 
 use crate::utils;
 

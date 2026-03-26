@@ -4,7 +4,8 @@
 /// including counts of total, successful, failed, no message,
 /// and skipped notifications.
 ///
-/// Used to summarize the outcomes of a batch of notification attempts.
+/// Used to summarize the outcomes of a batch of notification attempts
+/// for terminal output.
 #[allow(unused)]
 #[derive(Default, Debug)]
 pub struct DispatchReport {

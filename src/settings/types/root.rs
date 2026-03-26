@@ -11,10 +11,9 @@ use std::path;
 use crate::cli;
 use crate::defaults;
 use crate::file_config;
+use crate::logging;
 
-/// Root settings struct that aggregates all other settings types, including
-/// monitor settings, Slack settings, Batsign settings, command settings, and
-/// paths to resources.
+/// Root settings struct that aggregates all other settings types.
 ///
 /// This struct serves as the main settings struct for the application, holding
 /// all runtime settings that are used throughout the program's operation.
@@ -37,18 +36,17 @@ pub struct Settings {
     pub paths: super::PathBufs,
 
     /// Whether to treat the first run loop of the program as resuming from a
-    /// previous one, which can affect if reminder notifications are sent and/or
-    /// how they are phrased.
+    /// previous one, which affects how the first-run notification is worded.
     pub resume: bool,
 
     /// Whether to skip sending notifications for the first detected peer status
-    /// change after the program starts, which can be useful to avoid sending
+    /// change after the program starts, useful for avoiding sending
     /// notifications about the initial state.
     pub skip_first: bool,
 
-    /// Whether to disable timestamps in notifications, which can be useful if
-    /// the terminal output is routed into the systemd journal (where all lines
-    /// are already timestamped), or if the user simply prefers not to have
+    /// Whether to disable timestamps in notifications, useful for cases where
+    /// the terminal output is routed into the systemd journal, where all lines
+    /// are already timestamped -- or if the user simply prefers not to have
     /// timestamps in the notifications.
     pub disable_timestamps: bool,
 
@@ -68,8 +66,7 @@ pub struct Settings {
     /// which can be useful for in-depth debugging and understanding of the program's
     /// internal workings, but is generally not needed for regular use.
     ///
-    /// This is more verbose than `verbose` and is intended for debugging
-    /// specific issues or for development purposes.
+    /// This is more verbose than `verbose` is.
     pub debug: bool,
 }
 
@@ -139,14 +136,13 @@ impl Settings {
         if vec.is_empty() { Ok(()) } else { Err(vec) }
     }
 
-    /// Prints the settings in a human-readable format, which can be useful for
-    /// debugging and understanding the current configuration of the program.
+    /// Prints the settings in a human-readable format.
     pub fn print(&self) {
         println!("{:#?}", self);
 
         if self.dry_run {
             println!();
-            println!("[!] DRY RUN");
+            logging::tsprintln!(self.disable_timestamps, "DRY RUN IN EFFECT");
         }
     }
 
@@ -154,6 +150,7 @@ impl Settings {
     /// the configuration directory, updating the `paths` field of the `Settings`
     /// instance accordingly.
     ///
+    /// # Notes
     /// This should be called after the configuration directory has been resolved
     /// to ensure that the paths to the configuration file and peer list file
     /// are also correct.

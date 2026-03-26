@@ -6,23 +6,26 @@
 #[derive(Debug)]
 pub enum NotificationResult {
     /// Indicates that the notification was not actually sent because a dry run
-    /// mode is in effect, but includes the message that would have been sent.
+    /// mode is in effect.
+    ///
+    /// Includes the message that would have been sent.
     DryRun(String),
 
     /// Indicates that the notification was successfully sent, including the message
     /// that was sent.
     Success(String),
 
-    /// Indicates that there was a failure in sending the notification, including
-    /// an error message describing the failure and the message that was
-    /// attempted to be sent.
+    /// Indicates that there was a failure in sending the notification.
+    ///
+    /// Includes an error message describing the failure and the message that was
+    /// attempted to be sent (in that order).
     Failure(String, String),
 
     /// Indicates that the notification was not sent because the rendered message
     /// ended up empty.
     NoMessage,
 
-    /// Indicates that the notification was skipped, typically due to timing reasons.
+    /// Indicates that the notification was skipped due to timing reasons.
     #[allow(dead_code)]
     Skipped,
 }

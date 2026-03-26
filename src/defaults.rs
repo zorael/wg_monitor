@@ -1,5 +1,4 @@
-//! Default values for the WireGuard monitor program, including interface name,
-//! timeouts, intervals, file names, and program metadata.
+//! Default values.
 //!
 //! This is just to gather them in one place, and to avoid hardcoding these
 //! values in multiple places throughout the program.

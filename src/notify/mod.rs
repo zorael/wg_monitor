@@ -1,11 +1,4 @@
-//! Notification system for WG Monitor.
-//!
-//! This module provides the infrastructure for sending notifications and
-//! reminders based on various events and conditions.
-//!
-//! The notification system is designed to be flexible and extensible,
-//! allowing for different types of notifications and various backends for
-//! sending notifications (like Batsign, Slack, custom commands).
+//! Notification system.
 
 mod dispatch;
 mod format;

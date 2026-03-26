@@ -12,82 +12,51 @@
 //! for easy updates of the message strings based on user-provided configuration
 //! files.
 //!
-//! Each notification backend (e.g., Slack, Batsign, Command) has their own
-//! settings structs that include these message strings as fields. It is through
-//! these that message strings can be formatted.
+//! Each notification backend (e.g., Slack, Batsign, Command) has their own instance of
+//! these settings structs that include these message strings as fields. It is through
+//! these that message strings are formatted.
 
 use crate::file_config;
 
 /// Message string settings struct for the program.
-/// This must mirror `file_config::MessageStringsConfig`.
+///
+/// This *must* mirror `file_config::MessageStringsConfig`.
 #[derive(Clone, Debug)]
 pub struct MessageStrings {
-    /// Message header for notifications.
-    ///
-    /// This is the main header that appears at the top of the notification message.
-    /// Depending on the backend, it may be used as subject line.
+    /// Message header.
     pub header: String,
 
-    /// This is the main header that appears at the top of the notification
-    /// message on the first run of the program, when there is no previous state
-    /// to compare against. This can be used to indicate that the program is
-    /// starting up and provide an initial report of the current state of peers.
+    /// Message header for the first run (first loop) of the program.
     ///
-    /// It replaces `header` for the first run of the program, and is only used
-    /// at such times.
-    ///
-    /// Depending on the backend, it may be used as subject line.
+    /// This is used instead of `header` at such times.
     pub first_run_header: String,
 
     /// Section header for peers that are missing on the first run of the program.
-    ///
-    /// This is used in the initial report of the current state of peers when the
-    /// program is run for the first time, and indicates which peers are currently
-    /// missing (i.e., have never been seen before).
     pub first_run_missing: String,
 
-    /// Section header for peers that were present but are now missing, usually
-    /// due to a timeout.
-    ///
-    /// This indicates which peers were seen in the previous check but are now
-    /// missing, which means their handshake has timed out.
+    /// Section header for peers that were lost (timed out) since the last check.
     pub lost: String,
 
     /// Section header for peers that were present but are now missing, usually
-    /// due to a restart of the VPN.
-    ///
-    /// This indicates which peers were seen in the previous check but are now
-    /// missing, which should not happen if the VPN is running continuously.
+    /// (always?) due to a restart of the VPN.
     pub forgot: String,
 
     /// Section header for peers that appeared for the first time since the last check.
-    ///
-    /// This indicates peers which had never been seen since the last VPN restart
-    /// but were now seen for the first time.
     pub appeared: String,
 
     /// Section header for peers that returned after being lost (timed out).
-    ///
-    /// This indicates peers whose handshake previously timed out (making them
-    /// "lost"), but have now been seen again, meaning they have returned.
     pub returned: String,
 
     /// Section header for peers that are still lost (timed out).
-    ///
-    /// This indicates peers whose handshake has timed out and have still not
-    /// been seen since then.
     pub still_lost: String,
 
     /// Section header for peers that have still not appeared since the last restart.
     pub still_missing: String,
 
-    /// Message footer for notifications.
-    ///
-    /// This appears at the end of the notification message, and can be used
-    /// for any additional information or static closing remarks.
+    /// Message footer.
     pub footer: String,
 
-    /// Bullet point string for listing peers in notifications.
+    /// Bullet point string for listing peers.
     pub bullet_point: String,
 
     /// Message string for a peer with a timestamp, used in notifications
@@ -97,8 +66,11 @@ pub struct MessageStrings {
     pub peer_with_timestamp: String,
 
     /// Message string for a peer without a timestamp, used in notifications
-    /// when the timestamp is either unknown (peer is "missing") or when that
-    /// time is right now (the peer just "appeared" or "returned").
+    /// when the timestamp of the last seen time is zero.
+    ///
+    /// This translates to "missing" peers, peers that just returned and
+    /// peers that just appeared, since in all such cases the delta of the
+    /// peer's last seen time is less than or equal to the check interval.
     pub peer_no_timestamp: String,
 }
 
@@ -130,7 +102,7 @@ impl MessageStrings {
     ///
     /// This allows for overriding the default message strings with values from
     /// the configuration file, while still falling back to defaults for any
-    /// values that are not provided in the configuration file.
+    /// values that are not provided in it.
     ///
     /// # Parameters
     /// - `config`: The `file_config::MessageStringsConfig` containing the
@@ -194,38 +166,31 @@ impl MessageStrings {
 /// This must mirror `file_config::ReminderStringsConfig`.
 #[derive(Clone, Debug)]
 pub struct ReminderStrings {
-    /// Message header for reminders.
-    ///
-    /// This is the main header that appears at the top of the reminder message.
-    /// Depending on the backend, it may be used as subject line.
+    /// Message header for reminder notifications.
     pub header: String,
 
     /// Section header for peers that are still lost (timed out).
-    ///
-    /// This indicates peers whose handshake has timed out and have still not
-    /// been seen since then.
     pub still_lost: String,
 
     /// Section header for peers that have still not appeared since the last restart.
     pub still_missing: String,
 
-    /// Message footer for reminders.
-    ///
-    /// This appears at the end of the reminder message, and can be used
-    /// for any additional information or static closing remarks.
+    /// Message footer.
     pub footer: String,
 
-    /// Bullet point string for listing peers in reminders.
+    /// Bullet point string for listing peers.
     pub bullet_point: String,
 
-    /// Message string for a peer with a timestamp, used in reminders
+    /// Message string for a peer with a timestamp, used in notifications
     /// when the timestamp of the last seen time is known.
     ///
     /// This translates to "lost" peers.
     pub peer_with_timestamp: String,
 
-    /// Message string for a peer without a timestamp, used in reminders
-    /// when the timestamp is unknown (peer is "missing").
+    /// Message string for a peer without a timestamp, used in notifications
+    /// when the timestamp of the last seen time is zero.
+    ///
+    /// This translates to "missing" peers.
     pub peer_no_timestamp: String,
 }
 
@@ -251,7 +216,7 @@ impl ReminderStrings {
     ///
     /// This allows for overriding the default reminder message strings with
     /// values from the configuration file, while still falling back to defaults
-    /// for any values that are not provided in the configuration file.
+    /// for any values that are not provided in it.
     ///
     /// # Parameters
     /// - `config`: The `file_config::ReminderStringsConfig` containing the

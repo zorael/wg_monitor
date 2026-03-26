@@ -18,6 +18,7 @@ pub struct CommandConfig {
     pub enabled: Option<bool>,
 
     /// The command strings to execute for notifications.
+    ///
     /// Each command string is executed as a separate process.
     pub commands: Option<Vec<String>>,
 }

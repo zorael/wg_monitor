@@ -2,7 +2,7 @@
 //! notifications.
 //!
 //! The command is invoked with the composed message and various contextual
-//! information as arguments, allowing for flexible integration with custom
+//! information as arguments, allowing for integration with custom
 //! notification systems or scripts.
 //!
 //! The `CommandBackend` implements the `Backend` trait, which specifies the
@@ -41,8 +41,8 @@ pub struct CommandBackend {
     /// Cached name of the backend instance, which can be used to avoid
     /// recomputing the name on every call to `name()`.
     ///
-    /// The name is in the format "command#{id}:{command}", where {id} is the
-    /// unique numeric identifier of the instance, and {command} is the command
+    /// The name is in the format "`command#{id}:{command}`", where `{id}` is the
+    /// unique numeric identifier of the instance, and `{command}` is the command
     /// to execute.
     cached_name: String,
 }
@@ -82,9 +82,6 @@ impl CommandBackend {
 
 impl super::Backend for CommandBackend {
     /// Returns the unique identifier of the backend instance.
-    ///
-    /// # Returns
-    /// A numeric identifier that uniquely identifies this backend instance.
     #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
@@ -92,10 +89,8 @@ impl super::Backend for CommandBackend {
 
     /// Returns the name of this backend instance.
     ///
-    /// # Returns
-    /// A string slice representing the name of this backend instance.
-    /// It is in the format "command#{id}:{command}", where {id} is the unique
-    /// numeric identifier of the instance, and {command} is the command to execute.
+    /// It is in the format "`command#{id}:{command}`", where `{id}` is the unique
+    /// numeric identifier of the instance, and `{command}` is the command to execute.
     fn name(&self) -> &str {
         &self.cached_name
     }
@@ -109,8 +104,8 @@ impl super::Backend for CommandBackend {
     ///
     /// # Returns
     /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
@@ -124,8 +119,8 @@ impl super::Backend for CommandBackend {
     ///
     /// # Returns
     /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
         notify::prepare_reminder_body(ctx, &self.reminder_strings, header_closure)
@@ -134,39 +129,41 @@ impl super::Backend for CommandBackend {
     /// Sends a composed message by executing the configured command with the
     /// message and various contextual information as arguments.
     ///
-    /// The command is invoked with the following arguments:
+    /// The command is invoked with the following as command-line arguments
+    /// in order (as in, argument 1 is `$1`):
     ///
     /// 1. The composed message to be sent
     /// 2. The path to the peer list file
-    /// 3. The number of times the main loop has run (starting at 0, unless --resume was passed)
-    /// 4. A comma-separated string of lost keys in the format "key:timestamp"
-    /// 5. A comma-separated string of missing keys in the format "key:timestamp"
-    /// 6. A comma-separated string of previous lost keys in the format "key:timestamp"
-    /// 7. A comma-separated string of previous missing keys in the format "key:timestamp"
-    /// 8. If a delta is provided, a comma-separated string of keys that are now
-    ///    lost in the format "key:timestamp"
-    /// 9. If a delta is provided, a comma-separated string of keys that are now
-    ///    missing in the format "key:timestamp"
-    /// 10. If a delta is provided, a comma-separated string of keys that were
-    ///     lost (but are no longer) in the format "key:timestamp"
-    /// 11. If a delta is provided, a comma-separated string of keys that
-    ///     were missing (but are no longer) in the format "key:timestamp"
+    /// 3. The number of times the main loop has run (starting at 0, unless
+    ///    --resume was passed, in which case it starts at 1)
+    /// 4. A comma-separated string of lost keys in the format "`key:timestamp`"
+    /// 5. A comma-separated string of missing keys in the format "`key:timestamp`"
+    /// 6. A comma-separated string of previous lost keys in the format "`key:timestamp`"
+    /// 7. A comma-separated string of previous missing keys in the format "`key:timestamp`"
+    /// 8. If a key delta is provided, a comma-separated string of keys that are now
+    ///    lost in the format "`key:timestamp`"
+    /// 9. If a key delta is provided, a comma-separated string of keys that are now
+    ///    missing in the format "`key:timestamp`"
+    /// 10. If a key delta is provided, a comma-separated string of keys that were
+    ///     lost (but are no longer) in the format "`key:timestamp`"
+    /// 11. If a key delta is provided, a comma-separated string of keys that
+    ///     were missing (but are no longer) in the format "`key:timestamp`"
     ///
-    /// Any parameter for which there is no value (as in, no lost keys), the
-    /// argument passed but is simply empty.
+    /// Any parameter for which there is no value (as in, no lost keys, no keys
+    /// previously missing, etc), the argument passed but is simply an empty string `""`.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
     /// - `delta`: The changes detected since the last notification, or `None`
-    ///   if this is a reminder rather than a new notification.
-    /// - `message`: The composed message to send, which is passed as an
-    ///   argument to the command.
+    ///   if this is a reminder rather than a normal notification.
+    /// - `message`: The composed message to send, which is passed as argument
+    ///   `$1` to the command.
     ///
     /// # Returns
     /// - `Ok(None)` if the command executed successfully and produced no output.
-    /// - `Ok(Some(output))` if the command executed successfully and produced
+    /// - `Ok(Some(String))` if the command executed successfully and produced
     ///   output, which is returned as a string.
-    /// - `Err(error)` if the command execution failed, with the error message
+    /// - `Err(String)` if the command execution failed, with the error message
     ///   returned as a string.
     fn emit(
         &mut self,
@@ -231,29 +228,15 @@ impl super::Backend for CommandBackend {
 }
 
 /// Formats a list of keys and their corresponding timestamps into a
-/// comma-separated string in the format "key:timestamp".
-///
-/// There must exist a peer in the peers map for each key in the keys slice,
-/// or this function will panic.
-///
-/// Replace the map with the following to avoid panicking if a key is not found.
-///
-/// ```rust,ignore
-/// .filter_map(|key| {
-///     peers
-///         .get(key)
-///         .map(|peer| format!("{key}:{}", peer.last_seen_unix))
-/// })
-/// ```
+/// comma-separated string in the format "`key1:timestamp1,key2:timestamp2,...`".
 ///
 /// # Parameters
-/// - `peers`: A map of `peer::PeerKey` to their corresponding `peer::WireGuardPeer`
+/// - `peers`: A map of `wireguard::PeerKey` to their corresponding `wireguard::WireGuardPeer`
 ///   information, which includes the last seen timestamp for each peer.
 /// - `keys`: A slice of keys for which to format the key-timestamp pairs.
-///   Each key must exist in the `peers` map, or this function will panic.
 ///
 /// # Returns
-/// A comma-separated string of key-timestamp pairs in the format "key:timestamp".
+/// A comma-separated string of key-timestamp pairs in the format "`key:timestamp`".
 ///
 /// # Panics
 /// If any key in the `keys` slice does not exist in the `peers` map,
@@ -263,8 +246,12 @@ fn format_key_timestamp_pairs(
     keys: &[wireguard::PeerKey],
 ) -> String {
     keys.iter()
-        .map(|key| format!("{key}:{}", peers[key].last_seen_unix))
-        .collect::<Vec<_>>()
+        .filter_map(|key| {
+            peers
+                .get(key)
+                .map(|peer| format!("{key}:{}", peer.last_seen_unix))
+        })
+        .collect::<Vec<String>>()
         .join(",")
 }
 

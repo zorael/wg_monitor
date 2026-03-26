@@ -10,7 +10,7 @@
 //! - The `BatsignBackend` sends notifications to the free Batsign service by
 //!   making HTTP POST requests to a unique URL.
 //! - The `SlackBackend` sends notifications to a Slack channel via webhooks.
-//! - The `CommandBackend` executes a specified command to send notifications,
+//! - The `CommandBackend` executes an external command to send notifications,
 //!   allowing for custom handling of notifications through scripts or other executables.
 
 mod api;

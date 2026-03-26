@@ -4,7 +4,7 @@
 //!
 //! This struct is computed from the `Context` and contains vectors of public
 //! keys for peers that changed status, categorized by the type of change
-//! (now lost, now missing, was lost, was missing).
+//! ("now lost", "now missing", "was lost", "was missing").
 
 use crate::notify;
 use crate::utils;
@@ -24,6 +24,7 @@ pub struct KeyDelta {
     pub was_lost: Vec<wireguard::PeerKey>,
 
     /// Public keys of peers that went missing (not seen at all) since the last check.
+    ///
     /// This is indicative of a VPN restart.
     pub now_missing: Vec<wireguard::PeerKey>,
 
@@ -60,11 +61,9 @@ impl KeyDelta {
         self.was_missing.clear();
     }
 
-    /// Returns whether all the key vectors in the `KeyDelta` are empty, indicating
+    /// Returns `true` if all the key vectors in the `KeyDelta` are empty, indicating
     /// that there are no changes in peer status since the last check.
-    ///
-    /// # Returns
-    /// `true` if all key vectors are empty, and `false` if any of them contain keys.
+    /// `false` if not.
     pub fn is_empty(&self) -> bool {
         self.now_lost.is_empty()
             && self.was_lost.is_empty()

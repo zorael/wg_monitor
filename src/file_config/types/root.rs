@@ -1,4 +1,4 @@
-//! Root configuration structure for the file-based configuration system.
+//! Root for the file-based configuration system.
 
 use super::*;
 use serde::{Deserialize, Serialize};
@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::settings;
 
 /// Root configuration structure for the file-based configuration system.
+///
+/// Its layout is how the settings will be presented in the configuration file.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct FileConfig {

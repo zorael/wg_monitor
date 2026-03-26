@@ -1,9 +1,7 @@
-//! Utility functions for working with vectors of strings, including trimming
-//! whitespace, computing differences between vectors, and appending differences
-//! into destination vectors.
+//! Utility functions for working with vectors of strings.
 //!
 //! These functions are useful for managing lists of strings such as
-//! notification URLs, peer lists, and other collections of string data used
+//! notification URLs, peer lists, and other collections of data used
 //! across the program.
 
 #![allow(dead_code)]
@@ -26,7 +24,7 @@ pub fn trim_vec_of_strings(vec: &[String]) -> Vec<String> {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_trim {
     /// Tests for the `trim_vec_of_strings` function, ensuring that it correctly
     /// trims whitespace from each string and filters out empty strings.
     #[test]
@@ -88,7 +86,9 @@ pub fn get_elements_not_in_other_vec<T: Clone + PartialEq>(one: &[T], other: &[T
 }
 
 /// Appends the differences between two vectors into the provided
-/// destination vectors. The first destination vector will receive elements that
+/// destination vectors.
+///
+/// The first destination vector will receive elements that
 /// are in the first source vector but not in the second, and the second
 /// destination vector will receive elements that are in the second source vector
 /// but not in the first.
@@ -131,7 +131,7 @@ pub fn append_difference_into<T: Clone + PartialEq>(vec: &mut Vec<T>, one: &[T],
 }
 
 #[cfg(test)]
-mod tests_vec {
+mod tests_vec_difference {
     /// Tests for the `get_vec_difference` function, ensuring that it correctly
     /// computes the differences between two vectors and returns the
     /// expected results in the form of two other vectors: one for elements unique to

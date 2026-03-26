@@ -1,4 +1,4 @@
-//! WireGuard-related functionality, including parsing peer information and handshakes.
+//! WireGuard-related functionality.
 
 mod peer;
 mod wg;

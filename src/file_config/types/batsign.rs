@@ -18,6 +18,7 @@ pub struct BatsignConfig {
     pub enabled: Option<bool>,
 
     /// The Batsign URLs to which the notifications will be sent.
+    ///
     /// Each URL is unique to the target email address and includes a token
     /// for authentication.
     pub urls: Option<Vec<String>>,

@@ -2,9 +2,7 @@
 //! connection status of its peers.
 //!
 //! This module defines the `MonitorSettings` struct, which holds the runtime
-//! settings for monitoring the WireGuard interface and connection status,
-//! including the interface name, check interval, timeout, reminder interval,
-//! and retry interval.
+//! settings for monitoring the WireGuard interface and connection status.
 
 use std::time;
 
@@ -25,7 +23,9 @@ pub struct MonitorSettings {
 
     /// Interval for reminder notifications for pending notifications.
     /// This will be grown as consecutive reminders are sent for the same
-    /// pending notification. This allows for initially more frequent reminders,
+    /// pending notification.
+    ///
+    /// This allows for initially more frequent reminders,
     /// and less frequent reminders as time goes on without the peer status
     /// being resolved.
     pub reminder_interval: time::Duration,
@@ -55,9 +55,7 @@ impl Default for MonitorSettings {
 
 impl MonitorSettings {
     /// Applies settings from a `file_config::MonitorConfig` to the current
-    /// `MonitorSettings` instance, updating the interface name, check interval,
-    /// timeout, reminder interval, and retry interval based on the values provided
-    /// in the file configuration.
+    /// `MonitorSettings` instance.
     ///
     /// # Parameters
     /// - `monitor_config`: The `file_config::MonitorConfig` containing the

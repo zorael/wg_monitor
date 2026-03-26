@@ -1,9 +1,5 @@
 //! Defines the `Backend` trait, which specifies the interface for all
 //! notification backends.
-//!
-//! This module also re-exports the specific backend implementations
-//! (like `SlackBackend`, `BatsignBackend`, `CommandBackend`) so that they
-//! can be easily used by other parts of the application.
 
 use crate::notify;
 
@@ -12,9 +8,9 @@ use crate::notify;
 /// the notification context and delta, as well as emitting the notifications.
 ///
 /// Backends are responsible for formatting messages according to their specific
-/// requirements (such as JSON for Slack) and for sending the notifications through
-/// the appropriate channels (like HTTP requests for Slack, command execution
-/// for CommandBackend).
+/// requirements (such as JSON for `SlackBackend`) and for sending the notifications through
+/// the appropriate channels (like HTTP requests for `SlackBackend`, command execution
+/// for `CommandBackend`).
 pub trait Backend {
     /// Returns the unique identifier of the backend instance.
     #[allow(dead_code)]
@@ -23,7 +19,7 @@ pub trait Backend {
     /// Returns the name of the backend instance.
     ///
     /// The name is used for logging and identification purposes, and may include
-    /// additional information such as unique identifiers.
+    /// additional information such as identifiers unique to each instance.
     fn name(&self) -> &str;
 
     /// Composes a notification message based on the notification context and
@@ -35,24 +31,27 @@ pub trait Backend {
     ///
     /// # Returns
     /// - `Some(message)` if a message should be sent
-    /// - `None` if the composed message was empty, which typically means no
-    ///   message should be sent.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String>;
 
     /// Composes a reminder message based on the notification context.
+    ///
+    /// Reminders differ from normal notifications in that they do not include
+    /// a delta, since they are not triggered by a new state change.
     ///
     /// # Parameters
     /// - `ctx`: Current notification context.
     ///
     /// # Returns
     /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String>;
 
     /// Sends a composed notification message through this backend.
     ///
-    /// `delta` describes the state change that triggered the notification.
+    /// `delta`, if present, describes the state change that triggered the notification.
     /// A value of `None` indicates that `message` is a reminder rather than
     /// a new alert.
     ///

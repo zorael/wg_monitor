@@ -13,7 +13,7 @@ pub trait StatefulNotifier: super::NotificationSender + StateCarrier {}
 /// both `NotificationSender` and `StateCarrier`.
 ///
 /// This allows any type that implements both traits to automatically be
-/// considered a `StatefulNotifier`, which can be useful for writing generic
+/// considered a `StatefulNotifier`, making it useful for writing generic
 /// code that operates on stateful notifiers without needing to specify the
 /// exact type of notifier being used.
 impl<T: super::NotificationSender + StateCarrier> StatefulNotifier for T {}

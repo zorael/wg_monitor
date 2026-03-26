@@ -30,12 +30,11 @@ pub struct WireGuardPeer {
     /// as an `Option<SystemTime>`.
     ///
     /// This can be `None` if the peer has never been seen or if the timestamp
-    /// has been reset.
+    /// has been reset to 0 in a VPN restart.
     pub last_seen: Option<time::SystemTime>,
 
     /// The last seen timestamp represented as a UNIX timestamp (seconds since
-    /// the UNIX epoch). This is used for easier sorting and comparison of peers
-    /// based on their last seen times.
+    /// the UNIX epoch).
     pub last_seen_unix: u64,
 }
 
@@ -115,10 +114,10 @@ impl WireGuardPeer {
 
     /// "Validates" a WireGuard public key to ensure it is in the correct format.
     ///
-    /// A valid WireGuard public key is a 44-character base64 string that ends
-    /// with an '=' character. The function checks the length of the key,
-    /// ensures it ends with '=', and verifies that all characters (except the
-    /// trailing '=') are valid base64 characters (alphanumeric, '+', '/').
+    /// A valid WireGuard public key is a 44-character Base64 string that ends
+    /// with an '`=`' character. The function checks the length of the key,
+    /// ensures it ends with '`=`', and verifies that all characters (except the
+    /// trailing '`=`') are valid Base64 characters (alphanumeric, '`+`', '`/`').
     ///
     /// # Parameters
     /// - `public_key`: The WireGuard public key to validate.
@@ -156,6 +155,13 @@ impl WireGuardPeer {
 /// Peers that are present (have a non-0 timestamp) are sorted first, with newer
 /// timestamps appearing before older ones. Peers without a timestamp
 /// (or rather, with a timestamp of 0) are sorted last.
+///
+/// # Parameters
+/// - `keys`: A mutable slice of `PeerKey` instances representing the public
+///   keys of peers to be sorted.
+/// - `peers`: A reference to a hashmap mapping `PeerKey` instances to
+///   `WireGuardPeer` instances, which is used to look up the last seen
+///   timestamps for sorting the keys.
 pub fn sort_keys(keys: &mut [PeerKey], peers: &collections::HashMap<PeerKey, WireGuardPeer>) {
     keys.sort_unstable_by_key(|k| {
         let timestamp = peers.get(k).map(|p| p.last_seen_unix).unwrap_or(0);
@@ -177,8 +183,8 @@ impl PeerKey {
     ///   converted into a `PeerKey`.
     ///
     /// # Returns
-    /// An `Option<PeerKey>` which is `Some(PeerKey)` if the input string is a
-    /// valid WireGuard public key, or `None` if it is invalid.
+    /// `Some(PeerKey)` if the input string is a valid WireGuard public key,
+    /// or `None` if it is invalid.
     pub fn new(key: &str) -> Option<Self> {
         if WireGuardPeer::validate_public_key(key) {
             Some(Self(rc::Rc::from(key)))
@@ -187,10 +193,7 @@ impl PeerKey {
         }
     }
 
-    /// Returns the string slice representation of the `PeerKey`.
-    ///
-    /// # Returns
-    /// A string slice that represents the WireGuard public key contained in
+    /// Returns a string slice that represents the WireGuard public key contained in
     /// this `PeerKey`.
     pub fn as_str(&self) -> &str {
         &self.0

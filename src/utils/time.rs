@@ -1,6 +1,4 @@
-//! Utility functions for time formatting and conversion, including functions
-//! to convert `SystemTime` to human-readable timestamp and datestamp strings,
-//! and to get the current time as a timestamp or datestamp string.
+//! Utility functions for time formatting and conversion.
 
 #![allow(dead_code)]
 

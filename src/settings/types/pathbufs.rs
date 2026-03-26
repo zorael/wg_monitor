@@ -4,7 +4,9 @@ use std::path;
 
 /// Struct containing paths to various resources used by the program, such as
 /// the configuration directory, configuration file, and peer list file.
-/// These paths are resolved at runtime based on the environment and defaults,
+///
+/// These paths are resolved at runtime based on environment variables,
+/// command-line arguments and hardcoded defaults,
 /// and are used by the program to locate the necessary files and directories
 /// for its operation.
 #[derive(Debug, Default)]

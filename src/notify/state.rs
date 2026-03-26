@@ -14,8 +14,8 @@ pub struct NotifierState {
     pub last_notification_sent: Option<time::SystemTime>,
 
     /// The time when the first error was recorded for the current pending notification,
-    /// used to determine how long the notification has been pending and to grow
-    /// the reminder interval over time.
+    /// used to determine how long the notification has been pending so
+    /// the reminder interval can be grown over time.
     pub first_error_at: Option<time::SystemTime>,
 
     /// The time when the last reminder was sent, used to determine when the next
@@ -40,7 +40,7 @@ pub struct NotifierState {
 impl NotifierState {
     /// Saves the pending notification in the state, which can be either a
     /// normal notification (with a delta) or a reminder (without a delta),
-    /// based on the provided context and optional delta.
+    /// based on the provided arguments.
     ///
     /// The pending notification is stored in the `pending` field of the state,
     /// wrapped in the appropriate `PendingNotification` variant based on
@@ -73,6 +73,10 @@ impl NotifierState {
     /// but it is capped at a maximum interval to ensure that reminders are
     /// still sent eventually even for notifications that have been pending
     /// for a very long time.
+    ///
+    /// # Notes
+    /// It currently uses a multiplier-based approach, and as such the growth
+    /// will depend on the initial base reminder interval.
     ///
     /// # Parameters
     /// - `now`: The current time to compare against the last reminder sent,
@@ -123,7 +127,7 @@ impl NotifierState {
 
         // Grow the reminder interval over time but cap it at 48h
         let growth_multiplier = match self.num_consecutive_reminders {
-            0 => 1,  // 6h (base interval)
+            0 => 1,  // 6h (...assuming a base interval of 6h)
             1 => 2,  // 12h
             2 => 4,  // 24h (1 day)
             3 => 8,  // 48h (2 days)
@@ -150,6 +154,10 @@ impl NotifierState {
     /// still attempted eventually even for notifications that have been pending
     /// for a very long time.
     ///
+    /// # Notes
+    /// It currently uses a multiplier-based approach, and as such the growth
+    /// will depend on the initial base retry interval.
+    ///
     /// # Parameters
     /// - `now`: The current time to compare against the last failed send to
     ///   determine if the next retry is due.
@@ -174,7 +182,7 @@ impl NotifierState {
         };
 
         let growth_multiplier = match self.num_consecutive_failures {
-            0 => 1,  // 1m (base interval)
+            0 => 1,  // 1m (...assuming a base interval of 1m)
             1 => 2,  // 2m
             2 => 2,  // 2m
             3 => 5,  // 5m
@@ -190,11 +198,13 @@ impl NotifierState {
         }
     }
 
-    /// Handles the logic for when a notification or reminder fails to send,
-    /// including saving the pending notification, updating the last failed send
-    /// time, incrementing the number of consecutive failures, and setting the
+    /// Handles the logic for when a notification or reminder fails to send.
+    ///
+    /// This includes saving the pending notification, updating the last failed send
+    /// time, incrementing the number of consecutive failures, setting the
     /// first error time if it is not already set.
     ///
+    /// # Notes
     /// This method should be called whenever a send attempt fails, regardless of
     /// whether it was a new notification or a reminder, to ensure that the state
     /// is updated correctly for retry and reminder timing.
@@ -222,12 +232,15 @@ impl NotifierState {
         }
     }
 
-    /// Handles the logic for when a reminder is successfully sent, updating the
+    /// Handles the logic for when a reminder is successfully sent.
+    ///
+    /// This includes updating the
     /// last reminder sent time, incrementing the number of consecutive reminders,
     /// and resetting the failure tracking since a successful reminder indicates
     /// that the issue is still being actively worked on and should not be
     /// considered as failed for the purposes of retry timing.
     ///
+    /// # Notes
     /// This method should be called whenever a reminder is successfully sent,
     /// regardless of whether it is the first reminder or a subsequent reminder,
     /// to ensure that the state is updated correctly for future reminder and
@@ -245,12 +258,15 @@ impl NotifierState {
         self.first_error_at = None;
     }
 
-    /// Handles the logic for when a notification is successfully sent, resetting
+    /// Handles the logic for when a notification is successfully sent.
+    ///
+    /// This includes resetting
     /// all state related to pending notifications, reminder timing, and failure
     /// tracking, since a successful notification indicates that the issue has
     /// been resolved and there is no need to track any pending state or send
     /// reminders or retries.
     ///
+    /// # Notes
     /// This method should be called whenever a notification is successfully
     /// sent, regardless of whether it is the first notification or a subsequent
     /// notification, to ensure that the state is updated correctly and all

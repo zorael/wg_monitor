@@ -1,9 +1,5 @@
 //! WireGuard-related functions for reading peer information and handshakes,
 //! specifically in the context of the output of the `wg` command.
-//!
-//! This module provides functions for reading the list of WireGuard peers from a
-//! file, validating the output of the `wg show latest-handshakes` command, and
-//! updating the last seen timestamps for peers based on the command output.
 
 use std::collections;
 use std::fs;
@@ -13,11 +9,11 @@ use std::path;
 use std::process;
 
 /// Reads the list of WireGuard peers from a specified file path, returning a
-/// `HashMap` of `super::PeerKey` keys to `super::WireGuardPeer` values.
+/// `HashMap` of `PeerKey` keys to `WireGuardPeer` values.
 ///
 /// The function expects the file to contain lines in one of the following formats:
 /// - `public_key human_name`: A line with a public key followed by a
-///   human-readable name, separated by whitespace.
+///   human-readable name, with the two separated by whitespace.
 /// - `public_key`: A line with just a public key, in which case the
 ///   human-readable name will be derived from the public key using the
 ///   `shorten_key` method.
@@ -32,7 +28,7 @@ use std::process;
 ///   during the reading process.
 ///
 /// # Returns
-/// A `Result` containing a `HashMap` of `peer::PeerKey` keys to `peer::WireGuardPeer`
+/// A `Result` containing a `HashMap` of `PeerKey` keys to `WireGuardPeer`
 /// values if successful, or an `io::Error` if there was an issue reading the
 /// file or parsing its contents.
 pub fn read_peer_list(
@@ -127,13 +123,14 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
 /// corresponding peer's last seen timestamp based on the provided UNIX timestamp.
 ///
 /// If a peer is not present in the command output, its last seen timestamp
-/// will remain reset (`None` and `0`).
+/// will be reset (`None` and `0`). This means the peer has been removed from
+/// the VPN, and the current behaviour is to treat it as having gone missing.
 ///
 /// # Parameters
 /// - `terminal_output`: The output from the `wg show {iface} latest-handshakes`
 ///   command, which should contain lines in the format `public_key\ttimestamp`.
-/// - `peers`: A mutable reference to a `HashMap` of `peer::PeerKey` keys to
-///   `peer::WireGuardPeer` values, to be updated based on the command output.
+/// - `peers`: A mutable reference to a `HashMap` of `PeerKey` keys to
+///   `WireGuardPeer` values, to be updated based on the command output.
 pub fn update_handshakes(
     terminal_output: &str,
     peers: &mut collections::HashMap<super::PeerKey, super::WireGuardPeer>,
@@ -170,6 +167,9 @@ pub fn update_handshakes(
 
 /// Executes the `wg show {iface} latest-handshakes` command for the specified
 /// interface and returns its output as a `String`.
+///
+/// The `LC_ALL` environment variable is set to `C` to ensure that the output
+/// format is consistent across locales.
 ///
 /// # Parameters
 /// - `interface`: The name of the WireGuard interface to query (like "wg0").

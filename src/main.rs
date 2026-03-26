@@ -389,7 +389,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
 /// # Returns
 /// This function will never return under normal operation, as it runs an
 /// infinite loop. It will only return an exit code if the loop is somehow
-/// exited, which would typically indicate a shutdown or critical failure.
+/// exited, which indicates a shutdown or critical failure.
 /// In normal operation, the program should be terminated externally
 /// (via a signal) rather than exiting this function.
 fn run_loop(
@@ -546,11 +546,12 @@ fn run_loop(
 ///   configuration directory and any overrides to apply to the settings.
 ///
 /// # Returns
-/// An `InitSettingsResult` which is either a `Success` containing the initialized
-/// `Settings` instance, boxed in a `Box<settings::Settings>` for memory reasons,
-/// or an `EarlyExitCode` containing a `process::ExitCode` to exit with if
-/// initialization fails, alternatively if the `--save` flag was passed to
-/// generate configuration and resources.
+/// An `InitSettingsResult` which is either:
+/// - `Success` containing the initialized `Settings` instance, boxed in a
+///   `Box<settings::Settings>` for memory reasons
+/// - `EarlyExitCode` containing a `process::ExitCode` to exit with if
+///   initialization fails, alternatively if the `--save` flag was passed to
+///   generate configuration and resources.
 fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
     let mut settings = settings::Settings::default();
 
@@ -738,7 +739,7 @@ fn build_and_push_notifiers<B, F>(
 ///    Since this function will be called at the end of each loop, it follows
 ///    that the `resume` flag should be false from hereon after, in all cases.
 /// 3. Increments the loop iteration count.
-/// 4. Sleeps for the specified duration, which is typically the configured
+/// 4. Sleeps for the specified duration, which is the configured
 ///    check interval, to control how long the program waits between iterations
 ///    of the main loop. It can also be other values.
 ///
@@ -746,7 +747,7 @@ fn build_and_push_notifiers<B, F>(
 /// - `ctx`: The notification context, which is used to rotate the peer states
 ///   and update the loop iteration count.
 /// - `duration`: The duration to sleep for at the end of the loop, which is
-///   typically the configured check interval. This allows the main loop to
+///   the configured check interval. This allows the main loop to
 ///   sleep for the appropriate amount of time between iterations.
 fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
     ctx.rotate();

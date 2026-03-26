@@ -3,13 +3,14 @@
 //! "Configuration" explicitly only refers to file-based configuration, as opposed
 //! to "settings" which refers to the runtime settings used by the program.
 //!
-//! The configuration file is deserialized into a `FileConfig` struct, which contains
-//! the settings for the program. It in turn contains nested structs for the
-//! various sections of the configuration.
 
 use std::path;
 
-/// Deserializes the configuration file at the given path into a `FileConfig` struct.
+/// Deserializes the configuration file at the given path.
+///
+/// The configuration file is deserialized into a `FileConfig` struct, which contains
+/// the settings for the program. It in turn contains nested structs for the
+/// various sections of the configuration.
 ///
 /// If the file does not exist, returns `Ok(None)`. If the file exists but
 /// cannot be deserialized, returns an error.

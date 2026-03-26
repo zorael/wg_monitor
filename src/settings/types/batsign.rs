@@ -2,9 +2,7 @@
 //! message strings, enabled status, and notification URLs.
 //!
 //! This module defines the `BatsignSettings` struct, which holds the runtime
-//! settings for the Batsign notification backend, including message strings for
-//! notifications and reminders, whether Batsign notifications are enabled, and
-//! theblist of Batsign URLs to which notifications will be sent.
+//! settings for the Batsign notification backend.
 
 use crate::file_config;
 use crate::settings;
@@ -32,14 +30,12 @@ pub struct BatsignSettings {
 
 impl BatsignSettings {
     /// Applies settings from a `file_config::BatsignConfig` to the current
-    /// `BatsignSettings` instance, updating the message strings, enabled status,
-    /// and notification URLs based on the values provided in the file configuration.
+    /// `BatsignSettings` instance.
     ///
     /// # Parameters
     /// - `batsign_config`: The `file_config::BatsignConfig`
     ///   containing the settings to apply to the current `BatsignSettings`
-    ///   instance. This includes message strings for notifications and reminders,
-    ///   the enabled status, and the list of Batsign URLs.
+    ///   instance.
     pub fn apply_file(&mut self, batsign_config: &file_config::BatsignConfig) {
         self.strings.apply_file(&batsign_config.strings);
         self.reminder_strings

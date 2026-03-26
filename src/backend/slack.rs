@@ -1,8 +1,12 @@
 //! Defines the Slack backend for sending notifications to a Slack channel.
 //!
+//! The `SlackBackend` implements the `Backend` trait, which requires it to
+//! provide methods for composing messages and reminders based on the notification
+//! context and delta, as well as a method for emitting the notifications by making
+//! HTTP POST requests to the Slack webhook URL.
+//!
 //! The `SlackBackend` composes messages based on the notification context
 //! and delta, and sends them to the specified Slack webhook URL.
-//!
 //! Messages are formatted as JSON payloads according to Slack's requirements,
 //! and the backend handles both initial notifications and reminder notifications.
 
@@ -19,8 +23,9 @@ pub struct SlackBackend {
     /// HTTP agent used to send requests to the Slack webhook URL.
     agent: ureq::Agent,
 
-    /// Slack webhook URL to which the notification will be sent. This URL is
-    /// provided by Slack when setting up an incoming webhook integration,
+    /// Slack webhook URL to which the notification will be sent.
+    ///
+    /// This URL is provided by Slack when setting up an incoming webhook integration,
     /// and it includes a token for authentication.
     url: String,
 
@@ -36,9 +41,7 @@ pub struct SlackBackend {
 }
 
 impl SlackBackend {
-    /// Creates a new instance of `SlackBackend`.
-    ///
-    /// `cached_name` is computed based on the `id` and is in the format "slack#{id}".
+    /// Creates a new instance of `SlackBackend`..
     ///
     /// # Parameters
     /// - `id`: Unique numeric identifier for this backend instance, used
@@ -47,6 +50,11 @@ impl SlackBackend {
     /// - `url`: Slack webhook URL to which the notification will be sent.
     /// - `strings`: Message strings for Slack notifications.
     /// - `reminder_strings`: Message strings for Slack reminder notifications.
+    ///
+    /// # Returns
+    /// A new instance of `SlackBackend` initialized with the provided parameters.
+    /// The `cached_name` field is computed based on the `id` and is in the format
+    /// "`slack#{id}`".
     pub fn new(
         id: usize,
         agent: ureq::Agent,
@@ -69,19 +77,13 @@ impl SlackBackend {
 
 impl super::Backend for SlackBackend {
     /// Returns the unique identifier of this backend instance.
-    ///
-    /// # Returns
-    /// A numeric identifier that uniquely identifies this backend instance.
     #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }
 
-    /// Returns the name of this backend instance, which is in the format "slack#{id}".
+    /// Returns the name of this backend instance, which is in the format "`slack#{id}`".
     /// The name is used for logging and identification purposes.
-    ///
-    /// # Returns
-    /// A string slice representing the name of this backend instance.
     fn name(&self) -> &str {
         &self.cached_name
     }
@@ -94,9 +96,9 @@ impl super::Backend for SlackBackend {
     /// - `delta`: The changes detected since the last notification.
     ///
     /// # Returns
-    /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `Some(String)` if a message to send was composed.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
@@ -110,9 +112,9 @@ impl super::Backend for SlackBackend {
     /// - `ctx`: The notification context.
     ///
     /// # Returns
-    /// - `Some(message)` if a message to send was composed.
-    /// - `None` if an empty message was composed, typically meaning no message
-    ///   should be sent.
+    /// - `Some(String)` if a message to send was composed.
+    /// - `None` if the composed message was empty, in which case nothing
+    ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
         notify::prepare_reminder_body(ctx, &self.reminder_strings, header_closure)
@@ -133,7 +135,7 @@ impl super::Backend for SlackBackend {
     ///
     /// # Returns
     /// - `Ok(None)` if the message was sent successfully.
-    /// - `Err(error)` if the send attempt failed.
+    /// - `Err(String)` if the send attempt failed.
     fn emit(
         &mut self,
         _ctx: &notify::Context,

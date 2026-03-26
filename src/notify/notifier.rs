@@ -18,7 +18,7 @@ pub struct Notifier<B: backend::Backend> {
 
     /// The backend used to compose and send notifications.
     ///
-    /// This can be any type that implements the `Backend` trait, such as
+    /// This can be any type that implements the `Backend` trait, currently one of
     /// `BatsignBackend`, `SlackBackend`, or `CommandBackend`.
     backend: B,
 
@@ -32,7 +32,7 @@ pub struct Notifier<B: backend::Backend> {
 impl<B: backend::Backend> Notifier<B> {
     /// Creates a new `Notifier` instance with the specified backend and dry-run mode.
     ///
-    /// The dry-run mode is stored in the `Notifier`.
+    /// The dry-run mode is stored in the `Notifier` here, at instantiation.
     ///
     /// # Parameters
     /// - `backend`: The backend to use for composing and sending notifications.
@@ -84,12 +84,11 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     /// # Returns
     /// A `NotificationResult` indicating the outcome of the notification
     /// attempt, which can be:
-    ///
-    /// - `DryRun(message)`: The notification was not sent because dry run mode is
+    /// - `DryRun(String)`: The notification was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(message)`: The notification was successfully sent, including
+    /// - `Success(String)`: The notification was successfully sent, including
     ///   the message that was sent.
-    /// - `Failure(error, message)`: There was a failure in sending the notification,
+    /// - `Failure(String, String)`: There was a failure in sending the notification,
     ///   including an error message describing the failure and the message
     ///   that was attempted to be sent.
     /// - `NoMessage`: The notification was not sent because the rendered
@@ -128,12 +127,11 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     /// # Returns
     /// A `NotificationResult` indicating the outcome of the reminder attempt,
     /// which can be:
-    ///
-    /// - `DryRun(message)`: The reminder was not sent because dry run mode is
+    /// - `DryRun(String)`: The reminder was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(message)`: The reminder was successfully sent, including
+    /// - `Success(String)`: The reminder was successfully sent, including
     ///   the message that was sent.
-    /// - `Failure(error, message)`: There was a failure in sending the reminder,
+    /// - `Failure(String, String)`: There was a failure in sending the reminder,
     ///   including an error message describing the failure and the message
     ///   that was attempted to be sent.
     /// - `NoMessage`: The reminder was not sent because the rendered

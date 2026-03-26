@@ -2,9 +2,7 @@
 //! user-defined external commands to send notifications.
 //!
 //! This module defines the `CommandSettings` struct, which holds the runtime
-//! settings for the Command notification backend, including message strings
-//! for notifications and reminders, whether Command notifications are enabled,
-//! and the list of command strings to execute for notifications.
+//! settings for the Command notification backend.
 
 use crate::file_config;
 use crate::settings;
@@ -25,20 +23,17 @@ pub struct CommandSettings {
 
     /// The command strings to execute for notifications.
     ///
-    /// Each command string is executed as a separate process.
+    /// Each command string is executed as a separate non-asynchronous process.
     pub commands: Vec<String>,
 }
 
 impl CommandSettings {
     /// Applies settings from a `file_config::CommandConfig` to the current
-    /// `CommandSettings` instance, updating the message strings, enabled status,
-    /// and notification commands based on the values provided in the file configuration.
+    /// `CommandSettings` instance.
     ///
     /// # Parameters
     /// - `command_config`: The `file_config::CommandConfig` containing the
-    ///   settings to apply to the current `CommandSettings` instance. This
-    ///   includes message strings for notifications and reminders, the enabled
-    ///   status, and the list of command strings to execute for notifications.
+    ///   settings to apply to the current `CommandSettings` instance.
     pub fn apply_file(&mut self, command_config: &file_config::CommandConfig) {
         self.strings.apply_file(&command_config.strings);
         self.reminder_strings

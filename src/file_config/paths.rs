@@ -1,5 +1,4 @@
-//! This module contains functions related to resolving the configuration directory
-//! path from environment variables and default locations.
+//! This module contains functions related to resolving the configuration directory path.
 
 use std::env;
 use std::path;
@@ -22,7 +21,7 @@ use crate::defaults;
 ///    the configuration directory could not be resolved.
 ///
 /// # Returns
-/// - `Ok(path)` if the configuration directory was successfully resolved.
+/// - `Ok(path::PathBuf)` if the configuration directory was successfully resolved.
 /// - `Err(())` if the configuration directory could not be resolved.
 pub fn resolve_default_config_directory_from_env() -> Result<path::PathBuf, ()> {
     if let Some(path) = env::var_os("WG_MONITOR_CONFIG_DIR").map(path::PathBuf::from) {
