@@ -103,8 +103,9 @@ impl Settings {
         }
     }
 
-    /// Cleans up settings by trimming whitespace and empty values from relevant
-    /// fields in nested structs.
+    /// Trims whitespace and empty elements from the settings vectors of the backends.
+    ///
+    /// This is done before the backends are created.
     pub fn clean_up(&mut self) {
         self.slack.trim_urls();
         self.batsign.trim_urls();
