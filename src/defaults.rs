@@ -37,7 +37,7 @@ pub const DUMMY_SLACK_URL: &str = "https://hooks.slack.com/services/DUMMY/HOOK/u
 pub const DUMMY_BATSIGN_URL: &str = "https://batsign.me/at/example@mail.tld/asdf1234";
 
 /// Default command for testing Command notifications with a dummy command.
-pub const DUMMY_COMMAND: &str = "/usr/bin/echo";
+pub const DUMMY_COMMAND: &str = "/usr/bin/true";
 
 pub mod program_metadata {
     //! Program metadata constants, such as the program name, version, authors, and source repository URL.
