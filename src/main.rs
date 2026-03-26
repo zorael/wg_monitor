@@ -178,9 +178,9 @@ fn main() -> process::ExitCode {
         };
     };
 
-    let handshake_validation_errors = wireguard::validate_handshakes(&latest_handshakes_output);
-
-    if !handshake_validation_errors.is_empty() {
+    if let Err(handshake_validation_errors) =
+        wireguard::validate_handshakes(&latest_handshakes_output)
+    {
         logging::tseprintln!(
             &settings.disable_timestamps,
             "Error validating latest-handshakes output:",

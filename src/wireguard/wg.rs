@@ -87,9 +87,10 @@ pub fn read_peer_list(
 /// - `terminal_output`: The output from the `wg show {iface} latest-handshakes` command.
 ///
 /// # Returns:
-/// A vector of error messages for any lines that are invalid. If the vector is
-/// empty, it means all lines were valid.
-pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
+/// - `Ok(())` if all lines are valid.
+/// - `Err(Vec<String>)` if there are invalid lines, containing a vector of
+///   descriptive error messages for each issue found.
+pub fn validate_handshakes(terminal_output: &str) -> Result<(), Vec<String>> {
     let mut errors = Vec::new();
 
     for line in terminal_output.lines() {
@@ -112,7 +113,11 @@ pub fn validate_handshakes(terminal_output: &str) -> Vec<String> {
         };
     }
 
-    errors
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
 }
 
 /// Updates the last seen timestamps for peers based on the output of the
