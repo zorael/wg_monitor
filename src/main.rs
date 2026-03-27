@@ -727,8 +727,12 @@ fn run_loop(
             }
         }
 
-        wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
+        // Sort keys by how long they've been lost.
         wireguard::sort_keys(&mut ctx.lost_keys, &ctx.peers);
+
+        // Don't sort missing keys. None of them should have ever been seen,
+        // so there's no meaningful way to sort them.
+        //wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
 
         delta.compute_from(ctx);
 
