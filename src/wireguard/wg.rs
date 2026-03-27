@@ -98,15 +98,16 @@ pub fn read_peer_list(
     Ok(peers)
 }
 
-/// Validates the output of the `wg show {iface} latest-handshakes` command,
-/// ensuring that each line contains a valid public key and a valid timestamp.
+/// "Validates" the output of the `wg show {iface} latest-handshakes` command,
+/// ensuring that each line contains what seems to be a public key and a timestamp.
 ///
 /// The function checks that each line is in the format `public_key\ttimestamp`.
+/// It does *not* do a real cryptographic validation of the keys.
 ///
-/// # Parameters:
+/// # Parameters
 /// - `terminal_output`: The output from the `wg show {iface} latest-handshakes` command.
 ///
-/// # Returns:
+/// # Returns
 /// - `Ok(())` if all lines are valid.
 /// - `Err(Vec<String>)` if there are invalid lines, containing a vector of
 ///   descriptive error messages for each issue found.

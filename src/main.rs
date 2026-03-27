@@ -833,7 +833,7 @@ fn run_loop(
 ///    check interval, to control how long the program waits between iterations
 ///    of the main loop. It can also be other values.
 ///
-/// # Parameters:
+/// # Parameters
 /// - `ctx`: The notification context, which is used to rotate the peer states
 ///   and update the loop iteration count.
 /// - `duration`: The duration to sleep for at the end of the loop, which is
