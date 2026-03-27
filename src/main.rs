@@ -528,18 +528,41 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     if settings.dry_run {
         // Use dummy URLs for dry runs so that we can get output for all backends
         // even if no URLs were configured.
-        let dummy_slack_urls = vec![defaults::DUMMY_SLACK_URL.to_string()];
-        let dummy_batsign_urls = vec![defaults::DUMMY_BATSIGN_URL.to_string()];
-        let dummy_command = vec![defaults::DUMMY_COMMAND.to_string()];
 
-        build_and_push_notifiers(&mut notifiers, &dummy_slack_urls, make_slack_backend, true);
-        build_and_push_notifiers(
-            &mut notifiers,
-            &dummy_batsign_urls,
-            make_batsign_backend,
-            true,
-        );
-        build_and_push_notifiers(&mut notifiers, &dummy_command, make_command_backend, true);
+        let (dry_run_slack, dry_run_batsign, dry_run_command) = match (
+            settings.slack.enabled,
+            settings.batsign.enabled,
+            settings.command.enabled,
+        ) {
+            (false, false, false) => {
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "No backends enabled. Enabling all backends for dry run."
+                );
+                (true, true, true)
+            }
+            other => other,
+        };
+
+        if dry_run_slack {
+            let dummy_slack_urls = vec![defaults::DUMMY_SLACK_URL.to_string()];
+            build_and_push_notifiers(&mut notifiers, &dummy_slack_urls, make_slack_backend, true);
+        }
+
+        if dry_run_batsign {
+            let dummy_batsign_urls = vec![defaults::DUMMY_BATSIGN_URL.to_string()];
+            build_and_push_notifiers(
+                &mut notifiers,
+                &dummy_batsign_urls,
+                make_batsign_backend,
+                true,
+            );
+        }
+
+        if dry_run_command {
+            let dummy_command = vec![defaults::DUMMY_COMMAND.to_string()];
+            build_and_push_notifiers(&mut notifiers, &dummy_command, make_command_backend, true);
+        }
     } else {
         if settings.slack.enabled && !settings.slack.urls.is_empty() {
             build_and_push_notifiers(
