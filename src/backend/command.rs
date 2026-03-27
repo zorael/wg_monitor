@@ -187,7 +187,7 @@ impl super::Backend for CommandBackend {
 
                 process::Command::new(&self.command)
                     .arg(message)
-                    .arg(&ctx.peer_list_file_path)
+                    .arg(ctx.peer_list.display().to_string())
                     .arg(loop_iteration)
                     .arg(lost_keys)
                     .arg(missing_keys)
@@ -202,7 +202,7 @@ impl super::Backend for CommandBackend {
             }
             None => process::Command::new(&self.command)
                 .arg(message)
-                .arg(&ctx.peer_list_file_path)
+                .arg(ctx.peer_list.display().to_string())
                 .arg(loop_iteration)
                 .arg(lost_keys)
                 .arg(missing_keys)

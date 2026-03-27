@@ -2,6 +2,7 @@
 
 use std::collections;
 use std::mem;
+use std::path;
 use std::time;
 
 use crate::wireguard;
@@ -55,8 +56,8 @@ pub struct Context {
     /// This is currently only used by the Command notification backend, but it
     /// could potentially be used by other backends in the future if needed.
     ///
-    /// It does not really belong in this struct.
-    pub peer_list_file_path: String,
+    /// It arguably does not really belong in this struct.
+    pub peer_list: path::PathBuf,
 }
 
 impl Context {
@@ -80,7 +81,7 @@ impl Context {
             now: time::SystemTime::UNIX_EPOCH,
             loop_iteration: 0,
             resume: false,
-            peer_list_file_path: String::new(),
+            peer_list: path::PathBuf::new(),
         }
     }
 

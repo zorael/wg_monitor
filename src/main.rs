@@ -279,7 +279,7 @@ fn main() -> process::ExitCode {
     let mut ctx = notify::Context::inherit(peers);
 
     // Store the peer list file path in the context so that backends can access it
-    ctx.peer_list_file_path = settings.paths.peer_list.display().to_string();
+    ctx.peer_list = settings.paths.peer_list.clone();
 
     // And finally enter the loop.
     logging::tsprintln!(&settings.disable_timestamps, "Entering main loop...");
