@@ -141,42 +141,9 @@ fn main() -> process::ExitCode {
     // Verify that we can execute the `wg show` command but don't actually care
     // about the handshakes at this point. We just want to verify that the
     // command executes successfully before entering the main loop.
-    let latest_handshakes_output = loop {
-        match wireguard::get_handshakes(&settings.paths.wg, &settings.monitor.interface) {
-            Ok(output) => break output,
-            Err(e) => {
-                let e = e.to_string();
-                logging::tseprintln!(&settings.disable_timestamps, "{e}");
-
-                if e.contains("No such device") {
-                    logging::tsprintln!(
-                        &settings.disable_timestamps,
-                        "Interface {} down? Retrying in {}...",
-                        settings.monitor.interface,
-                        humantime::format_duration(settings.monitor.check_interval)
-                    );
-
-                    // Interface may not be up yet, such as if systemd is starting
-                    // this program before the network is fully up.
-                    thread::sleep(settings.monitor.check_interval);
-                    continue;
-                } else if e.contains("Operation not permitted") {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "Insufficient privileges to execute 'wg show' command."
-                    );
-                    return process::ExitCode::from(defaults::exit_codes::INSUFFICIENT_PRIVILEGES);
-                } else {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "Failed to execute handshakes command."
-                    );
-                    return process::ExitCode::from(
-                        defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
-                    );
-                }
-            }
-        };
+    let latest_handshakes_output = match get_first_handshakes_output(&settings) {
+        Ok(output) => output,
+        Err(code) => return code,
     };
 
     // Likewise verify that the output of `wg show {iface} latest-handshakes`
@@ -395,6 +362,60 @@ enum InitSettingsResult {
     /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
     /// and is such not necessarily an error exit code.
     EarlyExitCode(process::ExitCode),
+}
+
+/// Gets the output of the `wg show {iface} latest-handshakes` command,
+/// retrying as needed until it succeeds, and returns the output as a string.
+///
+/// # Parameters
+/// - `settings`: The program settings, used to determine the path to the
+///   `wg` command, the interface to monitor, and the check interval for
+///   retrying if the command fails.
+///
+/// # Returns
+/// - `Ok(String)` containing the output of the command if it executes successfully.
+/// - `Err(process::ExitCode)` if the command fails to execute due to what seems
+///   to not be a transient issue.
+fn get_first_handshakes_output(settings: &settings::Settings) -> Result<String, process::ExitCode> {
+    loop {
+        match wireguard::get_handshakes(&settings.paths.wg, &settings.monitor.interface) {
+            Ok(output) => break Ok(output),
+            Err(e) => {
+                let e = e.to_string();
+                logging::tseprintln!(&settings.disable_timestamps, "{e}");
+
+                if e.contains("No such device") {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "Interface {} down? Retrying in {}...",
+                        settings.monitor.interface,
+                        humantime::format_duration(settings.monitor.check_interval)
+                    );
+
+                    // Interface may not be up yet, such as if systemd is starting
+                    // this program before the network is fully up.
+                    thread::sleep(settings.monitor.check_interval);
+                    continue;
+                } else if e.contains("Operation not permitted") {
+                    logging::tseprintln!(
+                        &settings.disable_timestamps,
+                        "Insufficient privileges to execute 'wg show' command."
+                    );
+                    return Err(process::ExitCode::from(
+                        defaults::exit_codes::INSUFFICIENT_PRIVILEGES,
+                    ));
+                } else {
+                    logging::tseprintln!(
+                        &settings.disable_timestamps,
+                        "Failed to execute handshakes command."
+                    );
+                    return Err(process::ExitCode::from(
+                        defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
+                    ));
+                }
+            }
+        }
+    }
 }
 
 /// Saves the provided settings to the configuration file and creates an empty
