@@ -4,6 +4,7 @@
 # $2 contains the path to the peers.txt file, not relevant for this script
 # $3 contains the loop iteration number
 
+title="WireGuard Monitor"
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number="$3"
@@ -13,9 +14,9 @@ ids=( $(loginctl list-sessions -j | jq -r '.[] | .session') )
 
 if [[ $loop_number = 0 ]]; then
     # run 0
-    summary="WireGuard Monitor: first run"
+    summary="$title: first run"
 else
-    summary="WireGuard Monitor: update"
+    summary="$title: update"
 fi
 
 for id in "${ids[@]}" ; do
@@ -25,6 +26,7 @@ for id in "${ids[@]}" ; do
 
     systemd-run --machine=${user}@.host --user \
         notify-send \
+            --app-name="$title" \
             --icon="$icon" \
             --urgency="$urgency" \
             "$summary" \

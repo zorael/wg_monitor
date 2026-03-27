@@ -9,6 +9,7 @@
 
 user=1000
 
+title="WireGuard Monitor"
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number="$3"
@@ -16,13 +17,14 @@ message="$1"
 
 if [[ $loop_number = 0 ]]; then
     # run 0
-    summary="WireGuard Monitor: first run"
+    summary="$title: first run"
 else
-    summary="WireGuard Monitor: update"
+    summary="$title: update"
 fi
 
 systemd-run --machine=${user}@.host --user \
     notify-send \
+        --app-name="$title" \
         --icon="$icon" \
         --urgency="$urgency" \
         "$summary" \
