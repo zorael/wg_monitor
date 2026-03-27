@@ -120,6 +120,14 @@ fn main() -> process::ExitCode {
     }
 
     let peers = match wireguard::read_peer_list(&settings.paths.peer_list, settings.debug) {
+        Ok(peers) if peers.is_empty() => {
+            logging::tseprintln!(
+                &settings.disable_timestamps,
+                "Peer list file {} is empty.",
+                settings.paths.peer_list.display()
+            );
+            return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
+        }
         Ok(peers) => peers,
         Err(e) => {
             logging::tseprintln!(
@@ -129,15 +137,6 @@ fn main() -> process::ExitCode {
             return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
         }
     };
-
-    if peers.is_empty() {
-        logging::tseprintln!(
-            &settings.disable_timestamps,
-            "Peer list file {} is empty.",
-            settings.paths.peer_list.display()
-        );
-        return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
-    }
 
     // Verify that we can execute the `wg show` command but don't actually care
     // about the handshakes at this point. We just want to verify that the
