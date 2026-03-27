@@ -366,11 +366,11 @@ journalctl -b0 -fn100 -u wg_monitor.service
 
 ## ai
 
-[**GitHub Copilot AI**](https://github.com/features/copilot/ai-code-editor) was used (in [**Visual Studio Code**](https://code.visualstudio.com)) for inline suggestions and to tab-complete some code and documentation. [**ChatGPT**](https://chatgpt.com) and [**Claude**](https://claude.ai) were used to answer questions and teach Rust. The project contains no code from "write me a function doing *xyz*" prompts.
+[**GitHub Copilot AI**](https://github.com/features/copilot/ai-code-editor) was used (in [**Visual Studio Code**](https://code.visualstudio.com)) for inline suggestions and to tab-complete some code and documentation. [**ChatGPT**](https://chatgpt.com) and [**Claude**](https://claude.ai) were used to answer questions and teach Rust. No code from "write me a function doing *xyz*" prompts is included in this project.
 
 ## todo
 
-* polish in preparation for v1.0
+* currently nothing, ideas welcome
 
 ## license
 
