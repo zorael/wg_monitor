@@ -11,6 +11,7 @@ use std::path;
 use crate::cli;
 use crate::defaults;
 use crate::file_config;
+use crate::wireguard;
 
 /// Root settings struct that aggregates all other settings types.
 ///
@@ -152,6 +153,14 @@ impl Settings {
     pub fn resolve_resource_paths(&mut self) {
         self.paths.config_file = self.paths.config_dir.join(defaults::CONFIG_FILENAME);
         self.paths.peer_list = self.paths.config_dir.join(defaults::PEER_LIST_FILENAME);
+    }
+
+    /// Resolves the path to the `wg` executable and updates the `paths` field of
+    /// the `Settings` instance accordingly.
+    ///
+    /// This merely leverages `wireguard::resolve_wg()`.
+    pub fn resolve_wg(&mut self) {
+        self.paths.wg = wireguard::resolve_wg();
     }
 
     /// Applies settings from the provided `file_config::FileConfig` to the

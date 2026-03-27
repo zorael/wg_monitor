@@ -8,6 +8,9 @@ use std::time;
 /// Default WireGuard interface name.
 pub const INTERFACE: &str = "wg0";
 
+/// Default path to the `wg` executable.
+pub const WG_PATH: &str = "/usr/bin/wg";
+
 /// Default timeout duration for monitoring checks.
 pub const TIMEOUT: time::Duration = time::Duration::from_secs(600);
 
@@ -72,6 +75,7 @@ pub mod exit_codes {
     pub const FAILED_TO_EXECUTE_HANDSHAKES_COMMAND: u8 = 31;
     pub const FAILED_TO_PARSE_HANDSHAKES_OUTPUT: u8 = 32;
     pub const EMPTY_PEER_LIST: u8 = 33;
+    pub const WG_EXECUTABLE_NOT_FOUND: u8 = 34;
     pub const FAILED_TO_RESOLVE_CONFIG_DIR: u8 = 40;
     pub const CONFIG_DIR_DOES_NOT_EXIST: u8 = 41;
     pub const FAILED_TO_LOAD_RESOURCES: u8 = 42;

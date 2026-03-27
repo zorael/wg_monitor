@@ -21,4 +21,8 @@ pub struct PathBufs {
     /// Path to the peer list file, which contains the list of peers to monitor
     /// and their associated information.
     pub peer_list: path::PathBuf,
+
+    /// Path to the `wg` executable, which is used to read the WireGuard peer
+    /// information.
+    pub wg: path::PathBuf,
 }

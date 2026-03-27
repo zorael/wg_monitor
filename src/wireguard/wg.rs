@@ -2,11 +2,14 @@
 //! specifically in the context of the output of the `wg` command.
 
 use std::collections;
+use std::env;
 use std::fs;
 use std::io;
 use std::io::BufRead;
 use std::path;
 use std::process;
+
+use crate::defaults;
 
 /// Reads the list of WireGuard peers from a specified file path, returning a
 /// `HashMap` of `PeerKey` keys to `WireGuardPeer` values.
@@ -196,14 +199,15 @@ pub fn update_handshakes(
 /// format is consistent across locales.
 ///
 /// # Parameters
+/// - `wg`: The path to the `wg` executable to use for running the command.
 /// - `interface`: The name of the WireGuard interface to query (like "wg0").
 ///
 /// # Returns
 /// A `Result` containing the command output as a `String` if successful, or an
 /// `io::Error` if there was an issue executing the command, or if the command
 /// returned a non-zero exit status.
-pub fn get_handshakes(interface: &str) -> io::Result<String> {
-    let output = process::Command::new("/usr/bin/wg")
+pub fn get_handshakes(wg: &path::PathBuf, interface: &str) -> io::Result<String> {
+    let output = process::Command::new(wg)
         .arg("show")
         .arg(interface)
         .arg("latest-handshakes")
@@ -217,4 +221,30 @@ pub fn get_handshakes(interface: &str) -> io::Result<String> {
     }
 
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+/// Resolves the path to the `wg` executable, checking environment variables and
+/// default locations.
+///
+/// The function checks the following in order:
+/// 1. If the `WG_MONITOR_WG_PATH` environment variable is set,
+///    it uses that as the path to the `wg` executable.
+/// 2. If the default path defined in `defaults::WG_PATH` exists, it uses that.
+/// 3. If neither of the above conditions are met, it falls back to just
+///    "`wg`", relying on the system's `$PATH` to find it.
+///
+/// # Returns
+/// A `PathBuf` representing the resolved path to the `wg` executable.
+pub fn resolve_wg() -> path::PathBuf {
+    if let Some(from_env) = env::var_os("WG_MONITOR_WG_PATH").map(path::PathBuf::from) {
+        return from_env;
+    }
+
+    let from_defaults = path::PathBuf::from(defaults::WG_PATH);
+
+    if from_defaults.exists() {
+        return from_defaults;
+    }
+
+    path::PathBuf::from("wg")
 }

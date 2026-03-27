@@ -142,7 +142,7 @@ fn main() -> process::ExitCode {
     // about the handshakes at this point. We just want to verify that the
     // command executes successfully before entering the main loop.
     let latest_handshakes_output = loop {
-        match wireguard::get_handshakes(&settings.monitor.interface) {
+        match wireguard::get_handshakes(&settings.paths.wg, &settings.monitor.interface) {
             Ok(output) => break output,
             Err(e) => {
                 let e = e.to_string();
@@ -371,6 +371,9 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
         // create an empty peer list file if they don't already exist.
         return InitSettingsResult::EarlyExitCode(save_settings_to_config_file(&settings));
     }
+
+    // This need not be part of the --save routine to place it after where it returns
+    settings.resolve_wg();
 
     // Box the resulting settings to avoid issues with the size of the Settings struct
     // making the InitSettingsResult enum too large to compile.
@@ -679,7 +682,7 @@ fn run_loop(
     }
 
     loop {
-        match wireguard::get_handshakes(&settings.monitor.interface) {
+        match wireguard::get_handshakes(&settings.paths.wg, &settings.monitor.interface) {
             Ok(output) => {
                 if settings.debug {
                     // This is very spammy so gate it behind debug instead of verbose mode.
