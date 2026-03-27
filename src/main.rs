@@ -156,6 +156,8 @@ fn main() -> process::ExitCode {
                         humantime::format_duration(settings.monitor.check_interval)
                     );
 
+                    // Interface may not be up yet, such as if systemd is starting
+                    // this program before the network is fully up.
                     thread::sleep(settings.monitor.check_interval);
                     continue;
                 } else if e.contains("Operation not permitted") {
@@ -177,6 +179,8 @@ fn main() -> process::ExitCode {
         };
     };
 
+    // Likewise verify that the output of `wg show {iface} latest-handshakes`
+    // doesn't have anything unexpected in it before starting the main loop.
     if let Err(handshake_validation_errors) =
         wireguard::validate_handshakes(&latest_handshakes_output)
     {
@@ -313,6 +317,8 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
         ));
     }
 
+    // Error out if the configuration directory doesn't exist *unless* --save
+    // was passed, in which case we'll create it later.
     if !settings.paths.config_dir.exists() && !cli.save {
         logging::tseprintln!(
             &settings.disable_timestamps,
@@ -330,6 +336,7 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
     let config = match file_config::deserialize_config_file(&settings.paths.config_file) {
         Ok(cfg) => cfg,
         Err(e) => {
+            // The configuration file exists but could not be read. Permissions issue?
             logging::tseprintln!(
                 &settings.disable_timestamps,
                 "Failed to read configuration file {}: {e}",
@@ -341,7 +348,9 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
         }
     };
 
-    if !cli.save && config.is_none() {
+    // No configuration file was found.
+    // Error out unless --save was passed, in which case we'll create it later.
+    if config.is_none() && !cli.save {
         logging::tseprintln!(
             &settings.disable_timestamps,
             "No configuration file found at {}. \
@@ -503,6 +512,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
         )
     };
 
+    // Helper closure to build a Command backend instance.
     let make_command_backend = |i: usize, command: &String| {
         backend::CommandBackend::new(
             i,
