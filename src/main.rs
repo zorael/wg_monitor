@@ -99,13 +99,13 @@ fn main() -> process::ExitCode {
         return process::ExitCode::SUCCESS;
     }
 
-    if let Err(sanity_check_failures) = settings.sanity_check() {
+    if let Err(settings_sanity_check_failures) = settings.sanity_check() {
         logging::tseprintln!(
             &settings.disable_timestamps,
             "Incomplete or invalid configuration:"
         );
 
-        for error in sanity_check_failures {
+        for error in settings_sanity_check_failures {
             eprintln!("  * {error}");
         }
 
@@ -219,13 +219,13 @@ fn main() -> process::ExitCode {
         }
     }
 
-    if let Err(sanity_check_failures) = sanity_check_notifiers(&notifiers) {
+    if let Err(notifier_sanity_check_failures) = sanity_check_notifiers(&notifiers) {
         logging::tseprintln!(
             &settings.disable_timestamps,
             "Incomplete or invalid notifier configuration:"
         );
 
-        for error in sanity_check_failures {
+        for error in notifier_sanity_check_failures {
             eprintln!("  * {error}");
         }
 
