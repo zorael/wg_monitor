@@ -20,6 +20,7 @@ Options:
       --resume              Word the first notification as if the program was not just started
       --skip-first          Skip the first run and thus the first notification
       --disable-timestamps  Disable timestamps in terminal output
+      --sleep <duration>    Sleep for a specified duration before starting the monitoring loop
       --show                Output configuration to screen and exit
   -v, --verbose             Print some additional information
   -d, --debug               Print much more additional information
@@ -55,6 +56,7 @@ cargo run -- --save
       * [notify-send-to-all-gui.sh](#notify-send-to-all-guish)
       * [notify-send-to-one.sh](#notify-send-to-onesh)
 * [systemd](#systemd)
+  * [starts too early](#starts-too-early)
 * [ai](#ai)
 * [todo](#todo)
 * [license](#license)
@@ -82,6 +84,8 @@ To compile the program and run it immediately, use `cargo run`. If you also want
 cargo run -- --help
 cargo run -- --save
 ```
+
+You can find the binaries you compile with Cargo in the `target/<profile>/` subdirectory of the project, where `<profile>` is either `debug` or `release`, depending on what profile you built with.
 
 See the [**systemd**](#systemd) section for instructions on how to set it up as a system daemon that is automatically started on boot.
 
@@ -367,6 +371,18 @@ sudo systemctl enable --now wg_monitor.service
 
 ```sh
 journalctl -b0 -fn100 -u wg_monitor.service
+```
+
+### starts too early
+
+The systemd service is set up to start only after networking has been set up, but it might still take a while for peers to connect and handshake. If the program starts before peers have done this, it will report them as missing.
+
+To mitigate this, you can use the `--sleep` flag to have the program wait for a specified duration before starting the monitoring loop. The flag takes a human-readable duration string as argument, like `10s`, `1m`, `2h` and so forth.
+
+```ini
+[Service]
+ExecStart=
+ExecStart=/home/user/src/wg_monitor/wg_monitor --disable-timestamps --verbose --sleep 5m
 ```
 
 ## ai
