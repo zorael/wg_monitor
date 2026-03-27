@@ -36,7 +36,7 @@ pub fn read_peer_list(
     debug: bool,
 ) -> io::Result<collections::HashMap<super::PeerKey, super::WireGuardPeer>> {
     if debug {
-        println!("[i] Reading peers from file: '{}'\n", path.display());
+        println!("Reading peers from file: '{}'\n", path.display());
     }
 
     let file = fs::File::open(path)?;
@@ -71,7 +71,7 @@ pub fn read_peer_list(
         let human_name = parts.next().map(str::trim_start);
 
         let Some(peer) = super::WireGuardPeer::new(key, human_name) else {
-            eprintln!("[!] Invalid public key in peers file: '{}'", key);
+            eprintln!("Invalid public key in peers file: '{}'", key);
             continue;
         };
 
@@ -92,7 +92,7 @@ pub fn read_peer_list(
     }
 
     if debug {
-        println!("[i] Total peers loaded: {}\n", peers.len());
+        println!("Total peers loaded: {}\n", peers.len());
     }
 
     Ok(peers)
@@ -121,13 +121,13 @@ pub fn validate_handshakes(terminal_output: &str) -> Result<(), Vec<String>> {
         }
 
         let Some((key, timestamp)) = line.split_once('\t') else {
-            errors.push(format!("[!] Invalid line in handshakes output: '{line}'"));
+            errors.push(format!("Invalid line in handshakes output: '{line}'"));
             continue;
         };
 
         if timestamp.parse::<u64>().is_err() {
             errors.push(format!(
-                "[!] Invalid timestamp for key '{key}': '{timestamp}'"
+                "Invalid timestamp for key '{key}': '{timestamp}'"
             ));
             continue;
         };
