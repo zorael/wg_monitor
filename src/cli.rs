@@ -8,6 +8,7 @@
 //! help text for the corresponding command-line argument.
 
 use clap::Parser;
+use std::time;
 
 use crate::defaults;
 
@@ -34,6 +35,10 @@ pub struct Cli {
     /// Disable timestamps in terminal output
     #[arg(long)]
     pub disable_timestamps: bool,
+
+    /// Sleep for a specified duration before starting the monitoring loop
+    #[arg(long, value_name = "duration", value_parser = humantime::parse_duration)]
+    pub sleep: Option<time::Duration>,
 
     /// Output configuration to screen and exit
     #[arg(long)]

@@ -112,7 +112,7 @@ fn main() -> process::ExitCode {
         if settings.dry_run {
             logging::tsprintln!(
                 &settings.disable_timestamps,
-                "Continuing anyway because --dry-run was supplied."
+                "Continuing anyway because --dry-run is set."
             );
         } else {
             return process::ExitCode::from(defaults::exit_codes::CONFIGURATION_ERROR);
@@ -137,41 +137,6 @@ fn main() -> process::ExitCode {
             return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
         }
     };
-
-    // Verify that we can execute the `wg show` command but don't actually care
-    // about the handshakes at this point. We just want to verify that the
-    // command executes successfully before entering the main loop.
-    let latest_handshakes_output = match get_first_handshakes_output(&settings) {
-        Ok(output) => output,
-        Err(code) => return code,
-    };
-
-    // Likewise verify that the output of `wg show {iface} latest-handshakes`
-    // doesn't have anything unexpected in it before starting the main loop.
-    if let Err(handshake_validation_errors) =
-        wireguard::validate_handshakes(&latest_handshakes_output)
-    {
-        logging::tseprintln!(
-            &settings.disable_timestamps,
-            "Error validating latest-handshakes output:",
-        );
-
-        for error in handshake_validation_errors {
-            eprintln!("  * {error}");
-        }
-
-        if settings.dry_run {
-            logging::tsprintln!(
-                &settings.disable_timestamps,
-                "Continuing anyway because --dry-run is set.",
-            );
-            println!();
-        } else {
-            return process::ExitCode::from(
-                defaults::exit_codes::FAILED_TO_PARSE_HANDSHAKES_OUTPUT,
-            );
-        }
-    }
 
     let mut notifiers = build_notifiers(&settings);
 
@@ -207,6 +172,54 @@ fn main() -> process::ExitCode {
             println!();
         } else {
             return process::ExitCode::from(defaults::exit_codes::INVALID_NOTIFIER_CONFIGURATION);
+        }
+    }
+
+    // Sleep if --sleep was passed, to allow for the interface to come up
+    // and/or to allow for peers to be seen before we do the initial handshake check.
+    if let Some(duration) = cli.sleep
+        && duration > time::Duration::from_secs(0)
+    {
+        logging::tsprintln!(
+            &settings.disable_timestamps,
+            "Sleeping for {} before starting monitoring loop...",
+            humantime::format_duration(duration)
+        );
+        thread::sleep(duration);
+    }
+
+    // Verify that we can execute the `wg show` command but don't actually care
+    // about the handshakes at this point. We just want to verify that the
+    // command executes successfully before entering the main loop.
+    let latest_handshakes_output = match get_first_handshakes_output(&settings) {
+        Ok(output) => output,
+        Err(code) => return code,
+    };
+
+    // Likewise verify that the output of `wg show {iface} latest-handshakes`
+    // doesn't have anything unexpected in it before starting the main loop.
+    if let Err(handshake_validation_errors) =
+        wireguard::validate_handshakes(&latest_handshakes_output)
+    {
+        logging::tseprintln!(
+            &settings.disable_timestamps,
+            "Error validating latest-handshakes output:",
+        );
+
+        for error in handshake_validation_errors {
+            eprintln!("  * {error}");
+        }
+
+        if settings.dry_run {
+            logging::tsprintln!(
+                &settings.disable_timestamps,
+                "Continuing anyway because --dry-run is set.",
+            );
+            println!();
+        } else {
+            return process::ExitCode::from(
+                defaults::exit_codes::FAILED_TO_PARSE_HANDSHAKES_OUTPUT,
+            );
         }
     }
 
