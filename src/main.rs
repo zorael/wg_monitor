@@ -381,6 +381,45 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     notifiers
 }
 
+/// Helper function to build and push notifiers for a passed backend type into a
+/// passed vector.
+///
+/// This is only called from within `build_notifiers`, but as
+/// it doesn't actually use any variables from that scope, it can be a
+/// standalone function.
+///
+/// This function iterates over the provided elements (URLs or commands), uses
+/// the provided `make_backend_fn` to create backend instances for each element,
+/// wraps them in `Notifier` instances, and pushes them into the provided vector
+/// of notifiers. The `dry_run` parameter is passed to the `Notifier`
+/// constructor to allow for appropriate behavior in dry-run mode.
+///
+/// # Parameters
+/// - `vec`: The mutable vector of boxed `StatefulNotifier` trait objects to push
+///   the new notifiers into.
+/// - `elements`: A slice of strings representing the configuration elements for
+///   the backend (such as URLs for Slack/Batsign or commands for Command backend).
+/// - `make_backend_fn`: A closure that takes an index and a reference to a
+///   string and returns an instance of the backend type `B`.
+/// - `dry_run`: A boolean indicating whether the notifiers being created are
+///   for dry-run mode, which may affect how the notifiers behave when sending
+///   notifications.
+fn build_and_push_notifiers<B, F>(
+    vec: &mut Vec<Box<dyn notify::StatefulNotifier>>,
+    elements: &[String],
+    mut make_backend_fn: F,
+    dry_run: bool,
+) where
+    B: backend::Backend + 'static,
+    F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
+{
+    for (i, element) in elements.iter().enumerate() {
+        let backend = make_backend_fn(i, element);
+        let boxed = Box::new(notify::Notifier::new(backend, dry_run));
+        vec.push(boxed);
+    }
+}
+
 /// Performs a sanity check on all notifiers, validating their backends' settings.
 ///
 /// If any issues are found, a vector of descriptive error messages is returned.
@@ -776,43 +815,4 @@ enum InitSettingsResult {
     /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
     /// and is such not necessarily an error exit code.
     EarlyExitCode(process::ExitCode),
-}
-
-/// Helper function to build and push notifiers for a passed backend type into a
-/// passed vector.
-///
-/// This is only called from within the main loop in `build_notifiers`, but as
-/// it doesn't actually use any variables from that scope, it can be a
-/// standalone function.
-///
-/// This function iterates over the provided elements (URLs or commands), uses
-/// the provided `make_backend_fn` to create backend instances for each element,
-/// wraps them in `Notifier` instances, and pushes them into the provided vector
-/// of notifiers. The `dry_run` parameter is passed to the `Notifier`
-/// constructor to allow for appropriate behavior in dry-run mode.
-///
-/// # Parameters
-/// - `vec`: The mutable vector of boxed `StatefulNotifier` trait objects to push
-///   the new notifiers into.
-/// - `elements`: A slice of strings representing the configuration elements for
-///   the backend (such as URLs for Slack/Batsign or commands for Command backend).
-/// - `make_backend_fn`: A closure that takes an index and a reference to a
-///   string and returns an instance of the backend type `B`.
-/// - `dry_run`: A boolean indicating whether the notifiers being created are
-///   for dry-run mode, which may affect how the notifiers behave when sending
-///   notifications.
-fn build_and_push_notifiers<B, F>(
-    vec: &mut Vec<Box<dyn notify::StatefulNotifier>>,
-    elements: &[String],
-    mut make_backend_fn: F,
-    dry_run: bool,
-) where
-    B: backend::Backend + 'static,
-    F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
-{
-    for (i, element) in elements.iter().enumerate() {
-        let backend = make_backend_fn(i, element);
-        let boxed = Box::new(notify::Notifier::new(backend, dry_run));
-        vec.push(boxed);
-    }
 }
