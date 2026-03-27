@@ -727,6 +727,23 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
     InitSettingsResult::Success(Box::new(settings))
 }
 
+/// Return type for the `init_settings` function.
+///
+/// This enum is used to convey the result of initializing the program settings,
+/// which can either be a successful initialization with a `Box<settings::Settings>`
+/// instance, or an early exit with a specific `process::ExitCode`.
+enum InitSettingsResult {
+    /// Indicates that settings were successfully initialized, containing the
+    /// initialized `Settings` instance. It has to be `Box`ed to avoid issues
+    /// with the size of the `Settings` struct making the enum too large to compile.
+    Success(Box<settings::Settings>),
+
+    /// Indicates that initialization failed and the program should exit early
+    /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
+    /// and is such not necessarily an error exit code.
+    EarlyExitCode(process::ExitCode),
+}
+
 /// Helper function to build and push notifiers for a passed backend type into a
 /// passed vector.
 ///
@@ -798,21 +815,4 @@ fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
     ctx.resume = false;
     ctx.loop_iteration += 1;
     thread::sleep(duration);
-}
-
-/// Return type for the `init_settings` function.
-///
-/// This enum is used to convey the result of initializing the program settings,
-/// which can either be a successful initialization with a `Box<settings::Settings>`
-/// instance, or an early exit with a specific `process::ExitCode`.
-enum InitSettingsResult {
-    /// Indicates that settings were successfully initialized, containing the
-    /// initialized `Settings` instance. It has to be `Box`ed to avoid issues
-    /// with the size of the `Settings` struct making the enum too large to compile.
-    Success(Box<settings::Settings>),
-
-    /// Indicates that initialization failed and the program should exit early
-    /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
-    /// and is such not necessarily an error exit code.
-    EarlyExitCode(process::ExitCode),
 }
