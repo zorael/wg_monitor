@@ -8,14 +8,11 @@ In a hub-and-spoke WireGuard configuration, this program should be run on the hu
 
 Peers must have a `PersistentKeepalive` setting in their WireGuard configuration with a value *comfortably lower* than the peer timeout of this program. This timeout is **10 minutes** by default.
 
-Notifications can be sent as [**Slack**](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) messages, as short emails via [**Batsign**](https://batsign.me), and/or by invocation of an [**external command**](#external-command) (like `notify-send` or `sendmail`).
+Notifications can be sent as [**Slack**](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) messages, as short emails via [**Batsign**](https://batsign.me), and/or by invocation of an [**external command**](#external-command) (like `notify-send`, `wall` or `sendmail`).
 
 ## tl;dr
 
 ```text
-wg_monitor x.y.z | copyright (c) 2026 jr
-$ git clone https://github.com/zorael/wg_monitor
-
 Usage: wg_monitor [OPTIONS]
 
 Options:
@@ -86,6 +83,8 @@ cargo run -- --help
 cargo run -- --save
 ```
 
+See the [**systemd**](#systemd) section for instructions on how to set it up as a system daemon that is automatically started on boot.
+
 ### cross-compilation
 
 A device like the Pi Zero 2W can *run* the program but does not have enough memory to compile it, at least not with default flags. You can probably still build it on such a Pi by adding swap and exercising a lot of patience, but the convenient way is to just cross-compile it on another computer and transferring the resulting binary.
@@ -149,9 +148,9 @@ As part of `--save`, a new `config.toml` will be created in the configuration di
 
 ### `peers.txt`
 
-A new `peers.txt` file will also have been created in the configuration diretcory, next to the `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by a normal space character.
+A new `peers.txt` file will also have been created in the configuration diretcory, next to the `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by whitespace (such as a space or a tab).
 
-Lines that start with an octothorpe `#` will be ignored.
+Lines that start with an octothorpe `#` are ignored.
 
 ```text
 # <public key> <description>
@@ -264,6 +263,7 @@ Adapted from [the example on the Arch Linux wiki](https://wiki.archlinux.org/tit
 # $2 contains the path to the peers.txt file, not relevant for this script
 # $3 contains the loop iteration number
 
+title="WireGuard Monitor"
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number="$3"
@@ -273,9 +273,9 @@ ids=( $(loginctl list-sessions -j | jq -r '.[] | .session') )
 
 if [[ $loop_number = 0 ]]; then
     # run 0
-    summary="WireGuard Monitor: first run"
+    summary="$title: first run"
 else
-    summary="WireGuard Monitor: update"
+    summary="$title: update"
 fi
 
 for id in "${ids[@]}" ; do
@@ -285,6 +285,7 @@ for id in "${ids[@]}" ; do
 
     systemd-run --machine=${user}@.host --user \
         notify-send \
+            --app-name="$title" \
             --icon="$icon" \
             --urgency="$urgency" \
             "$summary" \
@@ -308,6 +309,7 @@ A similar script but for only *one* user. Change the `user=` line to match the u
 
 user=1000
 
+title="WireGuard Monitor"
 icon="network-wireless-disconnected"
 urgency="critical"
 loop_number="$3"
@@ -315,13 +317,14 @@ message="$1"
 
 if [[ $loop_number = 0 ]]; then
     # run 0
-    summary="WireGuard Monitor: first run"
+    summary="$title: first run"
 else
-    summary="WireGuard Monitor: update"
+    summary="$title: update"
 fi
 
 systemd-run --machine=${user}@.host --user \
     notify-send \
+        --app-name="$title" \
         --icon="$icon" \
         --urgency="$urgency" \
         "$summary" \
@@ -330,9 +333,11 @@ systemd-run --machine=${user}@.host --user \
 
 ## systemd
 
-The program is preferably run as a **systemd** service, to have it be automatically restarted upon restoration of power. To facilitate this, [a service unit file](wg_monitor.service) is provided in the repository.
+The program is preferably run as a [**systemd**](https://systemd.io) service, to have it be automatically restarted upon restoration of power. To facilitate this, [a service unit file](wg_monitor.service) is provided in the repository.
 
-It will have to be copied (or symlinked) into `/etc/systemd/system`, after which you can use `systemctl edit` to create a drop-in file for the service that overrides the `ExecStart` directive to point to the actual location of the `wg_monitor` binary. This is not required if the binary is already located in the default path of `/usr/local/bin/wg_monitor`.
+It will have to be copied (or symlinked) into `/etc/systemd/system`, after which you can use `systemctl edit` to create a drop-in file that overrides the `ExecStart` directive in the unit file to point to the actual location of the `wg_monitor` binary. This is not required if the binary is already located in the default path of `/usr/local/bin/wg_monitor`.
+
+You can find the binaries you compile with Cargo in the `target/<profile>/` subdirectory of the project, where `<profile>` is either `debug` or `release`, depending on what profile you built with.
 
 ```sh
 sudo cp wg_monitor.service /etc/systemd/system
@@ -358,7 +363,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now wg_monitor.service
 ```
 
-`enable --now` both enables the service to be autostarted on subsequent boots as well as starts it immediately. For the terminal output of the program (and error messages if it could not be started), refer to the systemd **journal**.
+`enable --now` both enables the service to be autostarted on subsequent boots as well as starts it immediately. For the terminal output of the program (and error messages if it could not be started), refer to the systemd [**journal**](https://wiki.archlinux.org/title/Systemd/Journal).
 
 ```sh
 journalctl -b0 -fn100 -u wg_monitor.service
