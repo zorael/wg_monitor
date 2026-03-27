@@ -285,6 +285,169 @@ fn main() -> process::ExitCode {
     run_loop(&mut ctx, &mut notifiers, settings)
 }
 
+/// Initializes the program settings by loading configuration from the specified
+/// configuration directory, applying any overrides from the command-line
+/// arguments, and performing necessary validation and setup.
+///
+/// # Parameters
+/// - `cli`: The parsed command-line arguments, used to determine the
+///   configuration directory and any overrides to apply to the settings.
+///
+/// # Returns
+/// An `InitSettingsResult` which is either:
+/// - `Success` containing the initialized `Settings` instance, boxed in a
+///   `Box<settings::Settings>` for memory reasons
+/// - `EarlyExitCode` containing a `process::ExitCode` to exit with if
+///   initialization fails, alternatively if the `--save` flag was passed to
+///   generate configuration and resources.
+fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
+    let mut settings = settings::Settings::default();
+
+    if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
+        logging::tseprintln!(
+            &settings.disable_timestamps,
+            "Error resolving default configuration directory: {e}"
+        );
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+            defaults::exit_codes::FAILED_TO_RESOLVE_CONFIG_DIR,
+        ));
+    }
+
+    if !settings.paths.config_dir.exists() && !cli.save {
+        logging::tseprintln!(
+            &settings.disable_timestamps,
+            "Configuration directory {} does not exist. \
+            Create it or run with `--save` to generate default configuration and resources.",
+            settings.paths.config_dir.display()
+        );
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+            defaults::exit_codes::CONFIG_DIR_DOES_NOT_EXIST,
+        ));
+    }
+
+    settings.resolve_resource_paths();
+
+    let config = match file_config::deserialize_config_file(&settings.paths.config_file) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            logging::tseprintln!(
+                &settings.disable_timestamps,
+                "Failed to read configuration file {}: {e}",
+                settings.paths.config_file.display()
+            );
+            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+                defaults::exit_codes::FAILED_TO_READ_CONFIG_FILE,
+            ));
+        }
+    };
+
+    if !cli.save && config.is_none() {
+        logging::tseprintln!(
+            &settings.disable_timestamps,
+            "No configuration file found at {}. \
+            Create it or run with `--save` to generate default configuration and resources.",
+            settings.paths.config_file.display()
+        );
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+            defaults::exit_codes::CONFIG_FILE_DOES_NOT_EXIST,
+        ));
+    }
+
+    settings.apply_file(&config);
+    settings.apply_cli(cli);
+    settings.clean_up();
+
+    if cli.save {
+        if !settings.paths.config_dir.exists() {
+            match fs::create_dir_all(&settings.paths.config_dir) {
+                Ok(()) => {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "Configuration directory {} created.",
+                        settings.paths.config_dir.display()
+                    );
+                }
+                Err(e) => {
+                    logging::tseprintln!(
+                        &settings.disable_timestamps,
+                        "Failed to create configuration directory {}: {e}",
+                        settings.paths.config_dir.display()
+                    );
+
+                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+                        defaults::exit_codes::FAILED_TO_CREATE_CONFIG_DIR,
+                    ));
+                }
+            };
+        }
+
+        let config = file_config::FileConfig::from(&settings);
+
+        if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
+            logging::tseprintln!(
+                &settings.disable_timestamps,
+                "Failed to write configuration file {}: {e}",
+                settings.paths.config_file.display()
+            );
+
+            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+                defaults::exit_codes::FAILED_TO_WRITE_CONFIG_FILE,
+            ));
+        };
+
+        if !settings.paths.peer_list.exists() {
+            match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
+                Ok(()) => {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "Empty peer list file {} created.",
+                        settings.paths.peer_list.display()
+                    );
+                }
+                Err(e) => {
+                    logging::tseprintln!(
+                        &settings.disable_timestamps,
+                        "Failed to write empty peer list file {}: {e}",
+                        settings.paths.peer_list.display()
+                    );
+
+                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
+                        defaults::exit_codes::FAILED_TO_WRITE_PEER_LIST_FILE,
+                    ));
+                }
+            };
+        }
+
+        logging::tsprintln!(
+            &settings.disable_timestamps,
+            "Configuration and resources written successfully to {}.",
+            settings.paths.config_dir.display()
+        );
+        return InitSettingsResult::EarlyExitCode(process::ExitCode::SUCCESS);
+    }
+
+    // Box the resulting settings to avoid issues with the size of the Settings struct
+    // making the InitSettingsResult enum too large to compile.
+    InitSettingsResult::Success(Box::new(settings))
+}
+
+/// Return type for the `init_settings` function.
+///
+/// This enum is used to convey the result of initializing the program settings,
+/// which can either be a successful initialization with a `Box<settings::Settings>`
+/// instance, or an early exit with a specific `process::ExitCode`.
+enum InitSettingsResult {
+    /// Indicates that settings were successfully initialized, containing the
+    /// initialized `Settings` instance. It has to be `Box`ed to avoid issues
+    /// with the size of the `Settings` struct making the enum too large to compile.
+    Success(Box<settings::Settings>),
+
+    /// Indicates that initialization failed and the program should exit early
+    /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
+    /// and is such not necessarily an error exit code.
+    EarlyExitCode(process::ExitCode),
+}
+
 /// Builds notifiers for all configured backends and returns them as a vector
 /// of trait objects.
 ///
@@ -652,167 +815,4 @@ fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
     ctx.resume = false;
     ctx.loop_iteration += 1;
     thread::sleep(duration);
-}
-
-/// Initializes the program settings by loading configuration from the specified
-/// configuration directory, applying any overrides from the command-line
-/// arguments, and performing necessary validation and setup.
-///
-/// # Parameters
-/// - `cli`: The parsed command-line arguments, used to determine the
-///   configuration directory and any overrides to apply to the settings.
-///
-/// # Returns
-/// An `InitSettingsResult` which is either:
-/// - `Success` containing the initialized `Settings` instance, boxed in a
-///   `Box<settings::Settings>` for memory reasons
-/// - `EarlyExitCode` containing a `process::ExitCode` to exit with if
-///   initialization fails, alternatively if the `--save` flag was passed to
-///   generate configuration and resources.
-fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
-    let mut settings = settings::Settings::default();
-
-    if let Err(e) = settings.inherit_config_dir(&cli.config_dir) {
-        logging::tseprintln!(
-            &settings.disable_timestamps,
-            "Error resolving default configuration directory: {e}"
-        );
-        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-            defaults::exit_codes::FAILED_TO_RESOLVE_CONFIG_DIR,
-        ));
-    }
-
-    if !settings.paths.config_dir.exists() && !cli.save {
-        logging::tseprintln!(
-            &settings.disable_timestamps,
-            "Configuration directory {} does not exist. \
-            Create it or run with `--save` to generate default configuration and resources.",
-            settings.paths.config_dir.display()
-        );
-        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-            defaults::exit_codes::CONFIG_DIR_DOES_NOT_EXIST,
-        ));
-    }
-
-    settings.resolve_resource_paths();
-
-    let config = match file_config::deserialize_config_file(&settings.paths.config_file) {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            logging::tseprintln!(
-                &settings.disable_timestamps,
-                "Failed to read configuration file {}: {e}",
-                settings.paths.config_file.display()
-            );
-            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                defaults::exit_codes::FAILED_TO_READ_CONFIG_FILE,
-            ));
-        }
-    };
-
-    if !cli.save && config.is_none() {
-        logging::tseprintln!(
-            &settings.disable_timestamps,
-            "No configuration file found at {}. \
-            Create it or run with `--save` to generate default configuration and resources.",
-            settings.paths.config_file.display()
-        );
-        return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-            defaults::exit_codes::CONFIG_FILE_DOES_NOT_EXIST,
-        ));
-    }
-
-    settings.apply_file(&config);
-    settings.apply_cli(cli);
-    settings.clean_up();
-
-    if cli.save {
-        if !settings.paths.config_dir.exists() {
-            match fs::create_dir_all(&settings.paths.config_dir) {
-                Ok(()) => {
-                    logging::tsprintln!(
-                        &settings.disable_timestamps,
-                        "Configuration directory {} created.",
-                        settings.paths.config_dir.display()
-                    );
-                }
-                Err(e) => {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "Failed to create configuration directory {}: {e}",
-                        settings.paths.config_dir.display()
-                    );
-
-                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                        defaults::exit_codes::FAILED_TO_CREATE_CONFIG_DIR,
-                    ));
-                }
-            };
-        }
-
-        let config = file_config::FileConfig::from(&settings);
-
-        if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
-            logging::tseprintln!(
-                &settings.disable_timestamps,
-                "Failed to write configuration file {}: {e}",
-                settings.paths.config_file.display()
-            );
-
-            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                defaults::exit_codes::FAILED_TO_WRITE_CONFIG_FILE,
-            ));
-        };
-
-        if !settings.paths.peer_list.exists() {
-            match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
-                Ok(()) => {
-                    logging::tsprintln!(
-                        &settings.disable_timestamps,
-                        "Empty peer list file {} created.",
-                        settings.paths.peer_list.display()
-                    );
-                }
-                Err(e) => {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "Failed to write empty peer list file {}: {e}",
-                        settings.paths.peer_list.display()
-                    );
-
-                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                        defaults::exit_codes::FAILED_TO_WRITE_PEER_LIST_FILE,
-                    ));
-                }
-            };
-        }
-
-        logging::tsprintln!(
-            &settings.disable_timestamps,
-            "Configuration and resources written successfully to {}.",
-            settings.paths.config_dir.display()
-        );
-        return InitSettingsResult::EarlyExitCode(process::ExitCode::SUCCESS);
-    }
-
-    // Box the resulting settings to avoid issues with the size of the Settings struct
-    // making the InitSettingsResult enum too large to compile.
-    InitSettingsResult::Success(Box::new(settings))
-}
-
-/// Return type for the `init_settings` function.
-///
-/// This enum is used to convey the result of initializing the program settings,
-/// which can either be a successful initialization with a `Box<settings::Settings>`
-/// instance, or an early exit with a specific `process::ExitCode`.
-enum InitSettingsResult {
-    /// Indicates that settings were successfully initialized, containing the
-    /// initialized `Settings` instance. It has to be `Box`ed to avoid issues
-    /// with the size of the `Settings` struct making the enum too large to compile.
-    Success(Box<settings::Settings>),
-
-    /// Indicates that initialization failed and the program should exit early
-    /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
-    /// and is such not necessarily an error exit code.
-    EarlyExitCode(process::ExitCode),
 }
