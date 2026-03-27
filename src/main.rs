@@ -581,6 +581,40 @@ fn run_loop(
     }
 }
 
+/// Perform some cleanup and sleep at the end of each loop duration.
+///
+/// This is only called from within the main loop in `run_loop`, but as it doesn't
+/// actually use any variables from that scope, it can be a standalone function.
+/// It is run at the end of each loop iteration to handle common tasks.
+///
+/// This function performs the following steps:
+///
+/// 1. Rotates the peer states in the context, which involves moving elements in
+///    the currently lost and missing peer vectors to the previously lost and
+///    missing peer vectors, and then resetting both current vectors for the
+///    next iteration.
+/// 2. Sets the `resume` flag in the context to false, which is something that
+///    is only used in the first iteration, if the `--resume` flag is set.
+///    Since this function will be called at the end of each loop, it follows
+///    that the `resume` flag should be false from hereon after, in all cases.
+/// 3. Increments the loop iteration count.
+/// 4. Sleeps for the specified duration, which is the configured
+///    check interval, to control how long the program waits between iterations
+///    of the main loop. It can also be other values.
+///
+/// # Parameters:
+/// - `ctx`: The notification context, which is used to rotate the peer states
+///   and update the loop iteration count.
+/// - `duration`: The duration to sleep for at the end of the loop, which is
+///   the configured check interval. This allows the main loop to
+///   sleep for the appropriate amount of time between iterations.
+fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
+    ctx.rotate();
+    ctx.resume = false;
+    ctx.loop_iteration += 1;
+    thread::sleep(duration);
+}
+
 /// Initializes the program settings by loading configuration from the specified
 /// configuration directory, applying any overrides from the command-line
 /// arguments, and performing necessary validation and setup.
@@ -781,38 +815,4 @@ fn build_and_push_notifiers<B, F>(
         let boxed = Box::new(notify::Notifier::new(backend, dry_run));
         vec.push(boxed);
     }
-}
-
-/// Perform some cleanup and sleep at the end of each loop duration.
-///
-/// This is only called from within the main loop in `run_loop`, but as it doesn't
-/// actually use any variables from that scope, it can be a standalone function.
-/// It is run at the end of each loop iteration to handle common tasks.
-///
-/// This function performs the following steps:
-///
-/// 1. Rotates the peer states in the context, which involves moving elements in
-///    the currently lost and missing peer vectors to the previously lost and
-///    missing peer vectors, and then resetting both current vectors for the
-///    next iteration.
-/// 2. Sets the `resume` flag in the context to false, which is something that
-///    is only used in the first iteration, if the `--resume` flag is set.
-///    Since this function will be called at the end of each loop, it follows
-///    that the `resume` flag should be false from hereon after, in all cases.
-/// 3. Increments the loop iteration count.
-/// 4. Sleeps for the specified duration, which is the configured
-///    check interval, to control how long the program waits between iterations
-///    of the main loop. It can also be other values.
-///
-/// # Parameters:
-/// - `ctx`: The notification context, which is used to rotate the peer states
-///   and update the loop iteration count.
-/// - `duration`: The duration to sleep for at the end of the loop, which is
-///   the configured check interval. This allows the main loop to
-///   sleep for the appropriate amount of time between iterations.
-fn end_loop(ctx: &mut notify::Context, duration: time::Duration) {
-    ctx.rotate();
-    ctx.resume = false;
-    ctx.loop_iteration += 1;
-    thread::sleep(duration);
 }
