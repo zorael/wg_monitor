@@ -358,72 +358,9 @@ fn init_settings(cli: &cli::Cli) -> InitSettingsResult {
     settings.clean_up();
 
     if cli.save {
-        if !settings.paths.config_dir.exists() {
-            match fs::create_dir_all(&settings.paths.config_dir) {
-                Ok(()) => {
-                    logging::tsprintln!(
-                        &settings.disable_timestamps,
-                        "Configuration directory {} created.",
-                        settings.paths.config_dir.display()
-                    );
-                }
-                Err(e) => {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "Failed to create configuration directory {}: {e}",
-                        settings.paths.config_dir.display()
-                    );
-
-                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                        defaults::exit_codes::FAILED_TO_CREATE_CONFIG_DIR,
-                    ));
-                }
-            };
-        }
-
-        let config = file_config::FileConfig::from(&settings);
-
-        if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
-            logging::tseprintln!(
-                &settings.disable_timestamps,
-                "Failed to write configuration file {}: {e}",
-                settings.paths.config_file.display()
-            );
-
-            return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                defaults::exit_codes::FAILED_TO_WRITE_CONFIG_FILE,
-            ));
-        };
-
-        if !settings.paths.peer_list.exists() {
-            match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
-                Ok(()) => {
-                    logging::tsprintln!(
-                        &settings.disable_timestamps,
-                        "Empty peer list file {} created.",
-                        settings.paths.peer_list.display()
-                    );
-                }
-                Err(e) => {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "Failed to write empty peer list file {}: {e}",
-                        settings.paths.peer_list.display()
-                    );
-
-                    return InitSettingsResult::EarlyExitCode(process::ExitCode::from(
-                        defaults::exit_codes::FAILED_TO_WRITE_PEER_LIST_FILE,
-                    ));
-                }
-            };
-        }
-
-        logging::tsprintln!(
-            &settings.disable_timestamps,
-            "Configuration and resources written successfully to {}.",
-            settings.paths.config_dir.display()
-        );
-        return InitSettingsResult::EarlyExitCode(process::ExitCode::SUCCESS);
+        // If --save was passed, save the settings to the configuration file and
+        // create an empty peer list file if they don't already exist.
+        return InitSettingsResult::EarlyExitCode(save_settings_to_config_file(&settings));
     }
 
     // Box the resulting settings to avoid issues with the size of the Settings struct
@@ -446,6 +383,84 @@ enum InitSettingsResult {
     /// with the provided `process::ExitCode`. This may be `process::SUCCESS`
     /// and is such not necessarily an error exit code.
     EarlyExitCode(process::ExitCode),
+}
+
+/// Saves the provided settings to the configuration file and creates an empty
+/// peer list file if they don't already exist.
+///
+/// # Notes
+/// Refer to the `crate::defaults::exit_codes` module for the specific exit codes used.
+///
+/// # Parameters
+/// - `settings`: The program settings to save to the configuration file and use
+///   for determining the paths to save to.
+///
+/// # Returns
+/// A `process::ExitCode` indicating the result of the operation.
+fn save_settings_to_config_file(settings: &settings::Settings) -> process::ExitCode {
+    if !settings.paths.config_dir.exists() {
+        match fs::create_dir_all(&settings.paths.config_dir) {
+            Ok(()) => {
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "Configuration directory {} created.",
+                    settings.paths.config_dir.display()
+                );
+            }
+            Err(e) => {
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "Failed to create configuration directory {}: {e}",
+                    settings.paths.config_dir.display()
+                );
+
+                return process::ExitCode::from(defaults::exit_codes::FAILED_TO_CREATE_CONFIG_DIR);
+            }
+        };
+    }
+
+    let config = file_config::FileConfig::from(settings);
+
+    if let Err(e) = confy::store_path(&settings.paths.config_file, config) {
+        logging::tseprintln!(
+            &settings.disable_timestamps,
+            "Failed to write configuration file {}: {e}",
+            settings.paths.config_file.display()
+        );
+
+        return process::ExitCode::from(defaults::exit_codes::FAILED_TO_WRITE_CONFIG_FILE);
+    };
+
+    if !settings.paths.peer_list.exists() {
+        match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
+            Ok(()) => {
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "Empty peer list file {} created.",
+                    settings.paths.peer_list.display()
+                );
+            }
+            Err(e) => {
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "Failed to write empty peer list file {}: {e}",
+                    settings.paths.peer_list.display()
+                );
+
+                return process::ExitCode::from(
+                    defaults::exit_codes::FAILED_TO_WRITE_PEER_LIST_FILE,
+                );
+            }
+        };
+    }
+
+    logging::tsprintln!(
+        &settings.disable_timestamps,
+        "Configuration and resources written successfully to {}.",
+        settings.paths.config_dir.display()
+    );
+
+    process::ExitCode::SUCCESS
 }
 
 /// Builds notifiers for all configured backends and returns them as a vector
