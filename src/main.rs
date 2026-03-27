@@ -494,7 +494,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     let agent = ureq::Agent::new_with_defaults();
 
     // Helper closure to build a Slack backend instance.
-    let make_slack_backend = |i: usize, url: &String| {
+    let make_slack_backend = |i: usize, url: &str| {
         backend::SlackBackend::new(
             i,
             agent.clone(),
@@ -505,7 +505,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     };
 
     // Helper closure to build a Batsign backend instance.
-    let make_batsign_backend = |i: usize, url: &String| {
+    let make_batsign_backend = |i: usize, url: &str| {
         backend::BatsignBackend::new(
             i,
             agent.clone(),
@@ -516,7 +516,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     };
 
     // Helper closure to build a Command backend instance.
-    let make_command_backend = |i: usize, command: &String| {
+    let make_command_backend = |i: usize, command: &str| {
         backend::CommandBackend::new(
             i,
             command,
@@ -625,7 +625,7 @@ fn build_and_push_notifiers<B, F>(
     dry_run: bool,
 ) where
     B: backend::Backend + 'static,
-    F: FnMut(usize, &String) -> B, // not &str due to lifetime issues
+    F: FnMut(usize, &str) -> B,
 {
     for (i, element) in elements.iter().enumerate() {
         let backend = make_backend_fn(i, element);
