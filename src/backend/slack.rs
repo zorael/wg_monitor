@@ -142,7 +142,7 @@ impl super::Backend for SlackBackend {
         _delta: Option<&notify::KeyDelta>,
         message: &str,
     ) -> Result<Option<String>, String> {
-        let json: serde_json::Value = serde_json::from_str(message).expect("internal slack json");
+        let json: serde_json::Value = serde_json::from_str(message).map_err(|e| e.to_string())?;
 
         match self.agent.post(&self.url).send_json(json) {
             Ok(mut r) => match r.body_mut().read_to_string() {
