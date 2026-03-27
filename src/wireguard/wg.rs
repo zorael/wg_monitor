@@ -44,7 +44,8 @@ pub fn read_peer_list(
     let mut peers = collections::HashMap::new();
 
     for whole_line in reader.lines() {
-        let whole_line = whole_line?.trim().to_string();
+        let whole_line = whole_line?;
+        let whole_line = whole_line.trim();
 
         if whole_line.is_empty() || whole_line.starts_with('#') {
             continue;
@@ -54,10 +55,20 @@ pub fn read_peer_list(
             println!("{whole_line}");
         }
 
-        let (key, human_name) = match whole_line.split_once(' ') {
-            Some((k, h)) => (k, Some(h)),
-            None => (whole_line.as_str(), None),
+        let mut parts = whole_line.splitn(2, char::is_whitespace);
+
+        let key = match parts.next() {
+            Some(k) if !k.is_empty() => k,
+            _ => {
+                eprintln!(
+                    "Invalid line in peers file (missing public key): '{}'",
+                    whole_line
+                );
+                continue;
+            }
         };
+
+        let human_name = parts.next().map(str::trim_start);
 
         let Some(peer) = super::WireGuardPeer::new(key, human_name) else {
             eprintln!("[!] Invalid public key in peers file: '{}'", key);
@@ -68,7 +79,16 @@ pub fn read_peer_list(
             println!("{:#?}\n", peer);
         }
 
-        peers.insert(peer.public_key.clone(), peer);
+        match peers.entry(peer.public_key.clone()) {
+            collections::hash_map::Entry::Vacant(e) => e.insert(peer),
+            collections::hash_map::Entry::Occupied(_) => {
+                eprintln!(
+                    "Duplicate public key in peers file: '{}'. Skipping.",
+                    peer.public_key
+                );
+                continue;
+            }
+        };
     }
 
     if debug {
