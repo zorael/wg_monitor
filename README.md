@@ -56,14 +56,14 @@ cargo run -- --save
       * [notify-send-to-all-gui.sh](#notify-send-to-all-guish)
       * [notify-send-to-one.sh](#notify-send-to-onesh)
 * [systemd](#systemd)
-  * [starts too early](#starts-too-early)
+  * [except it starts too early](#except-it-starts-too-early)
 * [ai](#ai)
 * [todo](#todo)
 * [license](#license)
 
 ## compilation
 
-This project uses [**Cargo**](https://doc.rust-lang.org/cargo) for compilation and dependency management. Get it from your repositories, install it via [**Homebrew `rustup`**](https://formulae.brew.sh/formula/rustup), or download it with the official [`rustup`](https://rustup.rs) installation script.
+This project uses [**Cargo**](https://doc.rust-lang.org/cargo) for compilation and dependency management. Grab it from your repositories, install it via [**Homebrew**](https://formulae.brew.sh/formula/rustup), or download it with the official [`rustup`](https://rustup.rs) installation script.
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -125,7 +125,7 @@ You *may* have some luck building it on the Pi if you build it in a serial mode,
 cargo build -j1
 ```
 
-Mind that build times will be *very* long. Cross-compilation is recommended. Failing that, remember to at least use a heatsink.
+Mind that build times will be *very* long. Remember to use a heatsink. (Cross-compilation remains recommended.)
 
 ## configuration
 
@@ -148,7 +148,7 @@ Mind that the program will likely require to be run with root permissions to be 
 
 ### `config.toml`
 
-As part of `--save`, a new `config.toml` will be created in the configuration directory, if it does not already exist. Edit it like you would any text file. `--save` will not overwrite an existing `config.toml`, but beware that any comments will be removed.
+As part of `--save`, a new `config.toml` will be created in the configuration directory, if it does not already exist. Edit it like you would any text file. Subsequent invocations with `--save` will not wipe an existing `config.toml`, but beware that any comments will be removed.
 
 ### `peers.txt`
 
@@ -367,17 +367,17 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now wg_monitor.service
 ```
 
-`enable --now` both enables the service to be autostarted on subsequent boots as well as starts it immediately. For the terminal output of the program (and error messages if it could not be started), refer to the systemd [**journal**](https://wiki.archlinux.org/title/Systemd/Journal).
+`enable --now` both enables the service to be autostarted on subsequent boots as well as starts it immediately. For the terminal output of the program (and error messages if it could not be started), refer to the systemd [**journal**](https://wiki.archlinux.org/title/Systemd/Journal) in which such is tracked.
 
 ```sh
 journalctl -b0 -fn100 -u wg_monitor.service
 ```
 
-### starts too early
+### except it starts too early
 
-The systemd service is set up to start only after networking has been set up, but it might still take a while for peers to connect and handshake. If the program starts before peers have done this, it will report them as missing.
+The systemd service is set up to start the program as soon as a network connection has been established, and it might still take a while for peers to connect and handshake. Any peers that have not completed this handshake at least once when the program eventually starts will immediately be reported as missing.
 
-To mitigate this, you can use the `--sleep` flag to have the program wait for a specified duration before starting the monitoring loop. The flag takes a human-readable duration string as argument, like `10s`, `1m`, `2h` and so forth.
+To combat this, you can use the `--sleep` flag to have the program wait for a specified duration before starting the monitoring loop. The flag takes a human-readable duration string with a unit as argument, like `10s`, `1m`, `2h` and so forth.
 
 ```ini
 [Service]
