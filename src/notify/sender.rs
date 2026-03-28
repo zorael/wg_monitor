@@ -24,7 +24,8 @@ pub trait NotificationSender {
     /// A `NotificationResult` indicating the outcome of the notification attempt, which can be:
     /// - `DryRun(String)`: The notification was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(String)`: The notification was successfully sent, including the message that was sent.
+    /// - `Success(String, Option<String>)`: The notification was successfully
+    ///   sent, including the message that was sent and any output from the backend.
     /// - `Failure(String, String)`: There was a failure in sending the notification,
     ///   including an error message describing the failure and the message that was attempted to be sent.
     /// - `NoMessage`: The notification was not sent because the rendered message ended up empty.
@@ -45,8 +46,8 @@ pub trait NotificationSender {
     /// A `NotificationResult` indicating the outcome of the reminder attempt, which can be:
     /// - `DryRun(String)`: The reminder was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(String)`: The reminder was successfully sent, including the message that was
-    ///   sent.
+    /// - `Success(String, Option<String>)`: The reminder was successfully sent,
+    ///   including the message that was sent and any output from the backend.
     /// - `Failure(String, String)`: There was a failure in sending the reminder,
     ///   including an error message describing the failure and the message that was attempted to be sent.
     /// - `NoMessage`: The reminder was not sent because the rendered message ended up empty

@@ -32,7 +32,7 @@ pub struct CommandBackend {
     /// This should be the path to the executable or script to run.
     command: String,
 
-    /// Whether to print the standard output of the executed comomands to the terminal.
+    /// Whether to print the standard output of the executed commands to the terminal.
     show_output: bool,
 
     /// Message strings for Command notifications.
@@ -58,7 +58,7 @@ impl CommandBackend {
     ///   for logging.
     /// - `command`: The command to execute when sending a notification.
     ///   This should be the path to the executable or script to run.
-    /// - `show_output`: Whether to print the output of the executed comomands to the terminal.
+    /// - `show_output`: Whether to print the output of the executed commands to the terminal.
     /// - `strings`: Message strings for Command notifications.
     /// - `reminder_strings`: Message strings for Command reminder notifications.
     ///

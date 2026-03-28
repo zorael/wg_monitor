@@ -35,8 +35,7 @@ impl<B: backend::Backend> Notifier<B> {
     ///   but will return the composed messages as `DryRun` results.
     ///
     /// # Returns
-    /// A new `Notifier` instance initialized with the provided backend, dry run
-    /// mode, and state.
+    /// A new `Notifier` instance initialized with the provided backend and dry run mode.
     pub fn new(backend: B, dry_run: bool) -> Self {
         Self {
             backend,

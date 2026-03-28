@@ -138,7 +138,7 @@ impl super::Backend for SlackBackend {
     /// - `message`: The already-composed message to send.
     ///
     /// # Returns
-    /// - `Ok(String)` if the message was sent successfully and the setting to
+    /// - `Ok(Some(String))` if the message was sent successfully and the setting to
     ///   output the response is enabled, containing the response body as a string.
     /// - `Ok(None)` if the message was sent successfully but the setting to output
     ///   the response is disabled.
