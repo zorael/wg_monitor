@@ -192,8 +192,8 @@ fn main() -> process::ExitCode {
     // about the handshakes at this point. We just want to verify that the
     // command executes successfully before entering the main loop.
     let latest_handshakes_output = match get_first_handshakes_output(&settings) {
-        Ok(output) => output,
-        Err(code) => return code,
+        Outcome::Success(output) => output,
+        Outcome::EarlyExitCode(code) => return code,
     };
 
     // Likewise verify that the output of `wg show {iface} latest-handshakes`
@@ -375,8 +375,8 @@ enum Outcome<T> {
     EarlyExitCode(process::ExitCode),
 }
 
-/// Gets the output of the `wg show {iface} latest-handshakes` command,
-/// retrying as needed until it succeeds, and returns the output as a string.
+/// Gets the output of the `wg show {iface} latest-handshakes` command, retrying
+/// as needed until it succeeds, and returns the output as an `Outcome<String>`.
 ///
 /// # Parameters
 /// - `settings`: The program settings, used to determine the path to the
@@ -384,13 +384,14 @@ enum Outcome<T> {
 ///   retrying if the command fails.
 ///
 /// # Returns
-/// - `Ok(String)` containing the output of the command if it executes successfully.
-/// - `Err(process::ExitCode)` if the command fails to execute due to what seems
-///   to not be a transient issue.
-fn get_first_handshakes_output(settings: &settings::Settings) -> Result<String, process::ExitCode> {
+/// - `Outcome::Success(String)` containing the output of the command if it
+///   executes successfully.
+/// - `Outcome::EarlyExitCode(process::ExitCode)` if the command fails to
+///   execute due to what seems to not be a transient issue.
+fn get_first_handshakes_output(settings: &settings::Settings) -> Outcome<String> {
     loop {
         match wireguard::get_handshakes(&settings.paths.wg, &settings.monitor.interface) {
-            Ok(output) => break Ok(output),
+            Ok(output) => break Outcome::Success(output),
             Err(e) => {
                 let e = e.to_string();
                 logging::tseprintln!(&settings.disable_timestamps, "{e}");
@@ -412,7 +413,7 @@ fn get_first_handshakes_output(settings: &settings::Settings) -> Result<String, 
                         &settings.disable_timestamps,
                         "Insufficient privileges to execute 'wg show' command."
                     );
-                    return Err(process::ExitCode::from(
+                    return Outcome::EarlyExitCode(process::ExitCode::from(
                         defaults::exit_codes::INSUFFICIENT_PRIVILEGES,
                     ));
                 } else {
@@ -420,7 +421,7 @@ fn get_first_handshakes_output(settings: &settings::Settings) -> Result<String, 
                         &settings.disable_timestamps,
                         "Failed to execute handshakes command."
                     );
-                    return Err(process::ExitCode::from(
+                    return Outcome::EarlyExitCode(process::ExitCode::from(
                         defaults::exit_codes::FAILED_TO_EXECUTE_HANDSHAKES_COMMAND,
                     ));
                 }
