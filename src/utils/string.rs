@@ -22,6 +22,7 @@
 /// let unescaped = unescape(escaped);
 /// assert_eq!(unescaped, "Hello \"world\"!\nThis is a test.\t{Curly braces}");
 /// ```
+///
 /// # Parameters
 /// - `input`: The input string to unescape.
 ///
@@ -40,10 +41,11 @@ pub fn unescape(input: &str) -> String {
 
 /// Returns the singular or plural form of a word based on the provided number.
 ///
+/// Specifically, 1 or -1 will return the singular form, while all other
+/// numbers will return the plural form.
+///
 /// # Parameters
 /// - `num`: The number to determine singular or plural form.
-///   Specifically, 1 or -1 will return the singular form, while all other
-///   numbers will return the plural form.
 /// - `singular`: The singular form of the word to return if `num` indicates
 ///   singular (1 or -1).
 /// - `plural`: The plural form of the word to return if `num` indicates plural.

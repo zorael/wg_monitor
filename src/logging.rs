@@ -1,15 +1,17 @@
 //! Logging utilities for the WireGuard monitor program.
-//!
-//! This is just macro magic.
 
 use crate::utils;
 
 /// Prints a timestamp prefix in the format "[HH:MM:SS] " to standard out.
+///
+/// It will not include a linebreak.
 pub fn print_timestamp_prefix() {
     print!("[{}] ", utils::timestamp_now());
 }
 
 /// Prints a timestamp prefix in the format "[HH:MM:SS] " to standard error.
+///
+/// It will not include a linebreak.
 pub fn eprint_timestamp_prefix() {
     eprint!("[{}] ", utils::timestamp_now());
 }
@@ -18,13 +20,12 @@ pub fn eprint_timestamp_prefix() {
 /// `disable_timestamps` flag is `false`, otherwise just prints the message.
 ///
 /// The message is formatted using the standard `println!` macro, and the
-/// timestamp is printed as a prefix if timestamps are not disabled in the
-/// provided settings.
+/// timestamp is printed as a prefix between brackets.
 ///
 /// # Parameters
 /// - `disable_timestamps`: If this value is `true`, the message will be
 ///   printed without a timestamp prefix. If `false`, the message will be
-///   prefixed with a timestamp in the format "[HH:MM:SS] ".
+///   prefixed with a timestamp in the format "`[HH:MM:SS] `".
 /// - `args`: The arguments to be formatted and printed, following the same
 ///   syntax as the `println!` macro.
 macro_rules! tsprintln {
@@ -40,13 +41,12 @@ macro_rules! tsprintln {
 /// `disable_timestamps` flag is `false`, otherwise just prints the message.
 ///
 /// The message is formatted using the standard `eprintln!` macro, and the
-/// timestamp is printed as a prefix if timestamps are not disabled in the
-/// provided settings.
+/// timestamp is printed as a prefix between brackets.
 ///
 /// # Parameters
 /// - `disable_timestamps`: If this value is `true`, the message will be
 ///   printed without a timestamp prefix. If `false`, the message will be
-///   prefixed with a timestamp in the format "[HH:MM:SS] ".
+///   prefixed with a timestamp in the format "`[HH:MM:SS] `".
 /// - `args`: The arguments to be formatted and printed, following the same
 ///   syntax as the `eprintln!` macro.
 macro_rules! tseprintln {

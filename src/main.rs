@@ -431,10 +431,10 @@ fn get_first_handshakes_output(settings: &settings::Settings) -> Outcome<String>
 }
 
 /// Saves the provided settings to the configuration file and creates an empty
-/// peer list file if they don't already exist.
+/// peer list file if one does not already exist.
 ///
 /// # Notes
-/// Refer to the `crate::defaults::exit_codes` module for the specific exit codes used.
+/// Refer to the `defaults::exit_codes` module for the specific exit codes used.
 ///
 /// # Parameters
 /// - `settings`: The program settings to save to the configuration file and use
@@ -817,7 +817,7 @@ fn run_loop(
         // Only skip after we've computed the key delta
         if should_skip_next {
             if ctx.is_first_run() {
-                // If you --skip-first the first run, reminds will never be sent
+                // If you --skip-first the first run, reminders will never be sent
                 // because the stateful notifiers will never have their
                 // last_notification_sent set. So fake a notification being sent here, once.
                 // The alternative is to keep a program_started_at timestamp

@@ -1,17 +1,13 @@
 //! Utility functions for working with vectors of strings.
-//!
-//! These functions are useful for managing lists of strings such as
-//! notification URLs, peer lists, and other collections of data used
-//! across the program.
 
 #![allow(dead_code)]
 
 /// Trims whitespace from each string in the input vector and filters out empty
-/// strings, returning a new vector of cleaned strings.
+/// ones, returning a new vector of cleaned strings.
 ///
 /// # Parameters
 /// - `vec`: A reference to a vector of strings that may contain leading or
-///   trailing whitespace, and may include empty strings.
+///   trailing whitespace, and may include empty string elements.
 ///
 /// # Returns
 /// A new vector of strings where each string has been trimmed of whitespace and
@@ -56,8 +52,8 @@ mod tests_trim {
 /// been added or removed.
 ///
 /// # Parameters
-/// - `one`: A reference to the first vector to compare.
-/// - `other`: A reference to the second vector to compare against.
+/// - `one`: A reference to the first vector.
+/// - `other`: A reference to the second vector to compare the first against.
 ///
 /// # Returns
 /// A tuple containing two vectors:
@@ -72,12 +68,11 @@ pub fn get_vec_difference<T: Clone + PartialEq>(one: &[T], other: &[T]) -> (Vec<
 /// Returns a vector containing the elements that are in the first input vector
 /// but not in the second input vector.
 ///
-/// This function is a helper for `get_vec_difference` and is used to compute
-/// the unique elements in one vector compared to another.
+/// This function is a helper for `get_vec_difference`.
 ///
 /// # Parameters
-/// - `one`: A reference to the first vector to compare.
-/// - `other`: A reference to the second vector to compare against.
+/// - `one`: A reference to the first vector.
+/// - `other`: A reference to the second vector.
 ///
 /// # Returns
 /// A vector containing the elements that are in `one` but not in `other`.
@@ -93,13 +88,9 @@ pub fn get_elements_not_in_other_vec<T: Clone + PartialEq>(one: &[T], other: &[T
 /// destination vector will receive elements that are in the second source vector
 /// but not in the first.
 ///
-/// This function is useful for updating lists of items based on changes between
-/// two source vectors, such as when managing notification URLs or peer lists that
-/// may have been modified.
-///
 /// # Parameters
-/// - `source_one`: A reference to the first source vector to compare.
-/// - `source_other`: A reference to the second source vector to compare against.
+/// - `source_one`: A reference to the first source vector.
+/// - `source_other`: A reference to the second source vector.
 /// - `dest_one`: A mutable reference to the first destination vector where
 ///   elements that are in `source_one` but not in `source_other` will be appended.
 /// - `dest_other`: A mutable reference to the second destination vector where
@@ -117,14 +108,13 @@ pub fn append_vec_difference<T: Clone + PartialEq>(
 /// Appends the elements that are in the first input vector but not in the second
 /// input vector into the provided destination vector.
 ///
-/// This function is a helper for `append_vec_difference` and is used to append
-/// the unique elements in one vector compared to another into a destination vector.
+/// This function is a helper for `append_vec_difference`.
 ///
 /// # Parameters
 /// - `dest`: A mutable reference to the destination vector where
 ///   elements that are in `one` but not in `other` will be appended.
-/// - `one`: A reference to the first vector to compare.
-/// - `other`: A reference to the second vector to compare against.
+/// - `one`: A reference to the first vector.
+/// - `other`: A reference to the second vector.
 pub fn append_difference_into<T: Clone + PartialEq>(vec: &mut Vec<T>, one: &[T], other: &[T]) {
     let elements = one.iter().filter(|k| !other.contains(k));
     vec.extend(elements.cloned());

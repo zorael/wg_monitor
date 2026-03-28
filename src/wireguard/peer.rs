@@ -1,6 +1,5 @@
-//! Defines the `WireGuardPeer` struct, which represents a WireGuard peer and
-//! includes methods for validating and shortening public keys, as well as a
-//! function for sorting peer keys based on their last seen timestamps.
+//! Defines the `WireGuardPeer` struct, which represents a peer machine in a
+//! WireGuard VPN.
 
 use std::borrow;
 use std::cmp;
@@ -9,7 +8,7 @@ use std::fmt;
 use std::rc;
 use std::time;
 
-/// Represents a WireGuard peer, including its public key, human-readable name,
+/// Represents a WireGuard peer, including its public key, a human-readable name,
 /// and timestamps for when it was last seen as active.
 #[derive(Clone, Debug)]
 pub struct WireGuardPeer {
@@ -21,13 +20,12 @@ pub struct WireGuardPeer {
     /// A human-readable name for the peer, which can be used for display purposes in
     /// notifications and logs.
     ///
-    /// This is not a required field in WireGuard itself, but it can be set
-    /// based on the configuration or other metadata to make it easier to
-    /// identify peers in notifications.
+    /// This is not a required field in WireGuard itself, but it is useful for
+    /// identifying peers in notifications.
     pub human_name: String,
 
     /// The timestamp of the last time the peer was seen as active, represented
-    /// as an `Option<SystemTime>`.
+    /// as an `Option<time::SystemTime>`.
     ///
     /// This can be `None` if the peer has never been seen or if the timestamp
     /// has been reset to 0 in a VPN restart.
@@ -47,11 +45,11 @@ impl WireGuardPeer {
     ///   validation in `PeerKey::new`, else this function will return `None`.
     /// - `human_name`: An optional human-readable name for the peer.
     ///   If `None` is provided, the human name will be derived from the public
-    ///   key using the `shorten_key` method.
+    ///   key using the `shorten_key` function.
     ///
     /// # Returns
-    /// An `Option<WireGuardPeer>` which is `Some(WireGuardPeer)` if the
-    /// provided public key is valid, or `None` if the public key is invalid.
+    /// - `Some(WireGuardPeer)` if the provided public key is (seemingly) valid.
+    /// - `None` if the public key is invalid.
     pub fn new(public_key: &str, human_name: Option<&str>) -> Option<Self> {
         let key = PeerKey::new(public_key)?;
 
@@ -149,8 +147,8 @@ impl WireGuardPeer {
     }
 }
 
-/// Sorts an array of peer public keys based on their last seen UNIX timestamps in the
-/// provided peers map.
+/// Sorts an array of peer public keys based on their last seen UNIX timestamps
+/// in the provided peers map.
 ///
 /// Peers that are present (have a non-0 timestamp) are sorted first, with newer
 /// timestamps appearing before older ones. Peers without a timestamp
@@ -169,13 +167,13 @@ pub fn sort_keys(keys: &mut [PeerKey], peers: &collections::HashMap<PeerKey, Wir
     });
 }
 
-/// Newtype of `Rc<str>` representing a WireGuard peer's public key, which is
+/// Newtype of `rc::Rc<str>` representing a WireGuard peer's public key,
 /// used as a key in hashmaps and for display purposes.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PeerKey(rc::Rc<str>);
 
 impl PeerKey {
-    /// Creates a new `PeerKey` from a string slice, validating that the input
+    /// Creates a new `PeerKey` from a string slice, "validating" that the input
     /// is a valid WireGuard public key.
     ///
     /// # Parameters
