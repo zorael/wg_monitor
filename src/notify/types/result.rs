@@ -10,8 +10,8 @@ pub enum NotificationResult {
     DryRun(String),
 
     /// Indicates that the notification was successfully sent, including the
-    /// composed message that was sent.
-    Success(String),
+    /// composed message that was sent, and optionally any output from the backend.
+    Success(String, Option<String>),
 
     /// Indicates that there was a failure in sending the notification.
     ///

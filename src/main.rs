@@ -532,6 +532,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             i,
             agent.clone(),
             url,
+            settings.slack.show_response,
             &settings.slack.strings,
             &settings.slack.reminder_strings,
         )
@@ -543,6 +544,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             i,
             agent.clone(),
             url,
+            settings.batsign.show_response,
             &settings.batsign.strings,
             &settings.batsign.reminder_strings,
         )
@@ -553,6 +555,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
         backend::CommandBackend::new(
             i,
             command,
+            settings.command.show_output,
             &settings.command.strings,
             &settings.command.reminder_strings,
         )

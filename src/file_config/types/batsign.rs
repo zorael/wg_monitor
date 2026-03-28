@@ -21,4 +21,7 @@ pub struct BatsignConfig {
     /// Each URL is unique to the target email address and includes a token
     /// for authentication.
     pub urls: Option<Vec<String>>,
+
+    /// Whether to print the responses to the HTTP requests to the terminal.
+    pub show_response: Option<bool>,
 }

@@ -40,6 +40,7 @@ impl From<&settings::Settings> for FileConfig {
                 reminder_strings: super::ReminderStringsConfig::from(&s.slack.reminder_strings),
                 enabled: Some(s.slack.enabled),
                 urls: Some(s.slack.urls.clone()),
+                show_response: Some(s.slack.show_response),
             },
 
             batsign: super::BatsignConfig {
@@ -47,6 +48,7 @@ impl From<&settings::Settings> for FileConfig {
                 reminder_strings: super::ReminderStringsConfig::from(&s.batsign.reminder_strings),
                 enabled: Some(s.batsign.enabled),
                 urls: Some(s.batsign.urls.clone()),
+                show_response: Some(s.batsign.show_response),
             },
 
             command: super::CommandConfig {
@@ -54,6 +56,7 @@ impl From<&settings::Settings> for FileConfig {
                 reminder_strings: super::ReminderStringsConfig::from(&s.command.reminder_strings),
                 enabled: Some(s.command.enabled),
                 commands: Some(s.command.commands.clone()),
+                show_output: Some(s.command.show_output),
             },
         }
     }

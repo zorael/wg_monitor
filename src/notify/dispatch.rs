@@ -83,7 +83,7 @@ pub fn retry_pending_notifications(
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
-            super::NotificationResult::Success(message) => {
+            super::NotificationResult::Success(message, output) => {
                 println!();
                 logging::tsprintln!(
                     &settings.disable_timestamps,
@@ -93,14 +93,26 @@ pub fn retry_pending_notifications(
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
+
+                if let Some(output) = output
+                    && !output.is_empty()
+                {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "[{}] Backend output:",
+                        n.name()
+                    );
+                    println!("{output}");
+                }
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
                 logging::tseprintln!(
                     &settings.disable_timestamps,
-                    "[{}] Failed to RETRY notification: {e}",
+                    "[{}] Failed to RETRY notification:",
                     n.name()
                 );
+                eprint!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -169,7 +181,7 @@ pub fn send_notification(
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
-            super::NotificationResult::Success(message) => {
+            super::NotificationResult::Success(message, output) => {
                 println!();
                 logging::tsprintln!(
                     &settings.disable_timestamps,
@@ -179,14 +191,26 @@ pub fn send_notification(
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
+
+                if let Some(output) = output
+                    && !output.is_empty()
+                {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "[{}] Backend output:",
+                        n.name()
+                    );
+                    println!("{output}");
+                }
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
                 logging::tseprintln!(
                     &settings.disable_timestamps,
-                    "[{}] Failed to send notification: {e}",
+                    "[{}] Failed to send notification:",
                     n.name()
                 );
+                eprint!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -259,7 +283,7 @@ pub fn send_reminder(
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
             }
-            super::NotificationResult::Success(message) => {
+            super::NotificationResult::Success(message, output) => {
                 println!();
                 logging::tsprintln!(
                     &settings.disable_timestamps,
@@ -269,14 +293,26 @@ pub fn send_reminder(
 
                 verbose_print(&message, settings.verbose);
                 report.successful += 1;
+
+                if let Some(output) = output
+                    && !output.is_empty()
+                {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "[{}] Backend output:",
+                        n.name()
+                    );
+                    println!("{output}");
+                }
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
                 logging::tseprintln!(
                     &settings.disable_timestamps,
-                    "[{}] Failed to send reminder: {e}",
+                    "[{}] Failed to send reminder:",
                     n.name()
                 );
+                eprint!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -321,7 +357,7 @@ fn send_via_notifier(
 
     match &result {
         super::NotificationResult::DryRun(_)
-        | super::NotificationResult::Success(_)
+        | super::NotificationResult::Success(_, _)
         | super::NotificationResult::NoMessage => {
             if delta.is_some() {
                 n.state_mut().on_successful_notification(&ctx.now);

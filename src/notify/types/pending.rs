@@ -12,7 +12,5 @@ pub enum PendingNotification {
 
     /// A pending reminder notification that is waiting to be retried, carrying
     /// the context of the reminder.
-    Reminder {
-        context: super::Context,
-    },
+    Reminder { context: super::Context },
 }

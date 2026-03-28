@@ -21,6 +21,9 @@ pub struct SlackSettings {
     /// Each URL is unique to the target Slack channel and includes a token
     /// for authentication.
     pub urls: Vec<String>,
+
+    /// Whether to print the response to the HTTP request to the terminal.
+    pub show_response: bool,
 }
 
 impl SlackSettings {
@@ -41,6 +44,10 @@ impl SlackSettings {
 
         if let Some(urls) = &slack_config.urls {
             self.urls = urls.clone();
+        }
+
+        if let Some(show_response) = slack_config.show_response {
+            self.show_response = show_response;
         }
     }
 

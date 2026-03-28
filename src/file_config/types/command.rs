@@ -20,4 +20,7 @@ pub struct CommandConfig {
     ///
     /// Each command string is executed as a separate process.
     pub commands: Option<Vec<String>>,
+
+    /// Whether to print the output of the executed comomands to the terminal.
+    pub show_output: Option<bool>,
 }

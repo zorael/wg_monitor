@@ -32,6 +32,9 @@ pub struct CommandBackend {
     /// This should be the path to the executable or script to run.
     command: String,
 
+    /// Whether to print the standard output of the executed comomands to the terminal.
+    show_output: bool,
+
     /// Message strings for Command notifications.
     strings: settings::MessageStrings,
 
@@ -55,6 +58,7 @@ impl CommandBackend {
     ///   for logging.
     /// - `command`: The command to execute when sending a notification.
     ///   This should be the path to the executable or script to run.
+    /// - `show_output`: Whether to print the output of the executed comomands to the terminal.
     /// - `strings`: Message strings for Command notifications.
     /// - `reminder_strings`: Message strings for Command reminder notifications.
     ///
@@ -65,6 +69,7 @@ impl CommandBackend {
     pub fn new(
         id: usize,
         command: &str,
+        show_output: bool,
         strings: &settings::MessageStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
@@ -73,6 +78,7 @@ impl CommandBackend {
         Self {
             id,
             command: command.to_string(),
+            show_output,
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
@@ -212,17 +218,38 @@ impl super::Backend for CommandBackend {
                 .map_err(|e| e.to_string())?,
         };
 
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-            return Err(stderr);
+        // Early exit if everything is okay and there's no output to show
+        if !self.show_output && output.status.success() {
+            return Ok(None);
         }
 
-        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        const SEP: &str = "\n====================\n";
 
-        if stdout.is_empty() {
-            Ok(None)
+        // Compose a string with both stdout and stderr in it, separated by a divider
+        let mut message = String::new();
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+
+        if !stdout.is_empty() {
+            message.push_str(&stdout);
+
+            if !stderr.is_empty() {
+                message.push_str(SEP);
+            }
+        }
+
+        if !stderr.is_empty() {
+            message.push_str(&stderr);
+        }
+
+        if output.status.success() {
+            if message.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(message))
+            }
         } else {
-            Ok(Some(stdout))
+            Err(message)
         }
     }
 

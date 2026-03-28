@@ -80,8 +80,8 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     /// attempt, which can be:
     /// - `DryRun(String)`: The notification was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(String)`: The notification was successfully sent, including
-    ///   the message that was sent.
+    /// - `Success(String, Option<String>)`: The notification was successfully sent,
+    ///   including the message that was sent and any output from the backend.
     /// - `Failure(String, String)`: There was a failure in sending the notification,
     ///   including an error message describing the failure and the message
     ///   that was attempted to be sent.
@@ -102,7 +102,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         }
 
         match self.backend.emit(ctx, Some(delta), &message) {
-            Ok(_) => super::NotificationResult::Success(message),
+            Ok(output) => super::NotificationResult::Success(message, output),
             Err(e) => super::NotificationResult::Failure(e, message),
         }
     }
@@ -124,8 +124,8 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     /// which can be:
     /// - `DryRun(String)`: The reminder was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(String)`: The reminder was successfully sent, including
-    ///   the message that was sent.
+    /// - `Success(String, Option<String>)`: The reminder was successfully sent,
+    ///   including the message that was sent and any output from the backend.
     /// - `Failure(String, String)`: There was a failure in sending the reminder,
     ///   including an error message describing the failure and the message
     ///   that was attempted to be sent.
@@ -142,7 +142,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         }
 
         match self.backend.emit(ctx, None, &reminder) {
-            Ok(_) => super::NotificationResult::Success(reminder),
+            Ok(output) => super::NotificationResult::Success(reminder, output),
             Err(e) => super::NotificationResult::Failure(e, reminder),
         }
     }

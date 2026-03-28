@@ -26,6 +26,9 @@ pub struct BatsignBackend {
     /// This URL is unique to the target email address and includes a token for authentication.
     url: String,
 
+    /// Whether to print the responses to the HTTP requests to the terminal.
+    show_response: bool,
+
     /// Message strings for Batsign notifications.
     strings: settings::MessageStrings,
 
@@ -49,6 +52,7 @@ impl BatsignBackend {
     ///   for logging.
     /// - `agent`: HTTP agent used to send requests to the Batsign service.
     /// - `url`: Batsign URL to which the notification will be sent.
+    /// - `show_response`: Whether to print the responses to the HTTP requests to the terminal.
     /// - `strings`: Message strings for Batsign notifications.
     /// - `reminder_strings`: Message strings for Batsign reminder notifications.
     ///
@@ -60,6 +64,7 @@ impl BatsignBackend {
         id: usize,
         agent: ureq::Agent,
         url: &str,
+        show_response: bool,
         strings: &settings::MessageStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
@@ -73,6 +78,7 @@ impl BatsignBackend {
             id,
             agent,
             url: url.to_string(),
+            show_response,
             strings: strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
@@ -140,8 +146,11 @@ impl super::Backend for BatsignBackend {
     /// - `message`: The already-composed message to send.
     ///
     /// # Returns
-    /// - `Ok(None)` if the message was sent successfully.
-    /// - `Err(String)` if the send attempt failed.
+    /// - `Ok(String)` if the message was sent successfully and the setting to
+    ///   output the response is enabled, containing the response body as a string.
+    /// - `Ok(None)` if the message was sent successfully but the setting to output
+    ///   the response is disabled.
+    /// - `Err(String)` if the send attempt failed, containing an error message.
     fn emit(
         &mut self,
         _ctx: &notify::Context,
@@ -150,7 +159,13 @@ impl super::Backend for BatsignBackend {
     ) -> Result<Option<String>, String> {
         match self.agent.post(&self.url).send(message) {
             Ok(mut r) => match r.body_mut().read_to_string() {
-                Ok(_) => Ok(None),
+                Ok(output) => {
+                    if self.show_response {
+                        Ok(Some(output))
+                    } else {
+                        Ok(None)
+                    }
+                }
                 Err(e) => Err(e.to_string()),
             },
             Err(e) => Err(e.to_string()),

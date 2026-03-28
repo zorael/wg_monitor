@@ -22,6 +22,9 @@ pub struct CommandSettings {
     ///
     /// Each command string is executed as a separate non-asynchronous process.
     pub commands: Vec<String>,
+
+    /// Whether to print the output of the executed comomands to the terminal.
+    pub show_output: bool,
 }
 
 impl CommandSettings {
@@ -42,6 +45,10 @@ impl CommandSettings {
 
         if let Some(commands) = &command_config.commands {
             self.commands = commands.clone();
+        }
+
+        if let Some(show_output) = command_config.show_output {
+            self.show_output = show_output;
         }
     }
 
