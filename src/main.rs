@@ -731,6 +731,11 @@ fn run_loop(
         ctx.loop_iteration = 1;
     }
 
+    // Add a linebreak in debug mode for better spacing
+    if settings.debug {
+        println!();
+    }
+
     loop {
         match wireguard::get_handshakes(&settings.paths.wg, &settings.monitor.interface) {
             Ok(output) => {
@@ -746,6 +751,16 @@ fn run_loop(
                 continue;
             }
         };
+
+        if settings.debug {
+            // Add a separator line between loop iterations
+            // 80c with timestamps
+            logging::tsprintln!(
+                &settings.disable_timestamps,
+                "---------------------------------------------------------------------"
+            );
+            println!();
+        }
 
         ctx.now = time::SystemTime::now();
 
@@ -830,6 +845,7 @@ fn run_loop(
             let report = notify::send_notification(ctx, &delta, notifiers, &settings);
 
             if settings.debug && report.total != report.skipped {
+                println!();
                 println!("{:#?}\n", report);
             }
 
@@ -849,6 +865,7 @@ fn run_loop(
             let report = notify::send_reminder(ctx, notifiers, &settings);
 
             if settings.debug && report.total != report.skipped {
+                println!();
                 println!("{:#?}\n", report);
             }
         }
