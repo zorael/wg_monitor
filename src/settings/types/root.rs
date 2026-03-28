@@ -1,6 +1,3 @@
-//! Types related to the root settings struct, which aggregates all other
-//! settings types.
-//!
 //! This module defines the `Settings` struct, which serves as the root
 //! configuration struct for the application, aggregating all other settings
 //! types such as `MonitorSettings`, `SlackSettings`, `BatsignSettings`,

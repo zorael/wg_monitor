@@ -2,8 +2,7 @@
 
 use std::time;
 
-/// State struct for notifiers, tracking pending notifications, reminder timing,
-/// and failure tracking to manage the notification flow effectively.
+/// State struct for notifiers.
 #[derive(Debug)]
 pub struct NotifierState {
     /// An optional pending notification that failed to send, so it can be retried later.
@@ -50,7 +49,7 @@ impl NotifierState {
     /// - `ctx`: The notification context to save for the pending notification.
     /// - `delta`: An optional delta representing the changes in peer status that
     ///   triggered the notification. If `None`, this indicates that the pending
-    ///   notification is a reminder rather than a new alert.
+    ///   notification is a reminder rather than a normal notification.
     pub fn save_pending(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.pending = match delta {
             Some(d) => Some(super::PendingNotification::Notification {

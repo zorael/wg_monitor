@@ -1,6 +1,4 @@
-//! Logic related to sending notifications about WireGuard peer status changes,
-//! including building messages based on the notification context and delta,
-//! and dispatching notifications to all configured notifiers.
+//! Logic related to sending notifications about WireGuard peer status changes.
 
 use crate::backend;
 
@@ -9,9 +7,6 @@ use crate::backend;
 /// The `Notifier` is responsible for composing messages based on the
 /// notification context and delta, and for sending the notifications through
 /// the specified backend.
-///
-/// It also tracks the state related to pending notifications, reminder timing,
-/// and failure tracking to manage the notification flow effectively.
 pub struct Notifier<B: backend::Backend> {
     /// State related to pending notifications, reminder timing, and failure tracking.
     pub state: super::NotifierState,
@@ -69,6 +64,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     ///
     /// The method composes a message using the backend's `compose_message`
     /// method, and then sends it using the backend's `emit` method.
+    ///
     /// The result of the notification attempt is returned as a
     /// `NotificationResult`, which can indicate success, failure, a dry run,
     /// or no message to send.
@@ -115,6 +111,7 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     ///
     /// The method composes a reminder message using the backend's
     /// `compose_reminder` method, and then sends it using the backend's `emit` method.
+    ///
     /// The result of the reminder attempt is returned as a `NotificationResult`,
     /// which can indicate success, failure, a dry run, or no message to send.
     ///

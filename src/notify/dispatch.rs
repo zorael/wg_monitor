@@ -25,8 +25,7 @@ fn verbose_print(message: &str, verbose: bool) {
 /// This function iterates through the provided notifiers, checks if their pending
 /// notifications are due for retrying based on the current time and the retry
 /// interval specified in settings, and attempts to resend the notifications if they
-/// are indeed due. The results of each retry attempt are collected into a
-/// `DispatchReport`, which is returned.
+/// are indeed due.
 ///
 /// # Parameters
 /// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to check
@@ -125,8 +124,8 @@ pub fn retry_pending_notifications(
 /// Sends a notification via all notifiers.
 ///
 /// This function iterates through the provided notifiers and attempts to send a
-/// notification using each notifier's `push_notification` method. The results
-/// of each send attempt are collected into a `DispatchReport` which is returned.
+/// notification using each notifier's `push_notification` method.
+///
 /// The function also handles the logic for updating the state of
 /// each notifier based on the result of the send attempt, such as marking
 /// successful notifications or handling failures.
@@ -209,8 +208,7 @@ pub fn send_notification(
 ///
 /// This function iterates through the provided notifiers, checks if they are due
 /// for sending a reminder based on the current time and the reminder interval
-/// specified in settings, and attempts to send a reminder if they are due. The
-/// results of each send attempt are collected into a `DispatchReport`, which is returned.
+/// specified in settings, and attempts to send a reminder if they are due.
 ///
 /// The function also handles the logic for updating the state
 /// of each notifier based on the result of the send attempt, such as marking

@@ -1,8 +1,5 @@
 //! Settings structures for the Command notification backend, which executes
 //! user-defined external commands to send notifications.
-//!
-//! This module defines the `CommandSettings` struct, which holds the runtime
-//! settings for the Command notification backend.
 
 use crate::file_config;
 use crate::settings;

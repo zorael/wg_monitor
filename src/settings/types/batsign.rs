@@ -1,8 +1,4 @@
-//! Types and implementations for Batsign runtime settings, which include
-//! message strings, enabled status, and notification URLs.
-//!
-//! This module defines the `BatsignSettings` struct, which holds the runtime
-//! settings for the Batsign notification backend.
+//! Types and implementations for Batsign runtime settings.
 
 use crate::file_config;
 use crate::settings;

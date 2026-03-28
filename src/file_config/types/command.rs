@@ -1,6 +1,5 @@
 //! Configuration structures for the Command notification backend.
 
-use super::*;
 use serde::{Deserialize, Serialize};
 
 /// Command configuration structure. This mirrors the runtime settings struct
@@ -9,10 +8,10 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct CommandConfig {
     /// Message strings for notifications.
-    pub strings: MessageStringsConfig,
+    pub strings: super::MessageStringsConfig,
 
     /// Message strings for reminder notifications.
-    pub reminder_strings: ReminderStringsConfig,
+    pub reminder_strings: super::ReminderStringsConfig,
 
     /// Whether Command notifications are enabled.
     pub enabled: Option<bool>,

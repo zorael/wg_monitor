@@ -1,6 +1,6 @@
-//! Delta struct representing the changes in peer status between two checks,
-//! key in composing notification messages based on what changed since the
-//! last check.
+//! Delta struct representing the changes in peer status between two checks
+//! (from a key perspective), instrumental in composing notification messages
+//! based on what changed since the last check.
 //!
 //! This struct is computed from the `Context` and contains vectors of public
 //! keys for peers that changed status, categorized by the type of change

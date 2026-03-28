@@ -1,8 +1,5 @@
 //! Settings structures for monitoring the WireGuard interface and the
 //! connection status of its peers.
-//!
-//! This module defines the `MonitorSettings` struct, which holds the runtime
-//! settings for monitoring the WireGuard interface and connection status.
 
 use std::time;
 

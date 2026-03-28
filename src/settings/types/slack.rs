@@ -1,15 +1,10 @@
-//! Types and implementation for Slack runtime settings, which include message
-//! strings, enabled status, and notification URLs.
-//!
-//! This module defines the `SlackSettings` struct, which holds the runtime
-//! settings for the Slack notification backend.
+//! Types and implementation for Slack runtime settings.
 
 use crate::file_config;
 use crate::settings;
 use crate::utils;
 
-/// Runtime settings for the Slack notification backend, including message
-/// strings, enabled status, and notification URLs.
+/// Runtime settings for the Slack notification backend.
 #[derive(Debug, Default)]
 pub struct SlackSettings {
     /// Message strings for Slack notifications.

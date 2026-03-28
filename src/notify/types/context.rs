@@ -11,7 +11,7 @@ use crate::wireguard;
 /// Context struct for notification message-composing, containing the current
 /// and previous state of peers.
 pub struct Context {
-    /// Current peers, keyed by their public key (in form of a `PeerKey`).
+    /// Current peers, keyed by their public key (in form of a `wireguard::PeerKey`).
     ///
     /// Can be used by notification backends to access peer information when
     /// composing notifications.
@@ -22,7 +22,7 @@ pub struct Context {
     pub lost_keys: Vec<wireguard::PeerKey>,
 
     /// Current peers that are missing; they have not been seen at all since
-    /// the program start.
+    /// the VPN started (or restarted).
     pub missing_keys: Vec<wireguard::PeerKey>,
 
     /// Peers that were previously lost in the last check.
@@ -42,7 +42,7 @@ pub struct Context {
     /// indicate how many times the program has checked the peers since it started.
     ///
     /// This starts at 0 for the first run, and increments by 1 on each loop iteration.
-    /// If `--resume` was passed, this will start at 1 instead.
+    /// If `--resume` was passed at the command line, this will start at 1 instead.
     pub loop_iteration: usize,
 
     /// Whether or not the program is resuming from a previous run, used to

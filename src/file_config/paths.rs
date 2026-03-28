@@ -9,15 +9,15 @@ use crate::defaults;
 /// variables and default locations.
 ///
 /// # Notes
-/// 1. If the `WG_MONITOR_CONFIG_DIR` environment variable is set, use that
+/// 1. If the `WG_MONITOR_CONFIG_DIR` environment variable is set, uses that
 ///    as the configuration directory.
-/// 2. If the program is running as root (UID 0), use `/etc/<program_name>`
+/// 2. If the program is running as root (UID 0), uses `/etc/<program_name>`
 ///    as the configuration directory.
-/// 3. If the `XDG_CONFIG_HOME` environment variable is set, use
+/// 3. If the `XDG_CONFIG_HOME` environment variable is set, uses
 ///    `<XDG_CONFIG_HOME>/<program_name>` as the configuration directory.
-/// 4. If the `HOME` environment variable is set, use `<HOME>/.config/<program_name>`
+/// 4. If the `HOME` environment variable is set, uses `<HOME>/.config/<program_name>`
 ///    as the configuration directory.
-/// 5. If none of the above conditions are met, return an error indicating that
+/// 5. If none of the above conditions are met, returns an error indicating that
 ///    the configuration directory could not be resolved.
 ///
 /// # Returns

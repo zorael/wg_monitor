@@ -7,8 +7,6 @@
 //!
 //! The `SlackBackend` composes messages based on the notification context
 //! and delta, and sends them to the specified Slack webhook URL.
-//! Messages are formatted as JSON payloads according to Slack's requirements,
-//! and the backend handles both initial notifications and reminder notifications.
 
 use crate::notify;
 use crate::settings;
