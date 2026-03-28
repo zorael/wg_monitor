@@ -839,7 +839,7 @@ fn run_loop(
         // which is another way of saying "there is at least one new notification to send".
         if !delta.is_empty() {
             if settings.debug {
-                delta.print_nonempty_prefixed("... ");
+                delta.print_nonempty_keys_prefixed("... ");
             }
 
             let report = notify::send_notification(ctx, &delta, notifiers, &settings);

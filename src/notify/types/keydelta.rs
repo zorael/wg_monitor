@@ -108,18 +108,35 @@ impl KeyDelta {
     /// # Parameters
     /// - `prefix`: A string prefix to prepend to each line of output, which can
     ///   help visually distinguish this output in terminal output.
-    pub fn print_nonempty_prefixed(&self, prefix: &str) {
-        if !self.now_lost.is_empty() {
-            println!("{prefix}now lost: {:?}", self.now_lost);
-        }
-        if !self.was_lost.is_empty() {
-            println!("{prefix}was lost: {:?}", self.was_lost);
-        }
-        if !self.now_missing.is_empty() {
-            println!("{prefix}now missing: {:?}", self.now_missing);
-        }
-        if !self.was_missing.is_empty() {
-            println!("{prefix}was missing: {:?}", self.was_missing);
-        }
+    pub fn print_nonempty_keys_prefixed(&self, prefix: &str) {
+        print_nonempty_vec_prefixed(prefix, "now lost", &self.now_lost);
+        print_nonempty_vec_prefixed(prefix, "was lost", &self.was_lost);
+        print_nonempty_vec_prefixed(prefix, "now missing", &self.now_missing);
+        print_nonempty_vec_prefixed(prefix, "was missing", &self.was_missing);
     }
+}
+
+/// Small helper function to print a non-empty vector of peer keys with
+/// a prefix string and a description prepended to the line.
+///
+/// If the vector is empty, nothing is printed.
+///
+/// # Parameters
+/// - `prefix`: A string prefix to prepend to the line, to visually distinguish
+///   it in terminal output.
+/// - `description`: A string description of the vector to include in the output.
+/// - `keys`: A slice of `wireguard::PeerKey` representing the public keys of
+///   the peers that changed status.
+fn print_nonempty_vec_prefixed(prefix: &str, description: &str, keys: &[wireguard::PeerKey]) {
+    if keys.is_empty() {
+        return;
+    }
+
+    println!(
+        "{prefix}{description}: {}",
+        keys.iter()
+            .map(|k| k.as_str())
+            .collect::<Vec<&str>>()
+            .join(", ")
+    );
 }
