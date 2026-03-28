@@ -106,7 +106,7 @@ fn main() -> process::ExitCode {
         );
 
         for error in settings_sanity_check_failures {
-            eprintln!("  * {error}");
+            eprintln!("  - {error}");
         }
 
         if settings.dry_run {
@@ -161,7 +161,7 @@ fn main() -> process::ExitCode {
         );
 
         for error in notifier_sanity_check_failures {
-            eprintln!("  * {error}");
+            eprintln!("  - {error}");
         }
 
         if settings.dry_run {
@@ -207,7 +207,7 @@ fn main() -> process::ExitCode {
         );
 
         for error in handshake_validation_errors {
-            eprintln!("  * {error}");
+            eprintln!("  - {error}");
         }
 
         if settings.dry_run {
@@ -775,7 +775,7 @@ fn run_loop(
                     if settings.debug {
                         let dt: chrono::DateTime<chrono::Local> = last_seen.into();
                         println!(
-                            "  * Peer '{}': last seen {} seconds ago at {}",
+                            "  - Peer '{}': last seen {} seconds ago at {}",
                             peer.human_name,
                             age.as_secs(),
                             dt.format("%Y-%m-%d %H:%M:%S")
@@ -795,7 +795,7 @@ fn run_loop(
                 None => {
                     if settings.debug {
                         println!(
-                            "  * Peer '{}' has never been seen, marking as missing",
+                            "  - Peer '{}' has never been seen, marking as missing",
                             peer.human_name
                         );
                     }
