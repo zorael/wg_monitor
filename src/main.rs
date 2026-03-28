@@ -185,7 +185,13 @@ fn main() -> process::ExitCode {
             "Sleeping for {} before starting monitoring loop...",
             humantime::format_duration(duration)
         );
+
         thread::sleep(duration);
+
+        logging::tsprintln!(
+            &settings.disable_timestamps,
+            "Finished sleep. Continuing..."
+        );
     }
 
     // Verify that we can execute the `wg show` command but don't actually care
