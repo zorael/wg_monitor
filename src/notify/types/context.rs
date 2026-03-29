@@ -105,6 +105,7 @@ impl Context {
             &mut delta.was_lost,
             &mut delta.now_lost,
         );
+
         utils::append_vec_difference(
             &previous.missing_keys,
             &current.missing_keys,
@@ -119,7 +120,7 @@ impl Context {
         delta
     }
 
-    pub fn swap(&mut self, other: &mut Self) {
+    pub fn rotate_into(&mut self, other: &mut Self) {
         mem::swap(self, other);
         self.peers = other.peers.clone();
         self.lost_keys.clear();

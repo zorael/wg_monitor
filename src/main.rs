@@ -815,15 +815,7 @@ fn run_loop(
             }
         }
 
-        // Sort keys by how long they've been lost.
-        wireguard::sort_keys(&mut ctx.lost_keys, &ctx.peers);
-
-        // Don't sort missing keys. None of them should have ever been seen,
-        // so there's no meaningful way to sort them.
-        //wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
-
         // --skip-first logic is here
-        // Only skip after we've computed the key delta
         if should_skip_next {
             if ctx.is_first_run() {
                 // If you --skip-first the first run, reminders will never be sent
@@ -844,27 +836,44 @@ fn run_loop(
             continue;
         }
 
+        // Sort keys by how long they've been lost.
+        wireguard::sort_keys(&mut ctx.lost_keys, &ctx.peers);
+
+        // Don't sort missing keys. None of them should have ever been seen,
+        // so there's no meaningful way to sort them.
+        //wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
+
         let delta = notify::Context::delta_between(ctx, previous_ctx);
 
         if ctx.is_first_run() {
             let report = notify::send_notification(ctx, &delta, notifiers, &settings);
-            end_loop(ctx, previous_ctx, report, &settings, false);
+            end_loop(ctx, previous_ctx, report, &settings);
             continue;
         }
 
-        let failed_previously = notifiers
+        let something_failed_previously = notifiers
             .iter()
             .any(|n| n.state().first_failed_ctx.is_some());
 
-        if failed_previously {
+        if something_failed_previously {
             let report = notify::retry_pending_notifications(ctx, notifiers, &settings);
 
             if settings.debug && report.total != report.skipped {
                 println!("{:#?}\n", report);
             }
 
-            // Don't continue here. Let it also send new notifications
-            // if there are changes. Correct?
+            // At this point a retry had been attempted based on the current
+            // context, the previous one and the delta between the two.
+            // If it succeeded and report.failed is 0, then the current state
+            // of things should have been pushed.
+            // If it failed and report.failed is > 0, then end_loop will sleep
+            // for the short retry interval and try again.
+            // If we pass the true value of failed_previously (which is always
+            // true here), then even a successful retry will cause it to sleep
+            // for the retry interval instead of the normal check interval.
+            // So, we continue?
+            end_loop(ctx, previous_ctx, report, &settings);
+            continue;
         }
 
         // !delta.is_empty() means "there was at least one change since the last loop"
@@ -881,7 +890,7 @@ fn run_loop(
                 println!("{:#?}\n", report);
             }
 
-            end_loop(ctx, previous_ctx, report, &settings, failed_previously);
+            end_loop(ctx, previous_ctx, report, &settings);
             continue;
         }
 
@@ -895,21 +904,13 @@ fn run_loop(
                 println!("{:#?}\n", report);
             }
 
-            end_loop(ctx, previous_ctx, report, &settings, failed_previously);
+            end_loop(ctx, previous_ctx, report, &settings);
             continue;
         }
 
-        let failed_previously = notifiers
-            .iter()
-            .any(|n| n.state().first_failed_ctx.is_some());
-
+        // No report to pass here so use end_loop_minimal and sleep manually
         end_loop_minimal(ctx, previous_ctx);
-
-        if failed_previously {
-            thread::sleep(settings.monitor.retry_interval);
-        } else {
-            thread::sleep(settings.monitor.check_interval);
-        }
+        thread::sleep(settings.monitor.check_interval)
     }
 }
 
@@ -941,7 +942,7 @@ fn run_loop(
 ///   the configured check interval. This allows the main loop to
 ///   sleep for the appropriate amount of time between iterations.
 fn end_loop_minimal(ctx: &mut notify::Context, previous_ctx: &mut notify::Context) {
-    ctx.swap(previous_ctx);
+    ctx.rotate_into(previous_ctx);
     ctx.loop_iteration = previous_ctx.loop_iteration + 1;
     ctx.resume = false;
 }
@@ -951,16 +952,11 @@ fn end_loop(
     previous_ctx: &mut notify::Context,
     report: notify::DispatchReport,
     settings: &settings::Settings,
-    failed_previously: bool,
 ) {
     end_loop_minimal(ctx, previous_ctx);
 
-    if failed_previously {
-        thread::sleep(settings.monitor.retry_interval);
-    } else if report.failed > 0 {
+    if report.failed > 0 {
         thread::sleep(settings.monitor.retry_interval)
-    } else if report.total == 0 {
-        thread::sleep(time::Duration::ZERO)
     } else {
         thread::sleep(settings.monitor.check_interval)
     }

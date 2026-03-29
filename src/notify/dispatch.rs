@@ -70,7 +70,7 @@ pub fn retry_pending_notifications(
             delta => Some(&delta.clone()),
         };
 
-        match send_via_notifier(&first_failed_ctx, delta, n) {
+        match send_via_notifier(&first_failed_ctx, delta, &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -168,7 +168,7 @@ pub fn send_notification(
     };
 
     for n in notifiers.iter_mut() {
-        match send_via_notifier(ctx, Some(delta), n) {
+        match send_via_notifier(ctx, Some(delta), &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -270,7 +270,7 @@ pub fn send_reminder(
             continue;
         }
 
-        match send_via_notifier(ctx, None, n) {
+        match send_via_notifier(ctx, None, &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -347,6 +347,7 @@ pub fn send_reminder(
 fn send_via_notifier(
     ctx: &super::Context,
     delta: Option<&super::KeyDelta>,
+    now: &time::SystemTime,
     n: &mut Box<dyn super::StatefulNotifier>,
 ) -> super::NotificationResult {
     let result = match delta {
@@ -359,9 +360,9 @@ fn send_via_notifier(
         | super::NotificationResult::Success(_, _)
         | super::NotificationResult::NoMessage => {
             if delta.is_some() {
-                n.state_mut().on_successful_notification(&ctx.now);
+                n.state_mut().on_successful_notification(now);
             } else {
-                n.state_mut().on_successful_reminder(&ctx.now);
+                n.state_mut().on_successful_reminder(now);
             }
         }
         super::NotificationResult::Failure(_, _) => {
