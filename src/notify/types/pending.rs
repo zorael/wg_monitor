@@ -2,6 +2,7 @@
 
 /// Enum representing a pending notification that is waiting to be retried.
 #[derive(Debug, Clone)]
+#[cfg(false)]
 pub enum PendingNotification {
     /// A pending notification that is waiting to be retried, carrying the context
     /// and delta of the notification.

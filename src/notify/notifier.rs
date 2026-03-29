@@ -41,7 +41,7 @@ impl<B: backend::Backend> Notifier<B> {
             backend,
             dry_run,
             state: super::NotifierState {
-                pending: None,
+                first_failed_ctx: None,
                 last_notification_sent: None,
                 first_error_at: None,
                 last_reminder_sent: None,

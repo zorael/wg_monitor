@@ -37,6 +37,7 @@ fn verbose_print(message: &str, verbose: bool) {
 /// including the total number of notifiers processed, how many were successful,
 /// failed, had no message to send, or were skipped due to timing reasons.
 pub fn retry_pending_notifications(
+    ctx: &super::Context,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
 ) -> super::DispatchReport {
@@ -58,21 +59,18 @@ pub fn retry_pending_notifications(
         }
 
         // Taking sets pending to None
-        let pending = n.state_mut().pending.take();
-
-        let (ctx, delta) = match &pending {
-            Some(super::PendingNotification::Notification { context, delta }) => {
-                (context, Some(delta))
-            }
-            Some(super::PendingNotification::Reminder { context }) => (context, None),
-            None => {
-                // None was taken
-                report.skipped += 1;
-                continue;
-            }
+        let Some(first_failed_ctx) = n.state_mut().first_failed_ctx.take() else {
+            // No pending notification to retry
+            report.skipped += 1;
+            continue;
         };
 
-        match send_via_notifier(ctx, delta, n) {
+        let delta = match super::Context::delta_between(ctx, &first_failed_ctx) {
+            delta if delta.is_empty() => None,
+            delta => Some(&delta.clone()),
+        };
+
+        match send_via_notifier(&first_failed_ctx, delta, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -112,8 +110,9 @@ pub fn retry_pending_notifications(
                     "[{}] Failed to RETRY notification:",
                     n.name()
                 );
-                eprint!("{e}");
+                eprintln!("{e}");
 
+                n.state_mut().first_failed_ctx = Some(first_failed_ctx);
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
             }
@@ -124,7 +123,7 @@ pub fn retry_pending_notifications(
             super::NotificationResult::Skipped => {
                 // May be due to next [something] not being due yet,
                 // so put back the pending notification
-                n.state_mut().pending = pending;
+                n.state_mut().first_failed_ctx = Some(first_failed_ctx);
                 report.skipped += 1;
             }
         }
@@ -210,7 +209,7 @@ pub fn send_notification(
                     "[{}] Failed to send notification:",
                     n.name()
                 );
-                eprint!("{e}");
+                eprintln!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -312,7 +311,7 @@ pub fn send_reminder(
                     "[{}] Failed to send reminder:",
                     n.name()
                 );
-                eprint!("{e}");
+                eprintln!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -366,7 +365,7 @@ fn send_via_notifier(
             }
         }
         super::NotificationResult::Failure(_, _) => {
-            n.state_mut().on_failure(ctx, delta, &ctx.now);
+            n.state_mut().on_failure(ctx);
         }
         super::NotificationResult::Skipped => {}
     }

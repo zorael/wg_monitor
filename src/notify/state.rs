@@ -6,7 +6,8 @@ use std::time;
 #[derive(Debug)]
 pub struct NotifierState {
     /// An optional pending notification that failed to send, so it can be retried later.
-    pub pending: Option<super::PendingNotification>,
+    //pub pending: Option<super::PendingNotification>,
+    pub first_failed_ctx: Option<super::Context>,
 
     /// The time when the last notification was successfully sent, key in
     /// determining when the next reminder is due.
@@ -50,6 +51,7 @@ impl NotifierState {
     /// - `delta`: An optional delta representing the changes in peer status that
     ///   triggered the notification. If `None`, this indicates that the pending
     ///   notification is a reminder rather than a normal notification.
+    #[cfg(false)]
     pub fn save_pending(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.pending = match delta {
             Some(d) => Some(super::PendingNotification::Notification {
@@ -181,12 +183,10 @@ impl NotifierState {
         };
 
         let growth_multiplier = match self.num_consecutive_failures {
-            0 => 1,  // 1m (...assuming a base interval of 1m)
-            1 => 2,  // 2m
-            2 => 2,  // 2m
-            3 => 5,  // 5m
-            4 => 5,  // 5m
-            _ => 10, // 10m (cap)
+            0..=6 => 1,   // 10s (...assuming a base interval of 10 seconds)
+            7..=12 => 3,  // 30s
+            13..=18 => 6, // 1m
+            _ => 6 * 5,   // 5m (cap)
         };
 
         let next_retry_interval = retry_interval.saturating_mul(growth_multiplier);
@@ -215,19 +215,17 @@ impl NotifierState {
     ///   notification is a reminder rather than a new notification.
     /// - `now`: The current time to record as the last failed send time and to
     ///   set as the first error time if it is not already set.
-    pub fn on_failure(
-        &mut self,
-        ctx: &super::Context,
-        delta: Option<&super::KeyDelta>,
-        now: &time::SystemTime,
-    ) {
-        self.save_pending(ctx, delta);
-        self.last_failed_send = Some(*now);
+    pub fn on_failure(&mut self, ctx: &super::Context) {
+        self.last_failed_send = Some(ctx.now);
         self.num_consecutive_failures += 1;
+
+        if self.first_failed_ctx.is_none() {
+            self.first_failed_ctx = Some(ctx.clone());
+        }
 
         if self.first_error_at.is_none() {
             // Only update first_error_at if there is no error recorded yet
-            self.first_error_at = Some(*now);
+            self.first_error_at = Some(ctx.now);
         }
     }
 
@@ -248,7 +246,7 @@ impl NotifierState {
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
-        self.pending = None;
+        self.first_failed_ctx = None;
         self.last_notification_sent = None;
         self.last_reminder_sent = Some(*now);
         self.num_consecutive_reminders += 1;
@@ -281,7 +279,7 @@ impl NotifierState {
     /// Resets all state related to pending notifications, reminder timing, and
     /// failure tracking.
     pub fn reset(&mut self) {
-        self.pending = None;
+        self.first_failed_ctx = None;
         self.last_notification_sent = None;
         self.first_error_at = None;
         self.last_reminder_sent = None;

@@ -179,9 +179,6 @@ impl super::Backend for CommandBackend {
     ) -> Result<Option<String>, String> {
         let lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.lost_keys);
         let missing_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.missing_keys);
-        let previous_lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.previous_lost_keys);
-        let previous_missing_keys =
-            format_key_timestamp_pairs(&ctx.peers, &ctx.previous_missing_keys);
         let loop_iteration = ctx.loop_iteration.to_string();
 
         let output = match delta {
@@ -197,8 +194,6 @@ impl super::Backend for CommandBackend {
                     .arg(loop_iteration)
                     .arg(lost_keys)
                     .arg(missing_keys)
-                    .arg(previous_lost_keys)
-                    .arg(previous_missing_keys)
                     .arg(now_lost_keys)
                     .arg(now_missing_keys)
                     .arg(was_lost_keys)
@@ -212,8 +207,6 @@ impl super::Backend for CommandBackend {
                 .arg(loop_iteration)
                 .arg(lost_keys)
                 .arg(missing_keys)
-                .arg(previous_lost_keys)
-                .arg(previous_missing_keys)
                 .output()
                 .map_err(|e| e.to_string())?,
         };

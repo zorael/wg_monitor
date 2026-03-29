@@ -5,6 +5,7 @@ use std::mem;
 use std::path;
 use std::time;
 
+use crate::utils;
 use crate::wireguard;
 
 #[derive(Clone, Debug)]
@@ -24,16 +25,6 @@ pub struct Context {
     /// Current peers that are missing; they have not been seen at all since
     /// the VPN started (or restarted).
     pub missing_keys: Vec<wireguard::PeerKey>,
-
-    /// Peers that were previously lost in the last check.
-    ///
-    /// They still might be; this is just a clone of the previous state.
-    pub previous_lost_keys: Vec<wireguard::PeerKey>,
-
-    /// Peers that were previously missing in the last check.
-    ///
-    /// They still might be; this is just a clone of the previous state.
-    pub previous_missing_keys: Vec<wireguard::PeerKey>,
 
     /// The current time.
     pub now: time::SystemTime,
@@ -76,8 +67,6 @@ impl Context {
             peers: collections::HashMap::with_capacity(capacity),
             lost_keys: Vec::with_capacity(capacity),
             missing_keys: Vec::with_capacity(capacity),
-            previous_lost_keys: Vec::with_capacity(capacity),
-            previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
             loop_iteration: 0,
             resume: false,
@@ -101,19 +90,39 @@ impl Context {
         sized
     }
 
-    /// Rotates the peer state by moving the current lost and missing keys to
-    /// the `previous_*` fields, and clearing the current lost and missing keys
-    /// for the next check.
-    pub fn rotate(&mut self) {
-        mem::swap(&mut self.lost_keys, &mut self.previous_lost_keys);
-        mem::swap(&mut self.missing_keys, &mut self.previous_missing_keys);
-        self.lost_keys.clear();
-        self.missing_keys.clear();
-    }
-
     /// Returns `true` if this is the first run of the program (loop iteration
     /// count is zero), and `false` otherwise.
     pub fn is_first_run(&self) -> bool {
         self.loop_iteration == 0
+    }
+
+    pub fn delta_between(current: &Self, previous: &Self) -> super::KeyDelta {
+        let mut delta = super::KeyDelta::new();
+
+        utils::append_vec_difference(
+            &previous.lost_keys,
+            &current.lost_keys,
+            &mut delta.was_lost,
+            &mut delta.now_lost,
+        );
+        utils::append_vec_difference(
+            &previous.missing_keys,
+            &current.missing_keys,
+            &mut delta.was_missing,
+            &mut delta.now_missing,
+        );
+
+        wireguard::sort_keys(&mut delta.now_lost, &current.peers);
+        wireguard::sort_keys(&mut delta.was_lost, &current.peers);
+        wireguard::sort_keys(&mut delta.was_missing, &current.peers);
+
+        delta
+    }
+
+    pub fn swap(&mut self, other: &mut Self) {
+        mem::swap(self, other);
+        self.peers = other.peers.clone();
+        self.lost_keys.clear();
+        self.missing_keys.clear();
     }
 }
