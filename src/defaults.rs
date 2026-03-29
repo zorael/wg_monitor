@@ -21,7 +21,7 @@ pub const CHECK_INTERVAL: time::Duration = time::Duration::from_secs(60);
 pub const REMINDER_INTERVAL: time::Duration = time::Duration::from_secs(3600 * 6);
 
 /// Base retry interval. Will be grown as retry attempts increase.
-pub const RETRY_INTERVAL: time::Duration = time::Duration::from_secs(60); // 1m
+pub const RETRY_INTERVAL: time::Duration = time::Duration::from_secs(10);
 
 /// Default configuration file name.
 pub const CONFIG_FILENAME: &str = "config.toml";
