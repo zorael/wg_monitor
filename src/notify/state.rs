@@ -5,11 +5,21 @@ use std::time;
 /// State struct for notifiers.
 #[derive(Debug)]
 pub struct NotifierState {
-    /// An optional pending notification that failed to send, so it can be retried later.
-    //pub pending: Option<super::PendingNotification>,
-    pub first_failed_ctx: Option<super::Context>,
+    /// The `Context` of one or more failed notification attempts.
+    ///
+    /// A `Context` that fails to be pushed is stored here. Further failed attempts
+    /// will merge their `Context` with the existing one. This means the final
+    /// notification may include conflicting information from multiple attempts,
+    /// but that's the design for now.
+    pub failed_ctx: Option<super::Context>,
 
-    pub first_failed_delta: Option<super::KeyDelta>,
+    /// The `KeyDelta` of one or more failed notification attempts.
+    ///
+    /// A `KeyDelta` that fails to be pushed is stored here. Further failed attempts
+    /// will merge their `KeyDelta` with the existing one. This means the final
+    /// notification may include conflicting information from multiple attempts,
+    /// but that's the design for now.
+    pub failed_delta: Option<super::KeyDelta>,
 
     /// The time when the last notification was successfully sent, key in
     /// determining when the next reminder is due.
@@ -42,32 +52,6 @@ pub struct NotifierState {
 }
 
 impl NotifierState {
-    /// Saves the pending notification in the state, which can be either a
-    /// normal notification (with a delta) or a reminder (without a delta),
-    /// based on the provided arguments.
-    ///
-    /// The pending notification is stored in the `pending` field of the state,
-    /// wrapped in the appropriate `PendingNotification` variant based on
-    /// whether a delta is provided or not.
-    ///
-    /// # Parameters
-    /// - `ctx`: The notification context to save for the pending notification.
-    /// - `delta`: An optional delta representing the changes in peer status that
-    ///   triggered the notification. If `None`, this indicates that the pending
-    ///   notification is a reminder rather than a normal notification.
-    #[cfg(false)]
-    pub fn save_pending(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
-        self.pending = match delta {
-            Some(d) => Some(super::PendingNotification::Notification {
-                context: ctx.clone(),
-                delta: d.clone(),
-            }),
-            None => Some(super::PendingNotification::Reminder {
-                context: ctx.clone(),
-            }),
-        }
-    }
-
     /// Checks if the next reminder is due based on the time since the last
     /// reminder or notification was sent (or the first error was recorded if
     /// no reminder or notification has been sent yet) and the number of
@@ -222,28 +206,25 @@ impl NotifierState {
         self.last_failed_send = Some(ctx.now);
         self.num_consecutive_failures += 1;
 
-        /*self.num_consecutive_notifications = 0;
-        self.num_consecutive_reminders = 0;*/
-
-        match &mut self.first_failed_ctx {
+        match &mut self.failed_ctx {
             Some(first_failed_ctx) => {
                 first_failed_ctx.merge(ctx);
                 first_failed_ctx.peers = ctx.peers.clone();
                 first_failed_ctx.now = ctx.now;
             }
             None => {
-                self.first_failed_ctx = Some(ctx.clone());
+                self.failed_ctx = Some(ctx.clone());
             }
         }
 
-        match &mut self.first_failed_delta {
+        match &mut self.failed_delta {
             Some(first_failed_delta) if delta.is_some() => {
-                let delta = delta.expect("we just checked)");
+                let delta = delta.expect("the arm guard verified that it is Some(KeyDelta)");
                 first_failed_delta.merge(delta);
             }
             Some(_) => {}
             None => {
-                self.first_failed_delta = delta.cloned();
+                self.failed_delta = delta.cloned();
             }
         }
 
@@ -270,8 +251,8 @@ impl NotifierState {
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
-        self.first_failed_ctx = None;
-        self.first_failed_delta = None;
+        self.failed_ctx = None;
+        self.failed_delta = None;
         self.last_notification_sent = None;
         self.last_reminder_sent = Some(*now);
         self.num_consecutive_reminders += 1;
@@ -306,8 +287,8 @@ impl NotifierState {
     /// Resets all state related to pending notifications, reminder timing, and
     /// failure tracking.
     pub fn reset(&mut self) {
-        self.first_failed_ctx = None;
-        self.first_failed_delta = None;
+        self.failed_ctx = None;
+        self.failed_delta = None;
         self.last_notification_sent = None;
         self.first_error_at = None;
         self.last_reminder_sent = None;

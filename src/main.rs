@@ -701,14 +701,25 @@ fn sanity_check_notifiers(
 ///
 /// 1. Executes the `wg show` command to get the latest handshakes and updates
 ///    the context with the new information.
-/// 2. Determines which peers are lost or missing based on the last seen
-///    timestamps and the configured timeout.
-/// 3. Computes the delta of changes since the last iteration.
-/// 4. If there are changes, sends notifications through the configured notifiers.
-/// 5. If there are no changes but there are lost/missing peers,
-///    sends reminders as needed.
-/// 6. Retries any pending notifications that are due for a retry.
-/// 7. Sleeps for the configured check interval before the next iteration.
+/// 2. Calculates a `notify::KeyDelta` that represents the difference between
+///    the current peer context (who is present, lost, missing) and the previous one.
+/// 3. If this is the first run, sends a notification with the initial state of all peers.
+/// 4. If there are any notifiers with pending failures, attempts to retry them.
+///    The number of remaining failures after the retry attempt is recorded.
+///    (If this number is 0, all retries have succeeded.)
+///    The loop proceeds; there are no `continue`s after this step.
+/// 5. If there were any changes between the previous loop and the current one,
+///    determined by whether or not the `notify::KeyDelta` is empty, it infers
+///    that there should be a notification sent. Assuming one was not sent too
+///    recently, it pushes one about these changes through all notifiers.
+///    `end_loop` is called here and the loop continues to the next iteration.
+/// 6. If there were no changes but there are still lost or missing peers,
+///    it infers there should be a remind sent. Assuming one was not sent too
+///    recently, it pushes a reminder through all notifiers.
+///    `end_loop` is called here and the loop continues to the next iteration.
+/// 7. If there were no changes and no lost/missing peers, it infers that there
+///    is nothing to notify about and does not send anything.
+///    `end_loop_minimal` is called here and the loop continues to the next iteration.
 ///
 /// # Parameters
 /// - `ctx`: The notification context, which holds the current state of peers
@@ -837,32 +848,28 @@ fn run_loop(
         }
 
         // Sort keys by how long they've been lost.
-        wireguard::sort_keys(&mut ctx.lost_keys, &ctx.peers);
-
         // Don't sort missing keys. None of them should have ever been seen,
         // so there's no meaningful way to sort them.
-        //wireguard::sort_keys(&mut ctx.missing_keys, &ctx.peers);
+        wireguard::sort_keys(&mut ctx.lost_keys, &ctx.peers);
 
         let delta = notify::Context::delta_between(ctx, previous_ctx);
 
         if ctx.is_first_run() {
-            let report = notify::send_notification(ctx, &delta, notifiers, &settings);
-            end_loop(ctx, previous_ctx, report, &settings);
+            let first_run_report = notify::send_notification(ctx, &delta, notifiers, &settings);
+            end_loop(ctx, previous_ctx, first_run_report, &settings);
             continue;
         }
 
-        let mut num_failed_notifiers = notifiers
+        let mut num_notifiers_with_failures = notifiers
             .iter()
-            .filter(|n| n.state().first_failed_ctx.is_some())
+            .filter(|n| n.state().failed_ctx.is_some())
             .count() as u32;
 
-        println!("::::::::: num failed previously: {num_failed_notifiers}");
+        if num_notifiers_with_failures > 0 {
+            let retry_report = notify::retry_pending_notifications(ctx, notifiers, &settings);
 
-        if num_failed_notifiers > 0 {
-            let report = notify::retry_pending_notifications(ctx, notifiers, &settings);
-
-            if settings.debug && report.total != report.skipped {
-                println!("{:#?}\n", report);
+            if settings.debug && retry_report.total != retry_report.skipped {
+                println!("{:#?}\n", retry_report);
             }
 
             // At this point a retry has been attempted based on the current
@@ -886,71 +893,55 @@ fn run_loop(
             // send a normal notification too, directly after the retry.
             //
             // Just drop down, I think.
-            num_failed_notifiers -= report.successful;
-            thread::sleep(settings.monitor.retry_interval);
+            num_notifiers_with_failures -= retry_report.successful;
 
-            /*if report.failed > 0 || report.skipped > 0 {
-                println!("retry sleep and continue");
+            // Sleep briefly so that if there is a notification waiting below
+            // it will not be sent immediately after this retry attempt.
+            if retry_report.successful > 0 || retry_report.failed > 0 {
+                // A retry attempt was made. Just in case there are more
+                // notifications waiting below, sleep briefly here to rate-limit things.
                 thread::sleep(settings.monitor.retry_interval);
-                continue;
-            } else {
-                let something_failed_previously = notifiers
-                    .iter()
-                    .any(|n| n.state().first_failed_ctx.is_some());
-
-                if something_failed_previously {
-                    logging::tseprintln!(
-                        &settings.disable_timestamps,
-                        "!!! One or more notifiers have a failing context but report.failed/skipped was 0.",
-                    );
-                    println!("{:#?}\n", report);
-                    thread::sleep(settings.monitor.retry_interval);
-                    continue;
-                }
-            }*/
+            }
         }
 
-        // !delta.is_empty() means "there was at least one change since the last loop"
-        // which is another way of saying "there is at least one new notification to send".
-        if !delta.is_empty() {
+        let there_was_at_least_one_change_since_previous_loop = !delta.is_empty();
+
+        if there_was_at_least_one_change_since_previous_loop {
             if settings.debug {
                 delta.print_nonempty_keys_prefixed("... ");
             }
 
-            let report = notify::send_notification(ctx, &delta, notifiers, &settings);
+            let notification_report = notify::send_notification(ctx, &delta, notifiers, &settings);
 
-            if settings.debug && report.total != report.skipped {
+            if settings.debug && notification_report.total != notification_report.skipped {
                 println!();
-                println!("{:#?}\n", report);
+                println!("{:#?}\n", notification_report);
             }
 
-            end_loop(ctx, previous_ctx, report, &settings);
+            end_loop(ctx, previous_ctx, notification_report, &settings);
             continue;
         }
 
-        // !ctx.missing_keys.is_empty() || !ctx.lost_keys.is_empty() means
-        // "there is at least one peer missing or lost"
-        if !ctx.missing_keys.is_empty() || !ctx.lost_keys.is_empty() {
-            let report = notify::send_reminder(ctx, notifiers, &settings);
+        // If we're here, there were no changes since the previous loop
 
-            if settings.debug && report.total != report.skipped {
+        let there_is_at_least_one_peer_missing_or_lost =
+            !ctx.missing_keys.is_empty() || !ctx.lost_keys.is_empty();
+
+        if there_is_at_least_one_peer_missing_or_lost {
+            let reminder_report = notify::send_reminder(ctx, notifiers, &settings);
+
+            if settings.debug && reminder_report.total != reminder_report.skipped {
                 println!();
-                println!("{:#?}\n", report);
+                println!("{:#?}\n", reminder_report);
             }
 
-            end_loop(ctx, previous_ctx, report, &settings);
+            end_loop(ctx, previous_ctx, reminder_report, &settings);
             continue;
         }
 
-        /*let something_failed_previously = notifiers
-        .iter()
-        .any(|n| n.state().first_failed_ctx.is_some());*/
-
-        // No report to pass here so use end_loop_minimal and sleep manually
         end_loop_minimal(ctx, previous_ctx);
-        //thread::sleep(settings.monitor.check_interval)
 
-        if num_failed_notifiers > 0 {
+        if num_notifiers_with_failures > 0 {
             thread::sleep(settings.monitor.retry_interval);
         } else {
             thread::sleep(settings.monitor.check_interval);
@@ -958,39 +949,41 @@ fn run_loop(
     }
 }
 
-/// Perform some cleanup and sleep at the end of each loop duration.
+/// Perform some cleanup at the end of a loop.
 ///
-/// This is only called from within the main loop in `run_loop`, but as it doesn't
-/// actually use any variables from that scope, it can be a standalone function.
-/// It is run at the end of each loop iteration to handle common tasks.
+/// This can be called directly if the callsite takes care of sleeping, but is
+/// otherwise mostly called indirectly via `end_loop`.
 ///
-/// This function performs the following steps:
+/// It has three main responsibilities;
 ///
-/// 1. Rotates the peer states in the context, which involves moving elements in
-///    the currently lost and missing peer vectors to the previously lost and
-///    missing peer vectors, and then resetting both current vectors for the
-///    next iteration.
-/// 2. Sets the `resume` flag in the context to false, which is something that
-///    is only used in the first iteration, if the `--resume` flag is set.
-///    Since this function will be called at the end of each loop, it follows
-///    that the `resume` flag should be false from hereon after, in all cases.
-/// 3. Increments the loop iteration count.
-/// 4. Sleeps for the specified duration, which is the configured
-///    check interval, to control how long the program waits between iterations
-///    of the main loop. It can also be other values.
+/// 1. Rotate the current `notify::Context` into the previous one and clear itself
+///    afterwards, making it a clean slate for the next loop iteration.
+/// 2. Increment the loop iteration count in the context.
+/// 3. Set the `resume` flag to `false`, since if this function is bein called,
+///    we're no longer in the initial state in which `resume` plays a role.
 ///
 /// # Parameters
-/// - `ctx`: The notification context, which is used to rotate the peer states
-///   and update the loop iteration count.
-/// - `duration`: The duration to sleep for at the end of the loop, which is
-///   the configured check interval. This allows the main loop to
-///   sleep for the appropriate amount of time between iterations.
+/// - `ctx`: The `notify::Context` used as a basis for the notification attempt.
+/// - `previous_ctx`: The previous `notify::Context` from the previous loop
+///   iteration, which will be overwritten with the current context's data.
 fn end_loop_minimal(ctx: &mut notify::Context, previous_ctx: &mut notify::Context) {
     ctx.rotate_into(previous_ctx);
     ctx.loop_iteration = previous_ctx.loop_iteration + 1;
     ctx.resume = false;
 }
 
+/// Performs some clean-up and sleeps depending on the results of a
+/// notification attempt.
+///
+/// `end_loop_minimal` is used for the clean-up. The additional logic in this
+/// function is to determine how long to sleep for.
+///
+/// # Parameters
+/// - `ctx`: The `notify::Context` used as a basis for the notification attempt.
+/// - `previous_ctx`: The previous `notify::Context` from the previous loop iteration.
+/// - `report`: The report from the notification attempt.
+/// - `settings`: The program settings, which houses the configured intervals
+///   for sleeping after loops.
 fn end_loop(
     ctx: &mut notify::Context,
     previous_ctx: &mut notify::Context,

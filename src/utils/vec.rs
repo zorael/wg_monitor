@@ -196,13 +196,5 @@ mod tests_vec_difference {
             only_currently_lost,
             vec!["peer2".to_string(), "peer4".to_string()]
         );
-
-        let left = vec![
-            "peer1".to_string(),
-            "peer2".to_string(),
-            "peer3".to_string(),
-        ];
-
-        let right = vec!["peer3".to_string(), "peer5".to_string()];
     }
 }

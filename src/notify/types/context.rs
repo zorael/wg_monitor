@@ -96,6 +96,17 @@ impl Context {
         self.loop_iteration == 0
     }
 
+    /// Computes the `KeyDelta` between the current `Context` and a previous `Context`,
+    /// which represents the changes in peer status (lost and missing peers) between
+    /// the two contexts.
+    ///
+    /// # Parameters
+    /// - `current`: The current `Context` representing the latest state of peers.
+    /// - `previous`: The previous `Context` representing the previous state of peers.
+    ///
+    /// # Returns
+    /// A `KeyDelta` instance containing the differences in lost and missing peers
+    /// between the current and previous contexts.
     pub fn delta_between(current: &Self, previous: &Self) -> super::KeyDelta {
         let mut delta = super::KeyDelta::new();
 
@@ -120,6 +131,15 @@ impl Context {
         delta
     }
 
+    /// Rotates the current `Context` into another `Context`, effectively
+    /// swapping their contents.
+    ///
+    /// One the swap is done, the `lost_keys` and `missing_keys` of the current
+    /// `Context` are cleared.
+    ///
+    /// # Parameters
+    /// - `other`: The other `Context` to rotate into, which will receive the
+    ///   contents of the current `Context`.
     pub fn rotate_into(&mut self, other: &mut Self) {
         mem::swap(self, other);
         self.peers = other.peers.clone();
@@ -127,11 +147,25 @@ impl Context {
         self.missing_keys.clear();
     }
 
-    #[cfg(false)]
-    pub fn apply(&mut self, other: &Self) {
-        let lost_keys = utils::get_elements_not_in_other_vec(&self.lost_keys, &other.lost_keys);
+    /// Updates the `now` and `loop_iteration` fields of the `Context` with the
+    /// provided values.
+    ///
+    /// # Parameters
+    /// - `now`: The new current time to set in the `Context`.
+    /// - `loop_iteration`: The new loop iteration count to set in the `Context`.
+    pub fn update_time_and_iteration(&mut self, now: time::SystemTime, loop_iteration: usize) {
+        self.now = now;
+        self.loop_iteration = loop_iteration;
     }
 
+    /// Takes another `Context` and merges its lost and missing peer information
+    /// into the current `Context`.
+    ///
+    /// The current `Context` becomes a union of the two.
+    ///
+    /// # Parameters
+    /// - `other`: The other `Context` whose lost and missing peer information
+    ///   will be merged into the current `Context`.
     pub fn merge(&mut self, other: &Self) {
         let lost_unique_to_other =
             utils::get_elements_not_in_other_vec(&other.lost_keys, &self.lost_keys);
