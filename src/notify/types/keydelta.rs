@@ -33,25 +33,8 @@ pub struct KeyDelta {
 }
 
 impl KeyDelta {
-    /// Creates a new `KeyDelta` with the specified capacity for the key vectors.
-    ///
-    /// # Parameters
-    /// - `capacity`: The capacity to use for the key vectors, which can help
-    ///   avoid unnecessary allocations if the number of peers is known in advance.
-    ///
-    /// # Returns
-    /// A new `KeyDelta` instance with the specified capacity for the key vectors,
-    /// initialized with empty vectors.
-    #[cfg(false)]
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            now_lost: Vec::with_capacity(capacity),
-            was_lost: Vec::with_capacity(capacity),
-            now_missing: Vec::with_capacity(capacity),
-            was_missing: Vec::with_capacity(capacity),
-        }
-    }
-
+    /// Creates a new `KeyDelta` with empty vectors for all categories of
+    /// peer status changes.
     pub fn new() -> Self {
         Self {
             now_lost: Vec::new(),
@@ -59,16 +42,6 @@ impl KeyDelta {
             now_missing: Vec::new(),
             was_missing: Vec::new(),
         }
-    }
-
-    /// Clears all the key vectors in the `KeyDelta`, effectively resetting it to an
-    /// empty state while retaining the allocated capacity.
-    #[cfg(false)]
-    pub fn clear(&mut self) {
-        self.now_lost.clear();
-        self.was_lost.clear();
-        self.now_missing.clear();
-        self.was_missing.clear();
     }
 
     /// Returns `true` if all the key vectors in the `KeyDelta` are empty, indicating
@@ -94,6 +67,11 @@ impl KeyDelta {
         print_nonempty_vec_prefixed(prefix, "was missing", &self.was_missing);
     }
 
+    /// Merges another `KeyDelta` into the current `KeyDelta`, effectively
+    /// making this one a union of the two.
+    ///
+    /// # Parameters
+    /// - `other`: The other `KeyDelta` to merge into the current one.
     pub fn merge(&mut self, other: &Self) {
         let now_lost_unique_to_other =
             utils::get_elements_not_in_other_vec(&other.now_lost, &self.now_lost);

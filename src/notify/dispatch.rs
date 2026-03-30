@@ -28,6 +28,9 @@ fn verbose_print(message: &str, verbose: bool) {
 /// are indeed due.
 ///
 /// # Parameters
+/// - `ctx`: The notification context containing information about the current
+///   state of peers and other relevant data needed for composing the
+///   notification message to retry sending.
 /// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to check
 ///   for pending notifications and attempt retries on.
 /// - `settings`: The settings struct which contains the retry interval.
@@ -353,6 +356,8 @@ pub fn send_reminder(
 /// - `delta`: The changes detected since the last notification, used to determine
 ///   what has changed and render the message accordingly.
 ///   This will be `None` if sending a reminder instead of a notification.
+/// - `now`: The current time, used for updating the notifier's state if the send
+///   attempt is successful.
 /// - `n`: The notifier to send the notification or reminder through.
 ///
 /// # Returns

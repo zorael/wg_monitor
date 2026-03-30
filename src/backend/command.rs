@@ -113,7 +113,6 @@ impl super::Backend for CommandBackend {
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
-        println!("backend composer here, passing onto prepare_message_body");
         let header_closure = |h: &str| h.to_string();
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
     }
@@ -145,16 +144,14 @@ impl super::Backend for CommandBackend {
     ///    --resume was passed, in which case it starts at 1)
     /// 4. A comma-separated string of lost keys in the format "`key:timestamp`"
     /// 5. A comma-separated string of missing keys in the format "`key:timestamp`"
-    /// 6. A comma-separated string of previous lost keys in the format "`key:timestamp`"
-    /// 7. A comma-separated string of previous missing keys in the format "`key:timestamp`"
-    /// 8. If a key delta is provided, a comma-separated string of keys that are now
+    /// 6. If a key delta is provided, a comma-separated string of keys that are now
     ///    lost in the format "`key:timestamp`"
-    /// 9. If a key delta is provided, a comma-separated string of keys that are now
+    /// 7. If a key delta is provided, a comma-separated string of keys that are now
     ///    missing in the format "`key:timestamp`"
-    /// 10. If a key delta is provided, a comma-separated string of keys that were
-    ///     lost (but are no longer) in the format "`key:timestamp`"
-    /// 11. If a key delta is provided, a comma-separated string of keys that
-    ///     were missing (but are no longer) in the format "`key:timestamp`"
+    /// 8. If a key delta is provided, a comma-separated string of keys that were
+    ///    lost (but are no longer) in the format "`key:timestamp`"
+    /// 9. If a key delta is provided, a comma-separated string of keys that
+    ///    were missing (but are no longer) in the format "`key:timestamp`"
     ///
     /// Any parameter for which there is no value (as in, no lost keys, no keys
     /// previously missing, etc), the argument passed but is simply an empty string `""`.
@@ -211,10 +208,6 @@ impl super::Backend for CommandBackend {
                 .output()
                 .map_err(|e| e.to_string())?,
         };
-
-        if ctx.loop_iteration >= 3 && ctx.loop_iteration < 30 {
-            return Err(ctx.loop_iteration.to_string());
-        }
 
         // Early exit if everything is okay and there's no output to show
         if !self.show_output && output.status.success() {

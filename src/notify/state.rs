@@ -200,8 +200,6 @@ impl NotifierState {
     /// - `delta`: An optional delta representing the changes in peer status that
     ///   triggered the notification. If `None`, this indicates that the pending
     ///   notification is a reminder rather than a new notification.
-    /// - `now`: The current time to record as the last failed send time and to
-    ///   set as the first error time if it is not already set.
     pub fn on_failure(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.last_failed_send = Some(ctx.now);
         self.num_consecutive_failures += 1;
