@@ -374,8 +374,6 @@ fn send_via_notifier(
         None => n.push_reminder(ctx),
     };
 
-    println!("push_notification/reminder result: {:?}", result);
-
     match &result {
         super::NotificationResult::DryRun(_)
         | super::NotificationResult::Success(_, _)
