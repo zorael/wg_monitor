@@ -72,6 +72,11 @@ pub struct MessageStrings {
     /// peers that just appeared, since in all such cases the delta of the
     /// peer's last seen time is less than or equal to the check interval.
     pub peer_no_timestamp: String,
+
+    /// Message string for a peer that is returning with a timestamp.
+    ///
+    /// This translates to "returning" and "appearing" peers.
+    pub returning_peer_with_timestamp: String,
 }
 
 impl Default for MessageStrings {
@@ -92,6 +97,7 @@ impl Default for MessageStrings {
             bullet_point: " - ".to_string(),
             peer_with_timestamp: "{peer} (last seen {when})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
+            returning_peer_with_timestamp: "{peer} (returned {when})".to_string(),
         }
     }
 }

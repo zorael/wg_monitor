@@ -72,7 +72,10 @@ fn format_generic_message(
         return message.trim_end().to_string();
     }
 
-    let mut add_section = |keys: &[wireguard::PeerKey], header: &str, disable_timestamps: bool| {
+    let mut add_section = |keys: &[wireguard::PeerKey],
+                           header: &str,
+                           disable_timestamps: bool,
+                           returning_peer: bool| {
         append_message_section(
             &ctx.peers,
             &mut message,
@@ -80,14 +83,16 @@ fn format_generic_message(
             header,
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
+            &strings.returning_peer_with_timestamp,
             &strings.bullet_point,
             disable_timestamps,
+            returning_peer,
         );
     };
 
     if ctx.resume {
-        add_section(&ctx.lost_keys, &strings.still_lost, false);
-        add_section(&ctx.missing_keys, &strings.still_missing, false);
+        add_section(&ctx.lost_keys, &strings.still_lost, false, false);
+        add_section(&ctx.missing_keys, &strings.still_missing, false, false);
 
         if !message.is_empty() && !strings.footer.is_empty() {
             //message.push('\n'); // append_message_section leaves an extra newline
@@ -104,14 +109,15 @@ fn format_generic_message(
         utils::get_elements_not_in_other_vec(&ctx.missing_keys, &delta.now_missing);
 
     // Revisit this order.
-    add_section(&delta.now_lost, &strings.lost, false);
-    add_section(&delta.was_lost, &strings.returned, true);
-    add_section(&delta.now_missing, &strings.forgot, false);
-    add_section(&delta.was_missing, &strings.appeared, true);
-    add_section(&lost_sans_now_lost_keys, &strings.still_lost, false);
+    add_section(&delta.now_lost, &strings.lost, false, false);
+    add_section(&delta.was_lost, &strings.returned, true, true);
+    add_section(&delta.now_missing, &strings.forgot, false, false);
+    add_section(&delta.was_missing, &strings.appeared, true, true);
+    add_section(&lost_sans_now_lost_keys, &strings.still_lost, false, false);
     add_section(
         &missing_sans_now_missing_keys,
         &strings.still_missing,
+        false,
         false,
     );
 
@@ -148,7 +154,9 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
             header,
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
+            "",
             &strings.bullet_point,
+            false,
             false,
         );
     };
@@ -225,11 +233,15 @@ fn format_peer_line(
 ///   time ("lost" peers and "forgotten" peers).
 /// - `peer_no_timestamp`: The pattern to use for formatting peers without a known last seen
 ///   time ("missing" peers, "returning" peers and "appearing" peers).
+/// - `returning_peer_with_timestamp`: The pattern to use for formatting
+///   "returning" peers that have a known last seen time.
 /// - `bullet_point`: The string to use as a bullet point for listing peers in this
 ///   section.
 /// - `disable_timestamps`: A boolean indicating whether to disable timestamps in the
 ///   peer formatting, which is used to select between use of `peer_with_timestamp`
 ///   and `peer_no_timestamp` patterns for formatting peers in this section.
+/// - `returning_peer`: A boolean indicating whether the peers in this section are
+///   "returning" peers (peers that were lost or missing but are now present again).
 #[allow(clippy::too_many_arguments)]
 fn append_message_section(
     peers: &collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
@@ -238,17 +250,19 @@ fn append_message_section(
     header: &str,
     peer_with_timestamp: &str,
     peer_no_timestamp: &str,
+    returning_peer_with_timestamp: &str,
     bullet_point: &str,
     disable_timestamps: bool,
+    returning_peer: bool,
 ) {
     if keys.is_empty() || header.is_empty() {
         return;
     }
 
-    let peer_with_timestamp = if disable_timestamps {
-        peer_no_timestamp
-    } else {
-        peer_with_timestamp
+    let peer_with_timestamp = match (disable_timestamps, returning_peer) {
+        (true, _) => peer_no_timestamp,
+        (false, true) => returning_peer_with_timestamp,
+        (false, false) => peer_with_timestamp,
     };
 
     message.push_str(header);
