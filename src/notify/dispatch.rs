@@ -119,7 +119,7 @@ pub fn retry_pending_notifications(
                 eprintln!("{e}");
                 verbose_print(&message, settings.verbose);
 
-                // Put it back
+                // Put them back
                 n.state_mut().failed_ctx = Some(failed_ctx);
                 n.state_mut().failed_delta = failed_delta;
                 report.failed += 1;
@@ -138,7 +138,7 @@ pub fn retry_pending_notifications(
                     n.name()
                 );
 
-                // Put it back
+                // Put them back
                 n.state_mut().failed_ctx = Some(failed_ctx);
                 n.state_mut().failed_delta = failed_delta;
                 report.skipped += 1;
@@ -387,7 +387,9 @@ fn send_via_notifier(
             }
         }
         super::NotificationResult::Failure(_, _) => {
-            n.state_mut().on_failure(ctx, delta);
+            if !ctx.has_failed {
+                n.state_mut().on_failure(ctx, delta);
+            }
         }
         super::NotificationResult::Skipped => {}
     }

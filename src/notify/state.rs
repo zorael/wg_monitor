@@ -221,72 +221,28 @@ impl NotifierState {
 
     /// Handles the logic for when a reminder is successfully sent.
     ///
-    /// This includes updating the
-    /// last reminder sent time, incrementing the number of consecutive reminders,
-    /// and resetting the failure tracking since a successful reminder indicates
-    /// that the issue is still being actively worked on and should not be
-    /// considered as failed for the purposes of retry timing.
-    ///
-    /// # Notes
-    /// This method should be called whenever a reminder is successfully sent,
-    /// regardless of whether it is the first reminder or a subsequent reminder,
-    /// to ensure that the state is updated correctly for future reminder and
-    /// retry timing.
-    ///
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
-        //self.failed_ctx = None;
-        //self.failed_delta = None;
         self.last_notification_sent = None;
         self.last_reminder_sent = Some(*now);
-        self.last_failed_send = None;
         self.num_consecutive_reminders += 1;
-        //self.first_error_at = None;
-        //self.num_consecutive_failures = 0;
     }
 
     /// Handles the logic for when a notification is successfully sent.
     ///
-    /// This includes resetting
-    /// all state related to failed notifications, reminder timing, and failure
-    /// tracking, since a successful notification indicates that the issue has
-    /// been resolved and there is no need to track any failed state or send
-    /// reminders or retries.
-    ///
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_notification(&mut self, now: &time::SystemTime) {
-        //self.failed_ctx = None;
-        //self.failed_delta = None;
         self.last_notification_sent = Some(*now);
         self.last_reminder_sent = None;
-        self.last_failed_send = None;
         self.num_consecutive_reminders = 0;
-        //self.first_error_at = None;
-        //self.num_consecutive_failures = 0;
     }
 
     /// Handles the logic for when a retry attempt is successful.
-    ///
-    /// # Parameters
-    /// - `now`: The current time.
     pub fn on_successful_retry(&mut self) {
         self.last_failed_send = None;
         self.first_error_at = None;
-        self.num_consecutive_failures = 0;
-    }
-
-    /// Resets all state.
-    #[cfg(false)]
-    pub fn reset(&mut self) {
-        self.failed_ctx = None;
-        self.failed_delta = None;
-        self.last_notification_sent = None;
-        self.first_error_at = None;
-        self.last_reminder_sent = None;
-        self.last_failed_send = None;
-        self.num_consecutive_reminders = 0;
         self.num_consecutive_failures = 0;
     }
 }
