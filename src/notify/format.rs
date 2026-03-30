@@ -290,8 +290,6 @@ pub fn prepare_message_body(
     strings: &settings::MessageStrings,
     header_closure: impl Fn(&str) -> String,
 ) -> Option<String> {
-    println!("prepare_message_body called");
-
     let mut message = String::new();
     let body = &format_generic_message(ctx, delta, strings);
 
