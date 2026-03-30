@@ -882,8 +882,8 @@ fn run_loop(
             num_notifiers_with_failures -= retry_report.successful;
 
             if retry_report.successful > 0 || retry_report.failed > 0 {
-                // One or more retry attempts were made and either succeded, or failed.
-                // The important part here is that attemps *were* made, so in the
+                // One or more retry attempts were made and either succeeded, or failed.
+                // The important part here is that attempts *were* made, so in the
                 // case where there are more notifications waiting below,
                 // we want to sleep a bit to rate-limit ourselves slightly.
                 // The number is just a guess at a reasonable amount.
