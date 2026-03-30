@@ -25,29 +25,19 @@ pub struct NotifierState {
     /// determining when the next reminder is due.
     pub last_notification_sent: Option<time::SystemTime>,
 
-    /// The time when the first error was recorded for the current pending notification,
-    /// used to determine how long the notification has been pending so
-    /// the reminder interval can be grown over time.
+    /// The time when a first error was recorded.
     pub first_error_at: Option<time::SystemTime>,
 
-    /// The time when the last reminder was sent, used to determine when the next
-    /// reminder is due based on the reminder interval and the number of consecutive
-    /// reminders already sent.
+    /// The time when the last reminder was sent.
     pub last_reminder_sent: Option<time::SystemTime>,
 
-    /// The time when the last failed send was recorded, used to determine when the next
-    /// retry is due based on the retry interval and the number of consecutive
-    /// failures already recorded.
+    /// The time when the last send failed.
     pub last_failed_send: Option<time::SystemTime>,
 
-    pub num_consecutive_notifications: u32,
-
-    /// The number of consecutive reminders sent for the current pending notification,
-    /// used to grow the reminder interval over time.
+    /// The number of consecutive reminders sent.
     pub num_consecutive_reminders: u32,
 
-    /// The number of consecutive failures recorded for the current pending notification,
-    /// used to grow the retry interval over time.
+    /// The number of consecutive failures recorded.
     pub num_consecutive_failures: u32,
 }
 
@@ -58,10 +48,8 @@ impl NotifierState {
     /// consecutive reminders already sent, using a growing interval.
     ///
     /// The reminder interval grows over time to avoid sending reminders too
-    /// frequently for notifications that have been pending for a long time,
-    /// but it is capped at a maximum interval to ensure that reminders are
-    /// still sent eventually even for notifications that have been pending
-    /// for a very long time.
+    /// frequently for notifications that have been unresolved for a long time,
+    /// but it is capped at a maximum interval.
     ///
     /// # Notes
     /// It currently uses a multiplier-based approach, and as such the growth
@@ -138,10 +126,8 @@ impl NotifierState {
     /// recorded, using a growing interval.
     ///
     /// The retry interval grows over time to avoid sending retries too
-    /// frequently for notifications that have been pending for a long time,
-    /// but it is capped at a maximum interval to ensure that retries are
-    /// still attempted eventually even for notifications that have been pending
-    /// for a very long time.
+    /// frequently for notifications that have been unresolved for a long time,
+    /// but it is capped at a maximum interval.
     ///
     /// # Notes
     /// It currently uses a multiplier-based approach, and as such the growth
@@ -166,7 +152,6 @@ impl NotifierState {
     ) -> bool {
         let Some(last_failed_send) = self.last_failed_send else {
             // No send has failed yet, so there is nothing previous to delay against.
-            // This implies that pending is None.
             return false;
         };
 
@@ -186,7 +171,7 @@ impl NotifierState {
 
     /// Handles the logic for when a notification or reminder fails to send.
     ///
-    /// This includes saving the pending notification, updating the last failed send
+    /// This includes saving the failed notification, updating the last failed send
     /// time, incrementing the number of consecutive failures, setting the
     /// first error time if it is not already set.
     ///
@@ -196,9 +181,9 @@ impl NotifierState {
     /// is updated correctly for retry and reminder timing.
     ///
     /// # Parameters
-    /// - `ctx`: The notification context to save for the pending notification.
+    /// - `ctx`: The notification context to save for the failed notification.
     /// - `delta`: An optional delta representing the changes in peer status that
-    ///   triggered the notification. If `None`, this indicates that the pending
+    ///   triggered the notification. If `None`, this indicates that the failed
     ///   notification is a reminder rather than a new notification.
     pub fn on_failure(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.last_failed_send = Some(ctx.now);

@@ -134,7 +134,7 @@ impl Context {
     /// Rotates the current `Context` into another `Context`, effectively
     /// swapping their contents.
     ///
-    /// One the swap is done, the `lost_keys` and `missing_keys` of the current
+    /// Once the swap is done, the `lost_keys` and `missing_keys` of the current
     /// `Context` are cleared.
     ///
     /// # Parameters

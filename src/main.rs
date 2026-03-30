@@ -946,7 +946,7 @@ fn run_loop(
 /// 1. Rotate the current `notify::Context` into the previous one and clear itself
 ///    afterwards, making it a clean slate for the next loop iteration.
 /// 2. Increment the loop iteration count in the context.
-/// 3. Set the `resume` flag to `false`, since if this function is bein called,
+/// 3. Set the `resume` flag to `false`, since if this function is being called,
 ///    we're no longer in the initial state in which `resume` plays a role.
 ///
 /// # Parameters

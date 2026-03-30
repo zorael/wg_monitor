@@ -153,8 +153,9 @@ impl super::Backend for CommandBackend {
     /// 9. If a key delta is provided, a comma-separated string of keys that
     ///    were missing (but are no longer) in the format "`key:timestamp`"
     ///
-    /// Any parameter for which there is no value (as in, no lost keys, no keys
-    /// previously missing, etc), the argument passed but is simply an empty string `""`.
+    /// Any parameter for which there is no value (as in, no lost keys,
+    /// no missing keys, etc) missing, etc), the argument passed but is simply
+    /// an empty string `""`.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
@@ -272,10 +273,6 @@ impl super::Backend for CommandBackend {
 ///
 /// # Returns
 /// A comma-separated string of key-timestamp pairs in the format "`key:timestamp`".
-///
-/// # Panics
-/// If any key in the `keys` slice does not exist in the `peers` map,
-/// this function will panic with a message indicating the missing key.
 fn format_key_timestamp_pairs(
     peers: &collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
     keys: &[wireguard::PeerKey],
