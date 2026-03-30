@@ -126,4 +126,18 @@ impl Context {
         self.lost_keys.clear();
         self.missing_keys.clear();
     }
+
+    #[cfg(false)]
+    pub fn apply(&mut self, other: &Self) {
+        let lost_keys = utils::get_elements_not_in_other_vec(&self.lost_keys, &other.lost_keys);
+    }
+
+    pub fn merge(&mut self, other: &Self) {
+        let lost_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.lost_keys, &self.lost_keys);
+        let missing_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.missing_keys, &self.missing_keys);
+        self.lost_keys.extend(lost_unique_to_other);
+        self.missing_keys.extend(missing_unique_to_other);
+    }
 }

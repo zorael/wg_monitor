@@ -133,6 +133,7 @@ mod tests_vec_difference {
             "peer2".to_string(),
             "peer3".to_string(),
         ];
+
         let vec2 = vec![
             "peer2".to_string(),
             "peer3".to_string(),
@@ -155,6 +156,7 @@ mod tests_vec_difference {
             "peer2".to_string(),
             "peer3".to_string(),
         ];
+
         let vec2 = vec![
             "peer2".to_string(),
             "peer3".to_string(),
@@ -167,5 +169,40 @@ mod tests_vec_difference {
         super::append_vec_difference(&vec1, &vec2, &mut dest_one, &mut dest_other);
         assert_eq!(dest_one, vec!["peer1".to_string()]);
         assert_eq!(dest_other, vec!["peer4".to_string()]);
+    }
+
+    #[test]
+    fn test_get_elements_not_in_other_vec() {
+        let previously_lost_keys = vec![
+            "peer1".to_string(),
+            "peer3".to_string(),
+            "peer5".to_string(),
+        ];
+
+        let currently_lost_keys = vec![
+            "peer2".to_string(),
+            "peer3".to_string(),
+            "peer4".to_string(),
+        ];
+
+        let (only_previously_lost, only_currently_lost) =
+            super::get_vec_difference(&previously_lost_keys, &currently_lost_keys);
+
+        assert_eq!(
+            only_previously_lost,
+            vec!["peer1".to_string(), "peer5".to_string()]
+        );
+        assert_eq!(
+            only_currently_lost,
+            vec!["peer2".to_string(), "peer4".to_string()]
+        );
+
+        let left = vec![
+            "peer1".to_string(),
+            "peer2".to_string(),
+            "peer3".to_string(),
+        ];
+
+        let right = vec!["peer3".to_string(), "peer5".to_string()];
     }
 }

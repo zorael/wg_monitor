@@ -53,24 +53,32 @@ pub fn retry_pending_notifications(
             .state()
             .next_retry_is_due(&now, &settings.monitor.retry_interval)
         {
-            // Not yet time
+            // Not yet time to retry the pending notification
             report.skipped += 1;
             continue;
         }
 
-        // Taking sets pending to None
+        // Taking sets it to None, so remember to put it back
         let Some(first_failed_ctx) = n.state_mut().first_failed_ctx.take() else {
             // No pending notification to retry
             report.skipped += 1;
             continue;
         };
 
-        let delta = match super::Context::delta_between(ctx, &first_failed_ctx) {
-            delta if delta.is_empty() => None,
-            delta => Some(&delta.clone()),
+        let failed_delta = n.state_mut().first_failed_delta.take();
+
+        let modified_failed_ctx = first_failed_ctx.clone();
+        let modified_failed_ctx = super::Context {
+            peers: modified_failed_ctx.peers,
+            lost_keys: modified_failed_ctx.lost_keys,
+            missing_keys: modified_failed_ctx.missing_keys,
+            now,                                // <-- changed
+            loop_iteration: ctx.loop_iteration, // <-- changed
+            resume: false,
+            peer_list: modified_failed_ctx.peer_list,
         };
 
-        match send_via_notifier(&first_failed_ctx, delta, &ctx.now, n) {
+        match send_via_notifier(&modified_failed_ctx, failed_delta.as_ref(), &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -112,6 +120,169 @@ pub fn retry_pending_notifications(
                 );
                 eprintln!("{e}");
 
+                // Put it back
+                n.state_mut().first_failed_ctx = Some(first_failed_ctx);
+                n.state_mut().first_failed_delta = failed_delta;
+                verbose_print(&message, settings.verbose);
+                report.failed += 1;
+            }
+            super::NotificationResult::NoMessage => {
+                // Backend returned an empty message, so nothing to send
+                report.no_message += 1;
+            }
+            super::NotificationResult::Skipped => {
+                // May be due to next [something] not being due yet,
+                // so put back the pending notification
+                println!();
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Notification SKIPPED",
+                    n.name()
+                );
+
+                // Put it back
+                n.state_mut().first_failed_ctx = Some(first_failed_ctx);
+                n.state_mut().first_failed_delta = failed_delta;
+                report.skipped += 1;
+            }
+        }
+    }
+
+    report
+}
+
+#[cfg(false)]
+pub fn retry_pending_notifications2(
+    ctx: &super::Context,
+    notifiers: &mut [Box<dyn super::StatefulNotifier>],
+    settings: &settings::Settings,
+) -> super::DispatchReport {
+    let now = time::SystemTime::now();
+
+    let mut report = super::DispatchReport {
+        total: notifiers.len() as u32,
+        ..Default::default()
+    };
+
+    for n in notifiers.iter_mut() {
+        /*if !n
+            .state()
+            .next_retry_is_due(&now, &settings.monitor.retry_interval)
+        {
+            // Not yet time
+            report.skipped += 1;
+            continue;
+        }*/
+
+        // Taking sets it to None, so remember to put it back
+        let Some(first_failed_ctx) = n.state_mut().first_failed_ctx.take() else {
+            // No pending notification to retry
+            report.skipped += 1;
+            continue;
+        };
+
+        let failed_ctx = first_failed_ctx.clone();
+        let orig_delta = super::Context::delta_between(ctx, &failed_ctx);
+
+        let currently_lost_keys =
+            utils::get_elements_not_in_other_vec(&failed_ctx.lost_keys, &orig_delta.was_lost);
+
+        let currently_missing_keys =
+            utils::get_elements_not_in_other_vec(&failed_ctx.missing_keys, &orig_delta.was_missing);
+
+        let failed_ctx = super::Context {
+            peers: failed_ctx.peers,
+            lost_keys: failed_ctx.lost_keys, //currently_lost_keys,
+            missing_keys: failed_ctx.missing_keys, //currently_missing_keys,
+            now,
+            loop_iteration: ctx.loop_iteration, // <--
+            resume: ctx.resume,
+            peer_list: failed_ctx.peer_list,
+        };
+
+        /*let delta = match super::Context::delta_between(ctx, &failed_ctx) {
+            delta if delta.is_empty() => delta,
+            delta => orig_delta,
+        };*/
+
+        println!(
+            "consecutive notif: {}, reminders: {}",
+            n.state().get_consecutive_notifications(),
+            n.state().get_consecutive_reminders(),
+        );
+
+        let at_least_one_successful_message_has_been_sent =
+            n.state().get_consecutive_notifications() > 0;
+        let at_least_one_successful_reminder_has_been_sent =
+            n.state().get_consecutive_reminders() > 0;
+        let the_retry_is_not_of_the_first_message = at_least_one_successful_message_has_been_sent
+            || at_least_one_successful_reminder_has_been_sent;
+
+        let delta = match super::Context::delta_between(ctx, &failed_ctx) {
+            delta if delta.is_empty() => {
+                println!("NEW: {:?}", delta);
+                println!("ORIG:{:?}", orig_delta);
+                if the_retry_is_not_of_the_first_message {
+                    println!("_________ not the first message");
+                    // Make it a reminder
+                    Some(delta)
+                } else {
+                    println!("__________________ IS the first message");
+                    Some(orig_delta)
+                }
+            }
+            _ => Some(orig_delta),
+        };
+
+        // Wrap it in an Option<&KeyDelta> to pass to send_via_notifier
+        /*let delta = match delta {
+            delta if delta.is_empty() => None,
+            delta => Some(&delta.clone()),
+        };*/
+
+        match send_via_notifier(&failed_ctx, delta.as_ref(), &ctx.now, n) {
+            super::NotificationResult::DryRun(message) => {
+                println!();
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] DRY RUN; RETRY not sent",
+                    n.name()
+                );
+                verbose_print(&message, settings.verbose);
+                report.successful += 1;
+            }
+            super::NotificationResult::Success(message, output) => {
+                println!();
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Notification RETRIED successfully",
+                    n.name()
+                );
+
+                verbose_print(&message, settings.verbose);
+                report.successful += 1;
+
+                if let Some(output) = output
+                    && !output.is_empty()
+                {
+                    logging::tsprintln!(
+                        &settings.disable_timestamps,
+                        "[{}] Backend output:",
+                        n.name()
+                    );
+                    println!("{output}");
+                }
+            }
+            super::NotificationResult::Failure(e, message) => {
+                eprintln!();
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Failed to RETRY notification:",
+                    n.name()
+                );
+                eprintln!("{e}");
+
+                // Put it back
                 n.state_mut().first_failed_ctx = Some(first_failed_ctx);
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -123,6 +294,14 @@ pub fn retry_pending_notifications(
             super::NotificationResult::Skipped => {
                 // May be due to next [something] not being due yet,
                 // so put back the pending notification
+                println!();
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Notification SKIPPED",
+                    n.name()
+                );
+
+                // Put it back
                 n.state_mut().first_failed_ctx = Some(first_failed_ctx);
                 report.skipped += 1;
             }
@@ -355,6 +534,8 @@ fn send_via_notifier(
         None => n.push_reminder(ctx),
     };
 
+    println!("push_notification/reminder result: {:?}", result);
+
     match &result {
         super::NotificationResult::DryRun(_)
         | super::NotificationResult::Success(_, _)
@@ -366,7 +547,7 @@ fn send_via_notifier(
             }
         }
         super::NotificationResult::Failure(_, _) => {
-            n.state_mut().on_failure(ctx);
+            n.state_mut().on_failure(ctx, delta);
         }
         super::NotificationResult::Skipped => {}
     }

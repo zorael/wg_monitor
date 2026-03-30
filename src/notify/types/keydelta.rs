@@ -6,6 +6,7 @@
 //! keys for peers that changed status, categorized by the type of change
 //! ("now lost", "now missing", "was lost", "was missing").
 
+use crate::utils;
 use crate::wireguard;
 
 /// Delta struct representing the changes in peer status between two checks,
@@ -91,6 +92,21 @@ impl KeyDelta {
         print_nonempty_vec_prefixed(prefix, "was lost", &self.was_lost);
         print_nonempty_vec_prefixed(prefix, "now missing", &self.now_missing);
         print_nonempty_vec_prefixed(prefix, "was missing", &self.was_missing);
+    }
+
+    pub fn merge(&mut self, other: &Self) {
+        let now_lost_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.now_lost, &self.now_lost);
+        let was_lost_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.was_lost, &self.was_lost);
+        let now_missing_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.now_missing, &self.now_missing);
+        let was_missing_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.was_missing, &self.was_missing);
+        self.now_lost.extend(now_lost_unique_to_other);
+        self.was_lost.extend(was_lost_unique_to_other);
+        self.now_missing.extend(now_missing_unique_to_other);
+        self.was_missing.extend(was_missing_unique_to_other);
     }
 }
 

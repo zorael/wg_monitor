@@ -764,10 +764,10 @@ fn run_loop(
 
         if settings.debug {
             // Add a separator line between loop iterations
-            // 80c with timestamps
             logging::tsprintln!(
                 &settings.disable_timestamps,
-                "---------------------------------------------------------------------"
+                "{}\n-------------------------------------------------------------",
+                ctx.loop_iteration
             );
             println!();
         }
@@ -851,29 +851,63 @@ fn run_loop(
             continue;
         }
 
-        let something_failed_previously = notifiers
+        let mut num_failed_notifiers = notifiers
             .iter()
-            .any(|n| n.state().first_failed_ctx.is_some());
+            .filter(|n| n.state().first_failed_ctx.is_some())
+            .count() as u32;
 
-        if something_failed_previously {
+        println!("::::::::: num failed previously: {num_failed_notifiers}");
+
+        if num_failed_notifiers > 0 {
             let report = notify::retry_pending_notifications(ctx, notifiers, &settings);
 
             if settings.debug && report.total != report.skipped {
                 println!("{:#?}\n", report);
             }
 
-            // At this point a retry had been attempted based on the current
-            // context, the previous one and the delta between the two.
-            // If it succeeded and report.failed is 0, then the current state
-            // of things should have been pushed.
-            // If it failed and report.failed is > 0, then end_loop will sleep
-            // for the short retry interval and try again.
-            // If we pass the true value of failed_previously (which is always
-            // true here), then even a successful retry will cause it to sleep
-            // for the retry interval instead of the normal check interval.
-            // So, we continue?
-            end_loop(ctx, previous_ctx, report, &settings);
-            continue;
+            // At this point a retry has been attempted based on the current
+            // context, one or more failing ones and the delta between them.
+            //
+            // If the retry succeeded (report.failed is 0) then the failing
+            // context is now None for all notifiers.
+            //
+            // If the retry failed (report.failed is > 0) then there is still
+            // at least one failing context across all notifiers.
+            //
+            // There may be notifiers that have not failed. They may be
+            // interested in sending a notification based on the current
+            // context, the previous context, and the delta between the two.
+            //
+            // If we end the loop here and continue, those notifiers will not
+            // get the chance to send their notifications.
+            //
+            // If we don't end the loop, drop down and let those notifiers push
+            // their notifications, notifiers who successfully retried may
+            // send a normal notification too, directly after the retry.
+            //
+            // Just drop down, I think.
+            num_failed_notifiers -= report.successful;
+            thread::sleep(settings.monitor.retry_interval);
+
+            /*if report.failed > 0 || report.skipped > 0 {
+                println!("retry sleep and continue");
+                thread::sleep(settings.monitor.retry_interval);
+                continue;
+            } else {
+                let something_failed_previously = notifiers
+                    .iter()
+                    .any(|n| n.state().first_failed_ctx.is_some());
+
+                if something_failed_previously {
+                    logging::tseprintln!(
+                        &settings.disable_timestamps,
+                        "!!! One or more notifiers have a failing context but report.failed/skipped was 0.",
+                    );
+                    println!("{:#?}\n", report);
+                    thread::sleep(settings.monitor.retry_interval);
+                    continue;
+                }
+            }*/
         }
 
         // !delta.is_empty() means "there was at least one change since the last loop"
@@ -908,9 +942,19 @@ fn run_loop(
             continue;
         }
 
+        /*let something_failed_previously = notifiers
+        .iter()
+        .any(|n| n.state().first_failed_ctx.is_some());*/
+
         // No report to pass here so use end_loop_minimal and sleep manually
         end_loop_minimal(ctx, previous_ctx);
-        thread::sleep(settings.monitor.check_interval)
+        //thread::sleep(settings.monitor.check_interval)
+
+        if num_failed_notifiers > 0 {
+            thread::sleep(settings.monitor.retry_interval);
+        } else {
+            thread::sleep(settings.monitor.check_interval);
+        }
     }
 }
 

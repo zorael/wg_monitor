@@ -113,6 +113,7 @@ impl super::Backend for CommandBackend {
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
+        println!("backend composer here, passing onto prepare_message_body");
         let header_closure = |h: &str| h.to_string();
         notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
     }
@@ -210,6 +211,10 @@ impl super::Backend for CommandBackend {
                 .output()
                 .map_err(|e| e.to_string())?,
         };
+
+        if ctx.loop_iteration >= 3 && ctx.loop_iteration < 30 {
+            return Err(ctx.loop_iteration.to_string());
+        }
 
         // Early exit if everything is okay and there's no output to show
         if !self.show_output && output.status.success() {

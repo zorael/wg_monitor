@@ -9,6 +9,8 @@ pub struct NotifierState {
     //pub pending: Option<super::PendingNotification>,
     pub first_failed_ctx: Option<super::Context>,
 
+    pub first_failed_delta: Option<super::KeyDelta>,
+
     /// The time when the last notification was successfully sent, key in
     /// determining when the next reminder is due.
     pub last_notification_sent: Option<time::SystemTime>,
@@ -27,6 +29,8 @@ pub struct NotifierState {
     /// retry is due based on the retry interval and the number of consecutive
     /// failures already recorded.
     pub last_failed_send: Option<time::SystemTime>,
+
+    pub num_consecutive_notifications: u32,
 
     /// The number of consecutive reminders sent for the current pending notification,
     /// used to grow the reminder interval over time.
@@ -183,10 +187,9 @@ impl NotifierState {
         };
 
         let growth_multiplier = match self.num_consecutive_failures {
-            0..=6 => 1,   // 10s (...assuming a base interval of 10 seconds)
-            7..=12 => 3,  // 30s
-            13..=18 => 6, // 1m
-            _ => 6 * 5,   // 5m (cap)
+            0..=11 => 1,  // 10s (...assuming a base interval of 10 seconds)
+            12..=23 => 3, // 30s
+            _ => 6,       // 1m (cap)
         };
 
         let next_retry_interval = retry_interval.saturating_mul(growth_multiplier);
@@ -215,12 +218,33 @@ impl NotifierState {
     ///   notification is a reminder rather than a new notification.
     /// - `now`: The current time to record as the last failed send time and to
     ///   set as the first error time if it is not already set.
-    pub fn on_failure(&mut self, ctx: &super::Context) {
+    pub fn on_failure(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.last_failed_send = Some(ctx.now);
         self.num_consecutive_failures += 1;
 
-        if self.first_failed_ctx.is_none() {
-            self.first_failed_ctx = Some(ctx.clone());
+        /*self.num_consecutive_notifications = 0;
+        self.num_consecutive_reminders = 0;*/
+
+        match &mut self.first_failed_ctx {
+            Some(first_failed_ctx) => {
+                first_failed_ctx.merge(ctx);
+                first_failed_ctx.peers = ctx.peers.clone();
+                first_failed_ctx.now = ctx.now;
+            }
+            None => {
+                self.first_failed_ctx = Some(ctx.clone());
+            }
+        }
+
+        match &mut self.first_failed_delta {
+            Some(first_failed_delta) if delta.is_some() => {
+                let delta = delta.expect("we just checked)");
+                first_failed_delta.merge(delta);
+            }
+            Some(_) => {}
+            None => {
+                self.first_failed_delta = delta.cloned();
+            }
         }
 
         if self.first_error_at.is_none() {
@@ -247,10 +271,12 @@ impl NotifierState {
     /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
         self.first_failed_ctx = None;
+        self.first_failed_delta = None;
         self.last_notification_sent = None;
         self.last_reminder_sent = Some(*now);
         self.num_consecutive_reminders += 1;
         self.last_failed_send = None;
+        self.num_consecutive_notifications = 0;
         self.num_consecutive_failures = 0;
         self.first_error_at = None;
     }
@@ -274,16 +300,19 @@ impl NotifierState {
     pub fn on_successful_notification(&mut self, now: &time::SystemTime) {
         self.reset();
         self.last_notification_sent = Some(*now);
+        self.num_consecutive_notifications = 1;
     }
 
     /// Resets all state related to pending notifications, reminder timing, and
     /// failure tracking.
     pub fn reset(&mut self) {
         self.first_failed_ctx = None;
+        self.first_failed_delta = None;
         self.last_notification_sent = None;
         self.first_error_at = None;
         self.last_reminder_sent = None;
         self.last_failed_send = None;
+        self.num_consecutive_notifications = 0;
         self.num_consecutive_reminders = 0;
         self.num_consecutive_failures = 0;
     }
