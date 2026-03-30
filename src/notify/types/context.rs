@@ -40,6 +40,9 @@ pub struct Context {
     /// prevent the program from sending an initial first-run "program started" notification.
     pub resume: bool,
 
+    /// Whether or not a notification based on this context has failed to send.
+    pub has_failed: bool,
+
     /// The path to the peer list file, which can be used by some notification
     /// backends for reading peers' human-readable names.
     ///
@@ -70,6 +73,7 @@ impl Context {
             now: time::SystemTime::UNIX_EPOCH,
             loop_iteration: 0,
             resume: false,
+            has_failed: false,
             peer_list: path::PathBuf::new(),
         }
     }

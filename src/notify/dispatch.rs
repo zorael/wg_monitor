@@ -378,7 +378,9 @@ fn send_via_notifier(
         super::NotificationResult::DryRun(_)
         | super::NotificationResult::Success(_, _)
         | super::NotificationResult::NoMessage => {
-            if delta.is_some() {
+            if ctx.has_failed {
+                n.state_mut().on_successful_retry();
+            } else if delta.is_some() {
                 n.state_mut().on_successful_notification(now);
             } else {
                 n.state_mut().on_successful_reminder(now);

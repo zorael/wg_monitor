@@ -196,7 +196,9 @@ impl NotifierState {
                 first_failed_ctx.now = ctx.now;
             }
             None => {
-                self.failed_ctx = Some(ctx.clone());
+                let mut new_failed_ctx = ctx.clone();
+                new_failed_ctx.has_failed = true;
+                self.failed_ctx = Some(new_failed_ctx);
             }
         }
 
@@ -234,41 +236,49 @@ impl NotifierState {
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
-        self.failed_ctx = None;
-        self.failed_delta = None;
+        //self.failed_ctx = None;
+        //self.failed_delta = None;
         self.last_notification_sent = None;
         self.last_reminder_sent = Some(*now);
-        self.num_consecutive_reminders += 1;
         self.last_failed_send = None;
-        self.num_consecutive_notifications = 0;
-        self.num_consecutive_failures = 0;
-        self.first_error_at = None;
+        self.num_consecutive_reminders += 1;
+        //self.first_error_at = None;
+        //self.num_consecutive_failures = 0;
     }
 
     /// Handles the logic for when a notification is successfully sent.
     ///
     /// This includes resetting
-    /// all state related to pending notifications, reminder timing, and failure
+    /// all state related to failed notifications, reminder timing, and failure
     /// tracking, since a successful notification indicates that the issue has
-    /// been resolved and there is no need to track any pending state or send
+    /// been resolved and there is no need to track any failed state or send
     /// reminders or retries.
-    ///
-    /// # Notes
-    /// This method should be called whenever a notification is successfully
-    /// sent, regardless of whether it is the first notification or a subsequent
-    /// notification, to ensure that the state is updated correctly and all
-    /// pending, reminder, and failure tracking is reset for future notifications.
     ///
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_notification(&mut self, now: &time::SystemTime) {
-        self.reset();
+        //self.failed_ctx = None;
+        //self.failed_delta = None;
         self.last_notification_sent = Some(*now);
-        self.num_consecutive_notifications = 1;
+        self.last_reminder_sent = None;
+        self.last_failed_send = None;
+        self.num_consecutive_reminders = 0;
+        //self.first_error_at = None;
+        //self.num_consecutive_failures = 0;
     }
 
-    /// Resets all state related to pending notifications, reminder timing, and
-    /// failure tracking.
+    /// Handles the logic for when a retry attempt is successful.
+    ///
+    /// # Parameters
+    /// - `now`: The current time.
+    pub fn on_successful_retry(&mut self) {
+        self.last_failed_send = None;
+        self.first_error_at = None;
+        self.num_consecutive_failures = 0;
+    }
+
+    /// Resets all state.
+    #[cfg(false)]
     pub fn reset(&mut self) {
         self.failed_ctx = None;
         self.failed_delta = None;
@@ -276,7 +286,6 @@ impl NotifierState {
         self.first_error_at = None;
         self.last_reminder_sent = None;
         self.last_failed_send = None;
-        self.num_consecutive_notifications = 0;
         self.num_consecutive_reminders = 0;
         self.num_consecutive_failures = 0;
     }
