@@ -66,7 +66,7 @@ fn format_generic_message(
 
         if !message.is_empty() && !strings.footer.is_empty() {
             message.push('\n');
-            message.push_str(&strings.footer);
+            message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
         }
 
         return message.trim_end().to_string();
@@ -90,7 +90,8 @@ fn format_generic_message(
         add_section(&ctx.missing_keys, &strings.still_missing, false);
 
         if !message.is_empty() && !strings.footer.is_empty() {
-            message.push_str(&strings.footer);
+            //message.push('\n'); // append_message_section leaves an extra newline
+            message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
         }
 
         return message.trim_end().to_string();
@@ -116,7 +117,7 @@ fn format_generic_message(
 
     if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
-        message.push_str(&strings.footer);
+        message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
     }
 
     message.trim_end().to_string()
@@ -157,7 +158,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
 
     if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
-        message.push_str(&strings.footer);
+        message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
     }
 
     message.trim_end().to_string()
@@ -204,7 +205,6 @@ fn format_peer_line(
         .replace("{key}", peer.public_key.as_str())
         .replace("{when}", &when)
         .replace("{unix}", &peer.last_seen_unix.to_string())
-        .replace("{version}", defaults::program_metadata::VERSION)
 }
 
 /// Appends a section to the notification message for a list of peer keys, using
@@ -368,4 +368,24 @@ pub fn prepare_reminder_body(
 
     let message = utils::unescape(&message).trim_end().to_string();
     Some(message)
+}
+
+/// Replaces placeholders in the footer string with actual values from the
+/// passed `notify::Context` and the program defaults.
+///
+/// # Parameters
+/// - `footer`: The footer string containing placeholders to be replaced.
+/// - `ctx`: The notification context containing information about peers.
+fn replace_footer_placeholders(footer: &str, ctx: &super::Context) -> String {
+    footer
+        .replace("{num_peers}", &ctx.peers.len().to_string())
+        .replace("{num_lost}", &ctx.lost_keys.len().to_string())
+        .replace("{num_missing}", &ctx.missing_keys.len().to_string())
+        .replace(
+            "{num_nonpresent}",
+            &(ctx.lost_keys.len() + ctx.missing_keys.len()).to_string(),
+        )
+        .replace("{timestamp}", &utils::timestamp_now())
+        .replace("{datestamp}", &utils::datestamp_now())
+        .replace("{version}", defaults::program_metadata::VERSION)
 }
