@@ -873,34 +873,21 @@ fn run_loop(
             }
 
             // At this point a retry has been attempted based on the current
-            // context, one or more failing ones and the delta between them.
-            //
-            // If the retry succeeded (report.failed is 0) then the failing
-            // context is now None for all notifiers.
-            //
-            // If the retry failed (report.failed is > 0) then there is still
-            // at least one failing context across all notifiers.
-            //
-            // There may be notifiers that have not failed. They may be
-            // interested in sending a notification based on the current
-            // context, the previous context, and the delta between the two.
-            //
-            // If we end the loop here and continue, those notifiers will not
-            // get the chance to send their notifications.
-            //
-            // If we don't end the loop, drop down and let those notifiers push
-            // their notifications, notifiers who successfully retried may
-            // send a normal notification too, directly after the retry.
-            //
-            // Just drop down, I think.
+            // context stored as "failing" in each notifier.
+            // Some of those retries may have succeeded, some may have failed
+            // again, and some may have been skipped because they were rate-limited.
+            // Record how many notifiers still have failures after this retry
+            // attempt, so we can use the information later when it's time to
+            // decide how long to sleep.
             num_notifiers_with_failures -= retry_report.successful;
 
-            // Sleep briefly so that if there is a notification waiting below
-            // it will not be sent immediately after this retry attempt.
             if retry_report.successful > 0 || retry_report.failed > 0 {
-                // A retry attempt was made. Just in case there are more
-                // notifications waiting below, sleep briefly here to rate-limit things.
-                thread::sleep(settings.monitor.retry_interval);
+                // One or more retry attempts were made and either succeded, or failed.
+                // The important part here is that attemps *were* made, so in the
+                // case where there are more notifications waiting below,
+                // we want to sleep a bit to rate-limit ourselves slightly.
+                // The number is just a guess at a reasonable amount.
+                thread::sleep(time::Duration::from_secs(5));
             }
         }
 
