@@ -201,11 +201,11 @@ impl NotifierState {
         }
 
         match &mut self.failed_delta {
-            Some(first_failed_delta) if delta.is_some() => {
-                let delta = delta.expect("the arm guard verified that it is Some(KeyDelta)");
-                first_failed_delta.merge(delta);
+            Some(first_failed_delta) => {
+                if let Some(delta) = delta {
+                    first_failed_delta.merge(delta);
+                }
             }
-            Some(_) => {}
             None => {
                 self.failed_delta = delta.cloned();
             }
