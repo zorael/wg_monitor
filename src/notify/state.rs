@@ -192,8 +192,6 @@ impl NotifierState {
         match &mut self.failed_ctx {
             Some(first_failed_ctx) => {
                 first_failed_ctx.merge(ctx);
-                first_failed_ctx.peers = ctx.peers.clone();
-                first_failed_ctx.now = ctx.now;
             }
             None => {
                 let mut new_failed_ctx = ctx.clone();

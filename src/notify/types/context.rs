@@ -175,7 +175,18 @@ impl Context {
             utils::get_elements_not_in_other_vec(&other.lost_keys, &self.lost_keys);
         let missing_unique_to_other =
             utils::get_elements_not_in_other_vec(&other.missing_keys, &self.missing_keys);
+
+        for key in &lost_unique_to_other {
+            let val = match other.peers.get(key) {
+                Some(peer) => peer.clone(),
+                None => continue,
+            };
+
+            self.peers.insert(key.clone(), val);
+        }
+
         self.lost_keys.extend(lost_unique_to_other);
         self.missing_keys.extend(missing_unique_to_other);
+        self.now = other.now;
     }
 }
