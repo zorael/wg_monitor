@@ -119,9 +119,11 @@ pub fn retry_pending_notifications(
                 eprintln!("{e}");
                 verbose_print(&message, settings.verbose);
 
-                // Put them back
+                // Put them back and update the notifier state
                 n.state_mut().failed_ctx = Some(failed_ctx);
                 n.state_mut().failed_delta = failed_delta;
+                n.state_mut().last_failed_send = Some(now);
+                n.state_mut().num_consecutive_failures += 1;
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
