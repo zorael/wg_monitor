@@ -28,6 +28,9 @@ fn verbose_print(message: &str, verbose: bool) {
 /// are indeed due.
 ///
 /// # Parameters
+/// - `ctx`: The notification context containing information about the current
+///   state of peers and other relevant data needed for composing the
+///   notification message to retry sending.
 /// - `notifiers`: A mutable slice of boxed `StatefulNotifier` instances to check
 ///   for pending notifications and attempt retries on.
 /// - `settings`: The settings struct which contains the retry interval.
@@ -37,6 +40,7 @@ fn verbose_print(message: &str, verbose: bool) {
 /// including the total number of notifiers processed, how many were successful,
 /// failed, had no message to send, or were skipped due to timing reasons.
 pub fn retry_pending_notifications(
+    ctx: &super::Context,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
 ) -> super::DispatchReport {
@@ -52,27 +56,26 @@ pub fn retry_pending_notifications(
             .state()
             .next_retry_is_due(&now, &settings.monitor.retry_interval)
         {
-            // Not yet time
+            // Not yet time to retry the pending notification
             report.skipped += 1;
             continue;
         }
 
-        // Taking sets pending to None
-        let pending = n.state_mut().pending.take();
-
-        let (ctx, delta) = match &pending {
-            Some(super::PendingNotification::Notification { context, delta }) => {
-                (context, Some(delta))
-            }
-            Some(super::PendingNotification::Reminder { context }) => (context, None),
-            None => {
-                // None was taken
-                report.skipped += 1;
-                continue;
-            }
+        // Taking sets it to None, so remember to put it back
+        // Make it mutable so we can update the time and iteration for the retry attempt
+        let Some(mut failed_ctx) = n.state_mut().failed_ctx.take() else {
+            // No failing Context to retry, so skip
+            report.skipped += 1;
+            continue;
         };
 
-        match send_via_notifier(ctx, delta, n) {
+        // Note that this is an Option<KeyDelta>
+        let failed_delta = n.state_mut().failed_delta.take();
+
+        // Update the failed Context to the present time and iteration for the retry attempt
+        failed_ctx.update_time_and_iteration(now, ctx.loop_iteration);
+
+        match send_via_notifier(&failed_ctx, failed_delta.as_ref(), &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -112,9 +115,16 @@ pub fn retry_pending_notifications(
                     "[{}] Failed to RETRY notification:",
                     n.name()
                 );
-                eprint!("{e}");
 
+                eprintln!("{e}");
                 verbose_print(&message, settings.verbose);
+
+                // Put them back and update the notifier state
+                let s = n.state_mut();
+                s.failed_ctx = Some(failed_ctx);
+                s.failed_delta = failed_delta;
+                s.last_failed_send = Some(now);
+                s.num_consecutive_failures += 1;
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
@@ -124,7 +134,17 @@ pub fn retry_pending_notifications(
             super::NotificationResult::Skipped => {
                 // May be due to next [something] not being due yet,
                 // so put back the pending notification
-                n.state_mut().pending = pending;
+                println!();
+                logging::tsprintln!(
+                    &settings.disable_timestamps,
+                    "[{}] Notification SKIPPED",
+                    n.name()
+                );
+
+                // Put them back
+                let s = n.state_mut();
+                s.failed_ctx = Some(failed_ctx);
+                s.failed_delta = failed_delta;
                 report.skipped += 1;
             }
         }
@@ -169,7 +189,7 @@ pub fn send_notification(
     };
 
     for n in notifiers.iter_mut() {
-        match send_via_notifier(ctx, Some(delta), n) {
+        match send_via_notifier(ctx, Some(delta), &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -210,7 +230,7 @@ pub fn send_notification(
                     "[{}] Failed to send notification:",
                     n.name()
                 );
-                eprint!("{e}");
+                eprintln!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -271,7 +291,7 @@ pub fn send_reminder(
             continue;
         }
 
-        match send_via_notifier(ctx, None, n) {
+        match send_via_notifier(ctx, None, &ctx.now, n) {
             super::NotificationResult::DryRun(message) => {
                 println!();
                 logging::tsprintln!(
@@ -312,7 +332,7 @@ pub fn send_reminder(
                     "[{}] Failed to send reminder:",
                     n.name()
                 );
-                eprint!("{e}");
+                eprintln!("{e}");
 
                 verbose_print(&message, settings.verbose);
                 report.failed += 1;
@@ -340,6 +360,8 @@ pub fn send_reminder(
 /// - `delta`: The changes detected since the last notification, used to determine
 ///   what has changed and render the message accordingly.
 ///   This will be `None` if sending a reminder instead of a notification.
+/// - `now`: The current time, used for updating the notifier's state if the send
+///   attempt is successful.
 /// - `n`: The notifier to send the notification or reminder through.
 ///
 /// # Returns
@@ -348,6 +370,7 @@ pub fn send_reminder(
 fn send_via_notifier(
     ctx: &super::Context,
     delta: Option<&super::KeyDelta>,
+    now: &time::SystemTime,
     n: &mut Box<dyn super::StatefulNotifier>,
 ) -> super::NotificationResult {
     let result = match delta {
@@ -359,14 +382,18 @@ fn send_via_notifier(
         super::NotificationResult::DryRun(_)
         | super::NotificationResult::Success(_, _)
         | super::NotificationResult::NoMessage => {
-            if delta.is_some() {
-                n.state_mut().on_successful_notification(&ctx.now);
+            if ctx.has_failed {
+                n.state_mut().on_successful_retry();
+            } else if delta.is_some() {
+                n.state_mut().on_successful_notification(now);
             } else {
-                n.state_mut().on_successful_reminder(&ctx.now);
+                n.state_mut().on_successful_reminder(now);
             }
         }
         super::NotificationResult::Failure(_, _) => {
-            n.state_mut().on_failure(ctx, delta, &ctx.now);
+            if !ctx.has_failed {
+                n.state_mut().on_failure(ctx, delta);
+            }
         }
         super::NotificationResult::Skipped => {}
     }

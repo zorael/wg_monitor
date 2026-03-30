@@ -64,7 +64,7 @@ fn format_generic_message(
             }
         }
 
-        if !strings.footer.is_empty() {
+        if !message.is_empty() && !strings.footer.is_empty() {
             message.push('\n');
             message.push_str(&strings.footer);
         }
@@ -89,7 +89,7 @@ fn format_generic_message(
         add_section(&ctx.lost_keys, &strings.still_lost, false);
         add_section(&ctx.missing_keys, &strings.still_missing, false);
 
-        if !strings.footer.is_empty() {
+        if !message.is_empty() && !strings.footer.is_empty() {
             message.push_str(&strings.footer);
         }
 
@@ -114,7 +114,7 @@ fn format_generic_message(
         false,
     );
 
-    if !strings.footer.is_empty() {
+    if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
         message.push_str(&strings.footer);
     }
@@ -155,7 +155,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
     add_section(&ctx.lost_keys, &strings.still_lost);
     add_section(&ctx.missing_keys, &strings.still_missing);
 
-    if !strings.footer.is_empty() {
+    if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
         message.push_str(&strings.footer);
     }
@@ -290,6 +290,8 @@ pub fn prepare_message_body(
     strings: &settings::MessageStrings,
     header_closure: impl Fn(&str) -> String,
 ) -> Option<String> {
+    println!("prepare_message_body called");
+
     let mut message = String::new();
     let body = &format_generic_message(ctx, delta, strings);
 

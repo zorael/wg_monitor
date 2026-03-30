@@ -5,6 +5,7 @@ use std::mem;
 use std::path;
 use std::time;
 
+use crate::utils;
 use crate::wireguard;
 
 #[derive(Clone, Debug)]
@@ -25,16 +26,6 @@ pub struct Context {
     /// the VPN started (or restarted).
     pub missing_keys: Vec<wireguard::PeerKey>,
 
-    /// Peers that were previously lost in the last check.
-    ///
-    /// They still might be; this is just a clone of the previous state.
-    pub previous_lost_keys: Vec<wireguard::PeerKey>,
-
-    /// Peers that were previously missing in the last check.
-    ///
-    /// They still might be; this is just a clone of the previous state.
-    pub previous_missing_keys: Vec<wireguard::PeerKey>,
-
     /// The current time.
     pub now: time::SystemTime,
 
@@ -48,6 +39,9 @@ pub struct Context {
     /// Whether or not the program is resuming from a previous run, used to
     /// prevent the program from sending an initial first-run "program started" notification.
     pub resume: bool,
+
+    /// Whether or not a notification based on this context has failed to send.
+    pub has_failed: bool,
 
     /// The path to the peer list file, which can be used by some notification
     /// backends for reading peers' human-readable names.
@@ -76,11 +70,10 @@ impl Context {
             peers: collections::HashMap::with_capacity(capacity),
             lost_keys: Vec::with_capacity(capacity),
             missing_keys: Vec::with_capacity(capacity),
-            previous_lost_keys: Vec::with_capacity(capacity),
-            previous_missing_keys: Vec::with_capacity(capacity),
             now: time::SystemTime::UNIX_EPOCH,
             loop_iteration: 0,
             resume: false,
+            has_failed: false,
             peer_list: path::PathBuf::new(),
         }
     }
@@ -101,19 +94,88 @@ impl Context {
         sized
     }
 
-    /// Rotates the peer state by moving the current lost and missing keys to
-    /// the `previous_*` fields, and clearing the current lost and missing keys
-    /// for the next check.
-    pub fn rotate(&mut self) {
-        mem::swap(&mut self.lost_keys, &mut self.previous_lost_keys);
-        mem::swap(&mut self.missing_keys, &mut self.previous_missing_keys);
-        self.lost_keys.clear();
-        self.missing_keys.clear();
-    }
-
     /// Returns `true` if this is the first run of the program (loop iteration
     /// count is zero), and `false` otherwise.
     pub fn is_first_run(&self) -> bool {
         self.loop_iteration == 0
+    }
+
+    /// Computes the `KeyDelta` between the current `Context` and a previous `Context`,
+    /// which represents the changes in peer status (lost and missing peers) between
+    /// the two contexts.
+    ///
+    /// # Parameters
+    /// - `current`: The current `Context` representing the latest state of peers.
+    /// - `previous`: The previous `Context` representing the previous state of peers.
+    ///
+    /// # Returns
+    /// A `KeyDelta` instance containing the differences in lost and missing peers
+    /// between the current and previous contexts.
+    pub fn delta_between(current: &Self, previous: &Self) -> super::KeyDelta {
+        let mut delta = super::KeyDelta::new();
+
+        utils::append_vec_difference(
+            &previous.lost_keys,
+            &current.lost_keys,
+            &mut delta.was_lost,
+            &mut delta.now_lost,
+        );
+
+        utils::append_vec_difference(
+            &previous.missing_keys,
+            &current.missing_keys,
+            &mut delta.was_missing,
+            &mut delta.now_missing,
+        );
+
+        wireguard::sort_keys(&mut delta.now_lost, &current.peers);
+        wireguard::sort_keys(&mut delta.was_lost, &current.peers);
+        wireguard::sort_keys(&mut delta.was_missing, &current.peers);
+
+        delta
+    }
+
+    /// Rotates the current `Context` into another `Context`, effectively
+    /// swapping their contents.
+    ///
+    /// Once the swap is done, the `lost_keys` and `missing_keys` of the current
+    /// `Context` are cleared.
+    ///
+    /// # Parameters
+    /// - `other`: The other `Context` to rotate into, which will receive the
+    ///   contents of the current `Context`.
+    pub fn rotate_into(&mut self, other: &mut Self) {
+        mem::swap(self, other);
+        self.peers = other.peers.clone();
+        self.lost_keys.clear();
+        self.missing_keys.clear();
+    }
+
+    /// Updates the `now` and `loop_iteration` fields of the `Context` with the
+    /// provided values.
+    ///
+    /// # Parameters
+    /// - `now`: The new current time to set in the `Context`.
+    /// - `loop_iteration`: The new loop iteration count to set in the `Context`.
+    pub fn update_time_and_iteration(&mut self, now: time::SystemTime, loop_iteration: usize) {
+        self.now = now;
+        self.loop_iteration = loop_iteration;
+    }
+
+    /// Takes another `Context` and merges its lost and missing peer information
+    /// into the current `Context`.
+    ///
+    /// The current `Context` becomes a union of the two.
+    ///
+    /// # Parameters
+    /// - `other`: The other `Context` whose lost and missing peer information
+    ///   will be merged into the current `Context`.
+    pub fn merge(&mut self, other: &Self) {
+        let lost_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.lost_keys, &self.lost_keys);
+        let missing_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.missing_keys, &self.missing_keys);
+        self.lost_keys.extend(lost_unique_to_other);
+        self.missing_keys.extend(missing_unique_to_other);
     }
 }

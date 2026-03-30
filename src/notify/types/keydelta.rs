@@ -6,7 +6,6 @@
 //! keys for peers that changed status, categorized by the type of change
 //! ("now lost", "now missing", "was lost", "was missing").
 
-use crate::notify;
 use crate::utils;
 use crate::wireguard;
 
@@ -34,31 +33,15 @@ pub struct KeyDelta {
 }
 
 impl KeyDelta {
-    /// Creates a new `KeyDelta` with the specified capacity for the key vectors.
-    ///
-    /// # Parameters
-    /// - `capacity`: The capacity to use for the key vectors, which can help
-    ///   avoid unnecessary allocations if the number of peers is known in advance.
-    ///
-    /// # Returns
-    /// A new `KeyDelta` instance with the specified capacity for the key vectors,
-    /// initialized with empty vectors.
-    pub fn with_capacity(capacity: usize) -> Self {
+    /// Creates a new `KeyDelta` with empty vectors for all categories of
+    /// peer status changes.
+    pub fn new() -> Self {
         Self {
-            now_lost: Vec::with_capacity(capacity),
-            was_lost: Vec::with_capacity(capacity),
-            now_missing: Vec::with_capacity(capacity),
-            was_missing: Vec::with_capacity(capacity),
+            now_lost: Vec::new(),
+            was_lost: Vec::new(),
+            now_missing: Vec::new(),
+            was_missing: Vec::new(),
         }
-    }
-
-    /// Clears all the key vectors in the `KeyDelta`, effectively resetting it to an
-    /// empty state while retaining the allocated capacity.
-    pub fn clear(&mut self) {
-        self.now_lost.clear();
-        self.was_lost.clear();
-        self.now_missing.clear();
-        self.was_missing.clear();
     }
 
     /// Returns `true` if all the key vectors in the `KeyDelta` are empty, indicating
@@ -69,37 +52,6 @@ impl KeyDelta {
             && self.was_lost.is_empty()
             && self.now_missing.is_empty()
             && self.was_missing.is_empty()
-    }
-
-    /// Computes the `KeyDelta` from the given `Context`, determining which peers
-    /// changed status since the last check and categorizing them into the
-    /// appropriate vectors.
-    ///
-    /// # Parameters
-    /// - `ctx`: The `Context` containing the current and previous state of peers.
-    pub fn compute_from(&mut self, ctx: &notify::Context) {
-        self.clear();
-
-        utils::append_vec_difference(
-            &ctx.previous_lost_keys,
-            &ctx.lost_keys,
-            &mut self.was_lost,
-            &mut self.now_lost,
-        );
-
-        utils::append_vec_difference(
-            &ctx.previous_missing_keys,
-            &ctx.missing_keys,
-            &mut self.was_missing,
-            &mut self.now_missing,
-        );
-
-        // Sort keys so that notifications present them in a descending order of
-        // disappearance time, with missing peers last.
-        wireguard::sort_keys(&mut self.now_lost, &ctx.peers);
-        wireguard::sort_keys(&mut self.was_lost, &ctx.peers);
-        wireguard::sort_keys(&mut self.now_missing, &ctx.peers);
-        wireguard::sort_keys(&mut self.was_missing, &ctx.peers);
     }
 
     /// Prints the non-empty key vectors in the `KeyDelta` with a specified prefix
@@ -113,6 +65,26 @@ impl KeyDelta {
         print_nonempty_vec_prefixed(prefix, "was lost", &self.was_lost);
         print_nonempty_vec_prefixed(prefix, "now missing", &self.now_missing);
         print_nonempty_vec_prefixed(prefix, "was missing", &self.was_missing);
+    }
+
+    /// Merges another `KeyDelta` into the current `KeyDelta`, effectively
+    /// making this one a union of the two.
+    ///
+    /// # Parameters
+    /// - `other`: The other `KeyDelta` to merge into the current one.
+    pub fn merge(&mut self, other: &Self) {
+        let now_lost_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.now_lost, &self.now_lost);
+        let was_lost_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.was_lost, &self.was_lost);
+        let now_missing_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.now_missing, &self.now_missing);
+        let was_missing_unique_to_other =
+            utils::get_elements_not_in_other_vec(&other.was_missing, &self.was_missing);
+        self.now_lost.extend(now_lost_unique_to_other);
+        self.was_lost.extend(was_lost_unique_to_other);
+        self.now_missing.extend(now_missing_unique_to_other);
+        self.was_missing.extend(was_missing_unique_to_other);
     }
 }
 

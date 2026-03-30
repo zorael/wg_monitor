@@ -144,19 +144,18 @@ impl super::Backend for CommandBackend {
     ///    --resume was passed, in which case it starts at 1)
     /// 4. A comma-separated string of lost keys in the format "`key:timestamp`"
     /// 5. A comma-separated string of missing keys in the format "`key:timestamp`"
-    /// 6. A comma-separated string of previous lost keys in the format "`key:timestamp`"
-    /// 7. A comma-separated string of previous missing keys in the format "`key:timestamp`"
-    /// 8. If a key delta is provided, a comma-separated string of keys that are now
+    /// 6. If a key delta is provided, a comma-separated string of keys that are now
     ///    lost in the format "`key:timestamp`"
-    /// 9. If a key delta is provided, a comma-separated string of keys that are now
+    /// 7. If a key delta is provided, a comma-separated string of keys that are now
     ///    missing in the format "`key:timestamp`"
-    /// 10. If a key delta is provided, a comma-separated string of keys that were
-    ///     lost (but are no longer) in the format "`key:timestamp`"
-    /// 11. If a key delta is provided, a comma-separated string of keys that
-    ///     were missing (but are no longer) in the format "`key:timestamp`"
+    /// 8. If a key delta is provided, a comma-separated string of keys that were
+    ///    lost (but are no longer) in the format "`key:timestamp`"
+    /// 9. If a key delta is provided, a comma-separated string of keys that
+    ///    were missing (but are no longer) in the format "`key:timestamp`"
     ///
-    /// Any parameter for which there is no value (as in, no lost keys, no keys
-    /// previously missing, etc), the argument passed but is simply an empty string `""`.
+    /// Any parameter for which there is no value (as in, no lost keys,
+    /// no missing keys, etc) missing, etc), the argument passed but is simply
+    /// an empty string `""`.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
@@ -179,9 +178,6 @@ impl super::Backend for CommandBackend {
     ) -> Result<Option<String>, String> {
         let lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.lost_keys);
         let missing_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.missing_keys);
-        let previous_lost_keys = format_key_timestamp_pairs(&ctx.peers, &ctx.previous_lost_keys);
-        let previous_missing_keys =
-            format_key_timestamp_pairs(&ctx.peers, &ctx.previous_missing_keys);
         let loop_iteration = ctx.loop_iteration.to_string();
 
         let output = match delta {
@@ -197,8 +193,6 @@ impl super::Backend for CommandBackend {
                     .arg(loop_iteration)
                     .arg(lost_keys)
                     .arg(missing_keys)
-                    .arg(previous_lost_keys)
-                    .arg(previous_missing_keys)
                     .arg(now_lost_keys)
                     .arg(now_missing_keys)
                     .arg(was_lost_keys)
@@ -212,8 +206,6 @@ impl super::Backend for CommandBackend {
                 .arg(loop_iteration)
                 .arg(lost_keys)
                 .arg(missing_keys)
-                .arg(previous_lost_keys)
-                .arg(previous_missing_keys)
                 .output()
                 .map_err(|e| e.to_string())?,
         };
@@ -281,10 +273,6 @@ impl super::Backend for CommandBackend {
 ///
 /// # Returns
 /// A comma-separated string of key-timestamp pairs in the format "`key:timestamp`".
-///
-/// # Panics
-/// If any key in the `keys` slice does not exist in the `peers` map,
-/// this function will panic with a message indicating the missing key.
 fn format_key_timestamp_pairs(
     peers: &collections::HashMap<wireguard::PeerKey, wireguard::WireGuardPeer>,
     keys: &[wireguard::PeerKey],
