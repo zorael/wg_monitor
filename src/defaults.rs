@@ -23,6 +23,10 @@ pub const REMINDER_INTERVAL: time::Duration = time::Duration::from_secs(3600 * 6
 /// Base retry interval. Will be grown as retry attempts increase.
 pub const RETRY_INTERVAL: time::Duration = time::Duration::from_secs(10);
 
+/// Default delay between notification attempts for multiple notifiers of the
+/// same backend type, to avoid overwhelming the backend with simultaneous notifications.
+pub const RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS: time::Duration = time::Duration::from_millis(300);
+
 /// Default configuration file name.
 pub const CONFIG_FILENAME: &str = "config.toml";
 
