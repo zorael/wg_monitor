@@ -1,7 +1,9 @@
 //! Module responsible for dispatching notifications and reminders via notifiers.
 
+use std::thread;
 use std::time;
 
+use crate::defaults;
 use crate::logging;
 use crate::settings;
 
@@ -372,6 +374,12 @@ fn send_via_notifier(
     now: &time::SystemTime,
     n: &mut Box<dyn super::StatefulNotifier>,
 ) -> super::NotificationResult {
+    if n.id() > 0 {
+        // If this is the second or later notifier of a given backend type,
+        // insert a small delay to rate-limit the attempts.
+        thread::sleep(defaults::RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS);
+    }
+
     let result = match delta {
         Some(d) => n.push_alert(ctx, d),
         None => n.push_reminder(ctx),
