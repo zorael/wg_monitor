@@ -165,6 +165,10 @@ impl AlertStrings {
         if let Some(peer_no_timestamp) = &config.peer_no_timestamp {
             self.peer_no_timestamp = peer_no_timestamp.clone();
         }
+
+        if let Some(returning_peer_with_timestamp) = &config.returning_peer_with_timestamp {
+            self.returning_peer_with_timestamp = returning_peer_with_timestamp.clone();
+        }
     }
 }
 
