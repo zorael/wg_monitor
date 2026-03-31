@@ -356,7 +356,7 @@ pub fn send_reminder(
 /// - `ctx`: The notification context containing information about the current
 ///   state of peers and other relevant data needed for rendering the
 ///   alert or reminder message.
-/// - `delta`: The changes detected since the last notification, used to determine
+/// - `delta`: The changes detected since the last check, used to determine
 ///   what has changed and render the message accordingly.
 ///   This will be `None` if sending a reminder instead of an alert.
 /// - `now`: The current time, used for updating the notifier's state if the send

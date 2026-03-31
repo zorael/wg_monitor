@@ -39,10 +39,7 @@ pub struct NotifierState {
 }
 
 impl NotifierState {
-    /// Checks if the next reminder is due based on the time since the last
-    /// reminder or alert was sent (or the first error was recorded if
-    /// no reminder or alert has been sent yet) and the number of
-    /// consecutive reminders already sent, using a growing interval.
+    /// Checks if the next reminder is due, using a growing interval.
     ///
     /// The reminder interval grows over time to avoid sending reminders too
     /// frequently for notifications that have been unresolved for a long time,
@@ -53,9 +50,7 @@ impl NotifierState {
     /// will depend on the initial base reminder interval.
     ///
     /// # Parameters
-    /// - `now`: The current time to compare against the last reminder sent,
-    ///   last alert sent, or first error recorded to determine if the
-    ///   next reminder is due.
+    /// - `now`: The current time to compare against the last alert/reminder sent.
     /// - `reminder_interval`: The base interval to use for calculating when
     ///   the next reminder is due, which will be multiplied by a growth factor
     ///   based on the number of consecutive reminders already sent.
@@ -159,20 +154,16 @@ impl NotifierState {
 
     /// Handles the logic for when an alert or reminder fails to send.
     ///
-    /// This includes saving the failed alert or reminder, updating the last failed send
-    /// time, incrementing the number of consecutive failures, setting the
-    /// first error time if it is not already set.
-    ///
     /// # Notes
     /// This method should be called whenever a send attempt fails, regardless of
     /// whether it was a new alert or a reminder, to ensure that the state
-    /// is updated correctly for retry and reminder timing.
+    /// is updated correctly for retries.
     ///
     /// # Parameters
     /// - `ctx`: The notification context to save for the failed alert or reminder.
     /// - `delta`: An optional delta representing the changes in peer status that
-    ///   triggered the notification. If `None`, this indicates that the failed
-    ///   notification is a reminder rather than an alert.
+    ///   triggered the alert. If `None`, this indicates that the failure
+    ///   was a reminder rather than an alert.
     pub fn on_failure(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.last_failed_send = Some(ctx.now);
         self.num_consecutive_failures += 1;
