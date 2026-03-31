@@ -44,7 +44,6 @@ impl<B: backend::Backend> Notifier<B> {
                 failed_ctx: None,
                 failed_delta: None,
                 last_notification_sent: None,
-                first_error_at: None,
                 last_reminder_sent: None,
                 last_failed_send: None,
                 num_consecutive_reminders: 0,

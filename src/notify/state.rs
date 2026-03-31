@@ -25,9 +25,6 @@ pub struct NotifierState {
     /// determining when the next reminder is due.
     pub last_notification_sent: Option<time::SystemTime>,
 
-    /// The time when a first error was recorded.
-    pub first_error_at: Option<time::SystemTime>,
-
     /// The time when the last reminder was sent.
     pub last_reminder_sent: Option<time::SystemTime>,
 
@@ -74,25 +71,17 @@ impl NotifierState {
         now: &time::SystemTime,
         reminder_interval: &time::Duration,
     ) -> bool {
-        let last_sent = match (
-            self.last_reminder_sent,
-            self.last_notification_sent,
-            self.first_error_at,
-        ) {
-            (Some(last_reminder_sent), None, None) => {
+        let last_sent = match (self.last_reminder_sent, self.last_notification_sent) {
+            (Some(last_reminder_sent), None) => {
                 // A reminder has been recently sent so compare against that
                 last_reminder_sent
             }
-            (None, Some(last_notification_sent), None) => {
+            (None, Some(last_notification_sent)) => {
                 // No reminder has been sent yet but a normal notification has
                 // so compare against that
                 last_notification_sent
             }
-            (None, None, Some(first_error_at)) => {
-                // A failure has been recorded but no reminder has been sent yet
-                first_error_at
-            }
-            (None, None, None) => {
+            (None, None) => {
                 // Nothing has been sent yet
                 return false;
             }
@@ -210,11 +199,6 @@ impl NotifierState {
                 self.failed_delta = delta.cloned();
             }
         }
-
-        if self.first_error_at.is_none() {
-            // Only update first_error_at if there is no error recorded yet
-            self.first_error_at = Some(ctx.now);
-        }
     }
 
     /// Handles the logic for when a reminder is successfully sent.
@@ -240,7 +224,6 @@ impl NotifierState {
     /// Handles the logic for when a retry attempt is successful.
     pub fn on_successful_retry(&mut self) {
         self.last_failed_send = None;
-        self.first_error_at = None;
         self.num_consecutive_failures = 0;
     }
 }
