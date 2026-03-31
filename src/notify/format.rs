@@ -110,14 +110,14 @@ fn format_generic_alert(
 
     // Revisit this order.
     add_section(&delta.now_lost, &strings.lost, false, false);
-    add_section(&delta.was_lost, &strings.returned, true, true);
-    add_section(&delta.now_missing, &strings.forgot, false, false);
-    add_section(&delta.was_missing, &strings.appeared, true, true);
+    add_section(&delta.was_lost, &strings.returned, false, true);
+    add_section(&delta.now_missing, &strings.forgot, true, false);
+    add_section(&delta.was_missing, &strings.appeared, false, true);
     add_section(&lost_sans_now_lost_keys, &strings.still_lost, false, false);
     add_section(
         &missing_sans_now_missing_keys,
         &strings.still_missing,
-        false,
+        true,
         false,
     );
 
