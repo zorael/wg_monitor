@@ -54,6 +54,11 @@ impl<B: backend::Backend> Notifier<B> {
 }
 
 impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
+    /// Returns the unique identifier of the backend.
+    fn id(&self) -> usize {
+        self.backend.id()
+    }
+
     /// Returns the name of the notifier, which is derived from the backend's name.
     fn name(&self) -> &str {
         self.backend.name()
