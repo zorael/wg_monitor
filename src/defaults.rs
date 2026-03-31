@@ -34,7 +34,7 @@ pub mod timing {
 
     /// Default delay between notification attempts for multiple notifiers of the
     /// same backend type, to avoid overwhelming the backend with simultaneous notifications.
-    pub const RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS: time::Duration = time::Duration::from_millis(300);
+    pub const NOTIFIER_RATE_LIMIT_DELAY: time::Duration = time::Duration::from_millis(300);
 }
 
 pub mod placeholder_values {
