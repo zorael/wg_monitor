@@ -39,7 +39,7 @@ fn format_generic_alert(
 ) -> String {
     let mut message = String::new();
 
-    if ctx.is_first_run() && !ctx.resume {
+    if ctx.is_first_run() {
         if strings.first_run_missing.is_empty()
             || (ctx.missing_keys.is_empty() && ctx.lost_keys.is_empty())
         {
