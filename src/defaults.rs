@@ -3,29 +3,11 @@
 //! This is just to gather them in one place, and to avoid hardcoding these
 //! values in multiple places throughout the program.
 
-use std::time;
-
 /// Default WireGuard interface name.
 pub const INTERFACE: &str = "wg0";
 
 /// Default path to the `wg` executable.
 pub const WG_PATH: &str = "/usr/bin/wg";
-
-/// Default timeout duration for monitoring checks.
-pub const TIMEOUT: time::Duration = time::Duration::from_secs(600);
-
-/// Default check interval for monitoring the WireGuard interface.
-pub const CHECK_INTERVAL: time::Duration = time::Duration::from_secs(60);
-
-/// Default reminder interval for sending reminder notifications. Base value, will be grown.
-pub const REMINDER_INTERVAL: time::Duration = time::Duration::from_secs(3600 * 6);
-
-/// Base retry interval. Will be grown as retry attempts increase.
-pub const RETRY_INTERVAL: time::Duration = time::Duration::from_secs(10);
-
-/// Default delay between notification attempts for multiple notifiers of the
-/// same backend type, to avoid overwhelming the backend with simultaneous notifications.
-pub const RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS: time::Duration = time::Duration::from_millis(300);
 
 /// Default configuration file name.
 pub const CONFIG_FILENAME: &str = "config.toml";
@@ -33,18 +15,44 @@ pub const CONFIG_FILENAME: &str = "config.toml";
 /// Default peer list file name.
 pub const PEER_LIST_FILENAME: &str = "peers.txt";
 
-/// Default content for the peer list file.
-pub const EMPTY_PEER_LIST_CONTENT: &str = "# <public key> <description>\n\
-    # PeerKey/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Humanly-readable description of peer\n";
+pub mod timing {
+    //! Default timing values for various aspects of the program.
 
-/// Default URL for testing Slack notifications with a dummy webhook URL.
-pub const DUMMY_SLACK_URL: &str = "https://hooks.slack.com/services/DUMMY/HOOK/url";
+    use std::time;
 
-/// Default URL for testing Batsign notifications with a dummy Batsign URL.
-pub const DUMMY_BATSIGN_URL: &str = "https://batsign.me/at/example@mail.tld/asdf1234";
+    /// Default timeout duration for monitoring checks.
+    pub const TIMEOUT: time::Duration = time::Duration::from_secs(600);
 
-/// Default command for testing Command notifications with a dummy command.
-pub const DUMMY_COMMAND: &str = "/usr/bin/echo";
+    /// Default check interval for monitoring the WireGuard interface.
+    pub const CHECK_INTERVAL: time::Duration = time::Duration::from_secs(60);
+
+    /// Default reminder interval for sending reminder notifications. Base value, will be grown.
+    pub const REMINDER_INTERVAL: time::Duration = time::Duration::from_secs(3600 * 6);
+
+    /// Base retry interval. Will be grown as retry attempts increase.
+    pub const RETRY_INTERVAL: time::Duration = time::Duration::from_secs(10);
+
+    /// Default delay between notification attempts for multiple notifiers of the
+    /// same backend type, to avoid overwhelming the backend with simultaneous notifications.
+    pub const RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS: time::Duration = time::Duration::from_millis(300);
+}
+
+pub mod placeholder_values {
+    //! Placeholder values for testing and default content.
+
+    /// Default content for the peer list file.
+    pub const EMPTY_PEER_LIST_CONTENT: &str = "# <public key> <description>\n\
+        # PeerKey/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Humanly-readable description of peer\n";
+
+    /// Default URL for testing Slack notifications with a dummy webhook URL.
+    pub const DUMMY_SLACK_URL: &str = "https://hooks.slack.com/services/DUMMY/HOOK/url";
+
+    /// Default URL for testing Batsign notifications with a dummy Batsign URL.
+    pub const DUMMY_BATSIGN_URL: &str = "https://batsign.me/at/example@mail.tld/asdf1234";
+
+    /// Default command for testing Command notifications with a dummy command.
+    pub const DUMMY_COMMAND: &str = "/usr/bin/echo";
+}
 
 pub mod program_metadata {
     //! Program metadata constants, such as the program name, version, authors, and source repository URL.

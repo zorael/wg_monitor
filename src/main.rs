@@ -483,7 +483,10 @@ fn save_settings_to_config_file(settings: &settings::Settings) -> process::ExitC
     };
 
     if !settings.paths.peer_list.exists() {
-        match fs::write(&settings.paths.peer_list, defaults::EMPTY_PEER_LIST_CONTENT) {
+        match fs::write(
+            &settings.paths.peer_list,
+            defaults::placeholder_values::EMPTY_PEER_LIST_CONTENT,
+        ) {
             Ok(()) => {
                 logging::tsprintln!(
                     &settings.disable_timestamps,
@@ -586,17 +589,19 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
     // backends even if no URLs were configured.
 
     let slack_urls = match settings.dry_run {
-        true if slack_enabled => vec![defaults::DUMMY_SLACK_URL.to_string()],
+        true if slack_enabled => vec![defaults::placeholder_values::DUMMY_SLACK_URL.to_string()],
         _ => settings.slack.urls.clone(),
     };
 
     let batsign_urls = match settings.dry_run {
-        true if batsign_enabled => vec![defaults::DUMMY_BATSIGN_URL.to_string()],
+        true if batsign_enabled => {
+            vec![defaults::placeholder_values::DUMMY_BATSIGN_URL.to_string()]
+        }
         _ => settings.batsign.urls.clone(),
     };
 
     let commands = match settings.dry_run {
-        true if command_enabled => vec![defaults::DUMMY_COMMAND.to_string()],
+        true if command_enabled => vec![defaults::placeholder_values::DUMMY_COMMAND.to_string()],
         _ => settings.command.commands.clone(),
     };
 

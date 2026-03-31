@@ -42,10 +42,10 @@ impl Default for MonitorSettings {
     fn default() -> Self {
         Self {
             interface: defaults::INTERFACE.to_string(),
-            check_interval: defaults::CHECK_INTERVAL,
-            timeout: defaults::TIMEOUT,
-            reminder_interval: defaults::REMINDER_INTERVAL,
-            retry_interval: defaults::RETRY_INTERVAL,
+            check_interval: defaults::timing::CHECK_INTERVAL,
+            timeout: defaults::timing::TIMEOUT,
+            reminder_interval: defaults::timing::REMINDER_INTERVAL,
+            retry_interval: defaults::timing::RETRY_INTERVAL,
         }
     }
 }

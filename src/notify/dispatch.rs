@@ -377,7 +377,7 @@ fn send_via_notifier(
     if n.id() > 0 {
         // If this is the second or later notifier of a given backend type,
         // insert a small delay to rate-limit the attempts.
-        thread::sleep(defaults::RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS);
+        thread::sleep(defaults::timing::RATE_LIMIT_DELAY_BETWEEN_NOTIFIERS);
     }
 
     let result = match delta {
