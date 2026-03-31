@@ -40,16 +40,15 @@ fn format_generic_alert(
     let mut message = String::new();
 
     if ctx.is_first_run() {
-        if strings.first_run_missing.is_empty()
-            || (ctx.missing_keys.is_empty() && ctx.lost_keys.is_empty())
-        {
-            return message.trim_end().to_string();
+        let no_peers_to_report = ctx.lost_keys.is_empty() && ctx.missing_keys.is_empty();
+
+        if strings.first_run_missing.is_empty() || no_peers_to_report {
+            // No first run missing banner or no peers to report
+            return message;
         }
 
-        if !strings.first_run_missing.is_empty() {
-            message.push_str(&strings.first_run_missing);
-            message.push('\n');
-        }
+        message.push_str(&strings.first_run_missing);
+        message.push('\n');
 
         let bp = &strings.bullet_point;
 
@@ -92,7 +91,7 @@ fn format_generic_alert(
 
     if ctx.resume {
         add_section(&ctx.lost_keys, &strings.still_lost, false, false);
-        add_section(&ctx.missing_keys, &strings.still_missing, false, false);
+        add_section(&ctx.missing_keys, &strings.still_missing, true, false);
 
         if !message.is_empty() && !strings.footer.is_empty() {
             //message.push('\n'); // append_message_section leaves an extra newline
@@ -102,10 +101,8 @@ fn format_generic_alert(
         return message.trim_end().to_string();
     }
 
-    let lost_sans_now_lost_keys =
-        utils::get_elements_not_in_other_vec(&ctx.lost_keys, &delta.now_lost);
-
-    let missing_sans_now_missing_keys =
+    let lost_sans_now_lost = utils::get_elements_not_in_other_vec(&ctx.lost_keys, &delta.now_lost);
+    let missing_sans_now_missing =
         utils::get_elements_not_in_other_vec(&ctx.missing_keys, &delta.now_missing);
 
     // Revisit this order.
@@ -113,9 +110,9 @@ fn format_generic_alert(
     add_section(&delta.was_lost, &strings.returned, false, true);
     add_section(&delta.now_missing, &strings.forgot, true, false);
     add_section(&delta.was_missing, &strings.appeared, false, true);
-    add_section(&lost_sans_now_lost_keys, &strings.still_lost, false, false);
+    add_section(&lost_sans_now_lost, &strings.still_lost, false, false);
     add_section(
-        &missing_sans_now_missing_keys,
+        &missing_sans_now_missing,
         &strings.still_missing,
         true,
         false,
