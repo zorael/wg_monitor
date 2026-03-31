@@ -201,10 +201,7 @@ fn format_peer_line(
     };
 
     let when = match peer.last_seen {
-        Some(ts) => {
-            let dt: chrono::DateTime<chrono::Local> = ts.into();
-            dt.format("%Y-%m-%d %H:%M:%S").to_string()
-        }
+        Some(ts) => utils::fuzzy_datestamp_of(&ts),
         None => "never".to_string(),
     };
 
