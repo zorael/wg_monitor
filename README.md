@@ -239,12 +239,12 @@ The order of arguments is as follows:
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
 3. The number of time the main loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
-4. A comma-separated string of lost keys in the format "`key:timestamp`"
-5. A comma-separated string of missing keys in the format "`key:timestamp`"
-6. In non-reminder notifications, a comma-separated string of keys that are now lost in the format "`key:timestamp`"
-7. In non-reminder notifications, a comma-separated string of keys that are now missing in the format "`key:timestamp`"
-8. In non-reminder notifications, a comma-separated string of keys that were lost (but are no longer) in the format "`key:timestamp`"
-9. In non-reminder notifications, a comma-separated string of keys that were missing (but are no longer) in the format "`key:timestamp`"
+4. A comma-separated string of lost keys in the format "`key1:timestamp1,key2:timestamp2,...`"
+5. A comma-separated string of missing keys in the format "`key1:timestamp1,key2:timestamp2,...`"
+6. In alert notifications, a comma-separated string of keys that are now lost in the format "`key1:timestamp1,key2:timestamp2,...`"
+7. In alert notifications, a comma-separated string of keys that are now missing in the format "`key1:timestamp1,key2:timestamp2,...`"
+8. In alert notifications, a comma-separated string of keys that were lost (but are no longer) in the format "`key1:timestamp1,key2:timestamp2,...`"
+9. In alert notifications, a comma-separated string of keys that were missing (but are no longer) in the format "`key1:timestamp1,key2:timestamp2,...`"
 
 Any parameter for which there is no value (as in, there are no lost peers), the argument is passed but is simply an empty string `""`.
 
