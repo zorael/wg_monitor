@@ -821,7 +821,8 @@ fn run_loop(
 
         if ctx.is_first_run() {
             let first_run_report = notify::send_alert(ctx, &delta, notifiers, &settings);
-            end_loop(ctx, previous_ctx, first_run_report, &settings);
+            let should_sleep_retry_delay = first_run_report.failed > 0;
+            end_loop(ctx, previous_ctx, should_sleep_retry_delay, &settings);
             continue;
         }
 
@@ -864,13 +865,15 @@ fn run_loop(
             }
 
             let alert_report = notify::send_alert(ctx, &delta, notifiers, &settings);
+            num_notifiers_with_failures += alert_report.failed;
 
             if settings.debug && alert_report.total != alert_report.skipped {
                 println!();
                 println!("{:#?}\n", alert_report);
             }
 
-            end_loop(ctx, previous_ctx, alert_report, &settings);
+            let should_sleep_retry_delay = num_notifiers_with_failures > 0;
+            end_loop(ctx, previous_ctx, should_sleep_retry_delay, &settings);
             continue;
         }
 
@@ -881,13 +884,15 @@ fn run_loop(
 
         if there_is_at_least_one_peer_missing_or_lost {
             let reminder_report = notify::send_reminder(ctx, notifiers, &settings);
+            num_notifiers_with_failures += reminder_report.failed;
 
             if settings.debug && reminder_report.total != reminder_report.skipped {
                 println!();
                 println!("{:#?}\n", reminder_report);
             }
 
-            end_loop(ctx, previous_ctx, reminder_report, &settings);
+            let should_sleep_retry_delay = num_notifiers_with_failures > 0;
+            end_loop(ctx, previous_ctx, should_sleep_retry_delay, &settings);
             continue;
         }
 
@@ -942,19 +947,20 @@ fn end_loop_minimal(ctx: &mut notify::Context, previous_ctx: &mut notify::Contex
 /// # Parameters
 /// - `ctx`: The `notify::Context` used as a basis for the notification attempt.
 /// - `previous_ctx`: The previous `notify::Context` from the previous loop iteration.
-/// - `report`: The report from the notification attempt.
+/// - `should_sleep_retry_delay`: A boolean indicating whether or not to sleep
+///   with the retry interval instead of the normal check interval.
 /// - `settings`: The program settings, which houses the configured intervals
 ///   for sleeping after loops.
 fn end_loop(
     ctx: &mut notify::Context,
     previous_ctx: &mut notify::Context,
-    report: notify::DispatchReport,
+    should_sleep_retry_delay: bool,
     settings: &settings::Settings,
 ) {
     end_loop_minimal(ctx, previous_ctx);
 
-    if report.failed > 0 {
-        // Copy/pasted from run_loop;
+    if should_sleep_retry_delay {
+        // Copy/paste from run_loop;
         // Always sleep the base retry interval here even if there have been
         // consecutive retry failures. Further attempts will be rate-limited
         // in retry_failed_notifications (by calling next_retry_is_due),
