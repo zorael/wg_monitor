@@ -13,7 +13,7 @@ use crate::settings;
 use crate::utils;
 use crate::wireguard;
 
-/// Builds a generic notification message based on the provided `Context` and
+/// Builds a generic alert message based on the provided `Context` and
 /// `KeyDelta`, using the specified message strings for formatting.
 ///
 /// The message is composed of sections for peers that became lost, went missing,
@@ -26,16 +26,16 @@ use crate::wireguard;
 /// (such as empty headers for some peer state where peer would have been listed).
 ///
 /// # Parameters
-/// - `ctx`: The notification context containing the current state of peers.
+/// - `ctx`: The alert context containing the current state of peers.
 /// - `delta`: The delta containing the changes in peer status since the last check.
-/// - `strings`: The message strings to use for formatting the notification.
+/// - `strings`: The message strings to use for formatting the alert.
 ///
 /// # Returns
-/// A formatted notification message as a `String`.
-fn format_generic_message(
+/// A formatted alert message as a `String`.
+fn format_generic_alert(
     ctx: &super::Context,
     delta: &super::KeyDelta,
-    strings: &settings::MessageStrings,
+    strings: &settings::AlertStrings,
 ) -> String {
     let mut message = String::new();
 
@@ -278,7 +278,7 @@ fn append_message_section(
     message.push('\n');
 }
 
-/// Prepares the message body for a notification by formatting it based on the
+/// Prepares the message body for an alert by formatting it based on the
 /// provided `Context`, `KeyDelta` and message strings, applying a header
 /// closure to the appropriate header string.
 ///
@@ -287,7 +287,7 @@ fn append_message_section(
 /// # Parameters
 /// - `ctx`: The notification context containing the current state of peers.
 /// - `delta`: The key delta containing the changes in peer status since the last check.
-/// - `strings`: The message strings to use for formatting the notification.
+/// - `strings`: The message strings to use for formatting the alert.
 /// - `header_closure`: A closure that takes a header string and returns a
 ///   formatted header string, which allows for backend-specific header
 ///   formatting (such as prepending "Subject: " for email bodies).
@@ -298,14 +298,14 @@ fn append_message_section(
 ///   configured so that the section header strings for peers to be listed
 ///   were empty, disabling that section from being output. In this case,
 ///   no message will be sent.
-pub fn prepare_message_body(
+pub fn prepare_alert_body(
     ctx: &super::Context,
     delta: &super::KeyDelta,
-    strings: &settings::MessageStrings,
+    strings: &settings::AlertStrings,
     header_closure: impl Fn(&str) -> String,
 ) -> Option<String> {
     let mut message = String::new();
-    let body = &format_generic_message(ctx, delta, strings);
+    let body = &format_generic_alert(ctx, delta, strings);
 
     if body.is_empty() && !ctx.is_first_run() {
         // Nothing to send. If it's the first run, we still want to send the

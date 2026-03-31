@@ -31,10 +31,9 @@ pub struct MonitorConfig {
     /// Interval for reminder notifications, specified as a human-readable duration.
     ///
     /// This is the interval at which reminder notifications are sent.
-    /// It will be grown as consecutive reminders are sent for the same pending
+    /// It will be grown as consecutive reminders are sent for the same
     /// notification, providing frequent reminders at the beginning,
-    /// and less frequent reminders as time goes on without the pending
-    /// notification being resolved.
+    /// and less frequent reminders as time goes on without it being resolved.
     #[serde(with = "humantime_serde")]
     pub reminder_interval: Option<time::Duration>,
 

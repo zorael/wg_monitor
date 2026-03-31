@@ -8,7 +8,7 @@ use crate::backend;
 /// notification context and delta, and for sending the notifications through
 /// the specified backend.
 pub struct Notifier<B: backend::Backend> {
-    /// State related to pending notifications, reminder timing, and failure tracking.
+    /// State related notifications.
     pub state: super::NotifierState,
 
     /// The backend used to compose and send notifications.
@@ -43,7 +43,7 @@ impl<B: backend::Backend> Notifier<B> {
             state: super::NotifierState {
                 failed_ctx: None,
                 failed_delta: None,
-                last_notification_sent: None,
+                last_alert_sent: None,
                 last_reminder_sent: None,
                 last_failed_send: None,
                 num_consecutive_reminders: 0,
@@ -59,12 +59,12 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
         self.backend.name()
     }
 
-    /// Sends a notification based on the provided context and delta.
+    /// Sends an alert based on the provided context and delta.
     ///
-    /// The method composes a message using the backend's `compose_message`
+    /// The method composes an alert message using the backend's `compose_alert`
     /// method, and then sends it using the backend's `emit` method.
     ///
-    /// The result of the notification attempt is returned as a
+    /// The result of the alert attempt is returned as a
     /// `NotificationResult`, which can indicate success, failure, a dry run,
     /// or no message to send.
     ///
@@ -72,26 +72,26 @@ impl<B: backend::Backend> super::NotificationSender for Notifier<B> {
     /// - `ctx`: The current notification context, which contains information
     ///   about the peers and timing.
     /// - `delta`: The delta representing the changes in peer status that
-    ///   triggered the notification.
+    ///   triggered the alert.
     ///
     /// # Returns
-    /// A `NotificationResult` indicating the outcome of the notification
+    /// A `NotificationResult` indicating the outcome of the alert
     /// attempt, which can be:
-    /// - `DryRun(String)`: The notification was not sent because dry run mode is
+    /// - `DryRun(String)`: The alert was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(String, Option<String>)`: The notification was successfully sent,
+    /// - `Success(String, Option<String>)`: The alert was successfully sent,
     ///   including the message that was sent and any output from the backend.
-    /// - `Failure(String, String)`: There was a failure in sending the notification,
+    /// - `Failure(String, String)`: There was a failure in sending the alert,
     ///   including an error message describing the failure and the message
     ///   that was attempted to be sent.
-    /// - `NoMessage`: The notification was not sent because the rendered
+    /// - `NoMessage`: The alert was not sent because the rendered
     ///   message ended up empty.
-    fn push_notification(
+    fn push_alert(
         &mut self,
         ctx: &super::Context,
         delta: &super::KeyDelta,
     ) -> super::NotificationResult {
-        let message = match self.backend.compose_message(ctx, delta) {
+        let message = match self.backend.compose_alert(ctx, delta) {
             Some(m) => m,
             None => return super::NotificationResult::NoMessage,
         };

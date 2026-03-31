@@ -35,8 +35,8 @@ pub struct CommandBackend {
     /// Whether to print the standard output of the executed commands to the terminal.
     show_output: bool,
 
-    /// Message strings for Command notifications.
-    strings: settings::MessageStrings,
+    /// Message strings for Command alert notifications.
+    alert_strings: settings::AlertStrings,
 
     /// Message strings for Command reminder notifications.
     reminder_strings: settings::ReminderStrings,
@@ -59,7 +59,7 @@ impl CommandBackend {
     /// - `command`: The command to execute when sending a notification.
     ///   This should be the path to the executable or script to run.
     /// - `show_output`: Whether to print the output of the executed commands to the terminal.
-    /// - `strings`: Message strings for Command notifications.
+    /// - `alert_strings`: Message strings for Command alert notifications.
     /// - `reminder_strings`: Message strings for Command reminder notifications.
     ///
     /// # Returns
@@ -70,7 +70,7 @@ impl CommandBackend {
         id: usize,
         command: &str,
         show_output: bool,
-        strings: &settings::MessageStrings,
+        alert_strings: &settings::AlertStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
         let cached_name = format!("command#{}:{}", id, command);
@@ -79,7 +79,7 @@ impl CommandBackend {
             id,
             command: command.to_string(),
             show_output,
-            strings: strings.clone(),
+            alert_strings: alert_strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
         }
@@ -101,20 +101,20 @@ impl super::Backend for CommandBackend {
         &self.cached_name
     }
 
-    /// Composes a message to be used as argument when executing the command,
+    /// Composes an alert message to be used as argument when executing the command,
     /// based on the notification context and key delta.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
-    /// - `delta`: The changes detected since the last notification.
+    /// - `delta`: The changes detected since the last check.
     ///
     /// # Returns
     /// - `Some(String)` if a message to send was composed.
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
+    fn compose_alert(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
-        notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
+        notify::prepare_alert_body(ctx, delta, &self.alert_strings, header_closure)
     }
 
     /// Composes a reminder message to be used as argument when executing the
@@ -159,8 +159,7 @@ impl super::Backend for CommandBackend {
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
-    /// - `delta`: The changes detected since the last notification, or `None`
-    ///   if this is a reminder rather than a normal notification.
+    /// - `delta`: The changes detected since the last alert.
     /// - `message`: The composed message to send, which is passed as argument
     ///   `$1` to the command.
     ///

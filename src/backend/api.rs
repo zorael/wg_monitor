@@ -22,22 +22,22 @@ pub trait Backend {
     /// additional information such as identifiers unique to each instance.
     fn name(&self) -> &str;
 
-    /// Composes a notification message based on the notification context and
-    /// the delta expressing the changes since the last notification.
+    /// Composes an alert message based on the notification context and
+    /// the delta expressing the changes since the last check.
     ///
     /// # Parameters
     /// - `ctx`: Current notification context.
-    /// - `delta`: The state change that triggered the notification.
+    /// - `delta`: The state change that triggered the alert.
     ///
     /// # Returns
     /// - `Some(String)` if a message should be sent
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String>;
+    fn compose_alert(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String>;
 
     /// Composes a reminder message based on the notification context.
     ///
-    /// Reminders differ from normal notifications in that they do not include
+    /// Reminders differ from alerts in that they do not include
     /// a delta, since they are not triggered by a new state change.
     ///
     /// # Parameters

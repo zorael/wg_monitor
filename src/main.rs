@@ -539,7 +539,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             agent.clone(),
             url,
             settings.slack.show_response,
-            &settings.slack.strings,
+            &settings.slack.alert_strings,
             &settings.slack.reminder_strings,
         )
     };
@@ -551,7 +551,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             agent.clone(),
             url,
             settings.batsign.show_response,
-            &settings.batsign.strings,
+            &settings.batsign.alert_strings,
             &settings.batsign.reminder_strings,
         )
     };
@@ -562,7 +562,7 @@ fn build_notifiers(settings: &settings::Settings) -> Vec<Box<dyn notify::Statefu
             i,
             command,
             settings.command.show_output,
-            &settings.command.strings,
+            &settings.command.alert_strings,
             &settings.command.reminder_strings,
         )
     };
@@ -703,18 +703,18 @@ fn sanity_check_notifiers(
 ///    the context with the new information.
 /// 2. Calculates a `notify::KeyDelta` that represents the difference between
 ///    the current peer context (who is present, lost, missing) and the previous one.
-/// 3. If this is the first run, sends a notification with the initial state of all peers.
+/// 3. If this is the first run, sends an alert with the initial state of all peers.
 /// 4. If there are any notifiers with pending failures, attempts to retry them.
 ///    The number of remaining failures after the retry attempt is recorded.
 ///    (If this number is 0, all retries have succeeded.)
 ///    The loop proceeds; there are no `continue`s after this step.
 /// 5. If there were any changes between the previous loop and the current one,
 ///    determined by whether or not the `notify::KeyDelta` is empty, it infers
-///    that there should be a notification sent. Assuming one was not sent too
+///    that there should be an alert sent. Assuming one was not sent too
 ///    recently, it pushes one about these changes through all notifiers.
 ///    `end_loop` is called here and the loop continues to the next iteration.
 /// 6. If there were no changes but there are still lost or missing peers,
-///    it infers there should be a remind sent. Assuming one was not sent too
+///    it infers there should be a reminder sent. Assuming one was not sent too
 ///    recently, it pushes a reminder through all notifiers.
 ///    `end_loop` is called here and the loop continues to the next iteration.
 /// 7. If there were no changes and no lost/missing peers, it infers that there
@@ -831,13 +831,13 @@ fn run_loop(
             if ctx.is_first_run() {
                 // If you --skip-first the first run, reminders will never be sent
                 // because the stateful notifiers will never have their
-                // last_notification_sent set. So fake a notification being sent here, once.
+                // last_alert_sent set. So fake an alert being sent here, once.
                 // The alternative is to keep a program_started_at timestamp
                 // in Context and check against that in the reminder logic, but
                 // this is simpler, leverages existing code and achieves the same results.
                 // Hacky, though.
                 for n in notifiers.iter_mut() {
-                    n.state_mut().on_successful_notification(&ctx.now);
+                    n.state_mut().on_successful_alert(&ctx.now);
                 }
             }
 
@@ -855,7 +855,7 @@ fn run_loop(
         let delta = notify::Context::delta_between(ctx, previous_ctx);
 
         if ctx.is_first_run() {
-            let first_run_report = notify::send_notification(ctx, &delta, notifiers, &settings);
+            let first_run_report = notify::send_alert(ctx, &delta, notifiers, &settings);
             end_loop(ctx, previous_ctx, first_run_report, &settings);
             continue;
         }
@@ -898,14 +898,14 @@ fn run_loop(
                 delta.print_nonempty_keys_prefixed("... ");
             }
 
-            let notification_report = notify::send_notification(ctx, &delta, notifiers, &settings);
+            let alert_report = notify::send_alert(ctx, &delta, notifiers, &settings);
 
-            if settings.debug && notification_report.total != notification_report.skipped {
+            if settings.debug && alert_report.total != alert_report.skipped {
                 println!();
-                println!("{:#?}\n", notification_report);
+                println!("{:#?}\n", alert_report);
             }
 
-            end_loop(ctx, previous_ctx, notification_report, &settings);
+            end_loop(ctx, previous_ctx, alert_report, &settings);
             continue;
         }
 

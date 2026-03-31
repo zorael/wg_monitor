@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct CommandConfig {
-    /// Message strings for notifications.
-    pub strings: super::MessageStringsConfig,
+    /// Message strings for alert notifications.
+    pub alert_strings: super::AlertStringsConfig,
 
     /// Message strings for reminder notifications.
     pub reminder_strings: super::ReminderStringsConfig,

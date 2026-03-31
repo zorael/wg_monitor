@@ -21,9 +21,9 @@ pub struct NotifierState {
     /// but that's the design for now.
     pub failed_delta: Option<super::KeyDelta>,
 
-    /// The time when the last notification was successfully sent, key in
+    /// The time when the last alert was successfully sent, key in
     /// determining when the next reminder is due.
-    pub last_notification_sent: Option<time::SystemTime>,
+    pub last_alert_sent: Option<time::SystemTime>,
 
     /// The time when the last reminder was sent.
     pub last_reminder_sent: Option<time::SystemTime>,
@@ -40,8 +40,8 @@ pub struct NotifierState {
 
 impl NotifierState {
     /// Checks if the next reminder is due based on the time since the last
-    /// reminder or notification was sent (or the first error was recorded if
-    /// no reminder or notification has been sent yet) and the number of
+    /// reminder or alert was sent (or the first error was recorded if
+    /// no reminder or alert has been sent yet) and the number of
     /// consecutive reminders already sent, using a growing interval.
     ///
     /// The reminder interval grows over time to avoid sending reminders too
@@ -54,7 +54,7 @@ impl NotifierState {
     ///
     /// # Parameters
     /// - `now`: The current time to compare against the last reminder sent,
-    ///   last notification sent, or first error recorded to determine if the
+    ///   last alert sent, or first error recorded to determine if the
     ///   next reminder is due.
     /// - `reminder_interval`: The base interval to use for calculating when
     ///   the next reminder is due, which will be multiplied by a growth factor
@@ -62,8 +62,7 @@ impl NotifierState {
     ///
     /// # Returns
     /// - `true` if the next reminder is due based on the time since the last
-    ///   reminder sent, last notification sent, or first error recorded and
-    ///   the calculated next reminder interval.
+    ///   reminder or last alert sent.
     /// - `false` if the next reminder is not yet due based on the time since
     ///   the last relevant event and the calculated next reminder interval.
     pub fn next_reminder_is_due(
@@ -71,15 +70,15 @@ impl NotifierState {
         now: &time::SystemTime,
         reminder_interval: &time::Duration,
     ) -> bool {
-        let last_sent = match (self.last_reminder_sent, self.last_notification_sent) {
+        let last_sent = match (self.last_reminder_sent, self.last_alert_sent) {
             (Some(last_reminder_sent), None) => {
                 // A reminder has been recently sent so compare against that
                 last_reminder_sent
             }
-            (None, Some(last_notification_sent)) => {
-                // No reminder has been sent yet but a normal notification has
+            (None, Some(last_alert_sent)) => {
+                // No reminder has been sent yet but a normal alert has,
                 // so compare against that
-                last_notification_sent
+                last_alert_sent
             }
             (None, None) => {
                 // Nothing has been sent yet
@@ -158,22 +157,22 @@ impl NotifierState {
         }
     }
 
-    /// Handles the logic for when a notification or reminder fails to send.
+    /// Handles the logic for when an alert or reminder fails to send.
     ///
-    /// This includes saving the failed notification, updating the last failed send
+    /// This includes saving the failed alert or reminder, updating the last failed send
     /// time, incrementing the number of consecutive failures, setting the
     /// first error time if it is not already set.
     ///
     /// # Notes
     /// This method should be called whenever a send attempt fails, regardless of
-    /// whether it was a new notification or a reminder, to ensure that the state
+    /// whether it was a new alert or a reminder, to ensure that the state
     /// is updated correctly for retry and reminder timing.
     ///
     /// # Parameters
-    /// - `ctx`: The notification context to save for the failed notification.
+    /// - `ctx`: The notification context to save for the failed alert or reminder.
     /// - `delta`: An optional delta representing the changes in peer status that
     ///   triggered the notification. If `None`, this indicates that the failed
-    ///   notification is a reminder rather than a new notification.
+    ///   notification is a reminder rather than an alert.
     pub fn on_failure(&mut self, ctx: &super::Context, delta: Option<&super::KeyDelta>) {
         self.last_failed_send = Some(ctx.now);
         self.num_consecutive_failures += 1;
@@ -206,17 +205,17 @@ impl NotifierState {
     /// # Parameters
     /// - `now`: The current time.
     pub fn on_successful_reminder(&mut self, now: &time::SystemTime) {
-        self.last_notification_sent = None;
+        self.last_alert_sent = None;
         self.last_reminder_sent = Some(*now);
         self.num_consecutive_reminders += 1;
     }
 
-    /// Handles the logic for when a notification is successfully sent.
+    /// Handles the logic for when an alert is successfully sent.
     ///
     /// # Parameters
     /// - `now`: The current time.
-    pub fn on_successful_notification(&mut self, now: &time::SystemTime) {
-        self.last_notification_sent = Some(*now);
+    pub fn on_successful_alert(&mut self, now: &time::SystemTime) {
+        self.last_alert_sent = Some(*now);
         self.last_reminder_sent = None;
         self.num_consecutive_reminders = 0;
     }

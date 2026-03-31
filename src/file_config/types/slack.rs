@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct SlackConfig {
     /// Message strings for notifications.
-    pub strings: super::MessageStringsConfig,
+    pub alert_strings: super::AlertStringsConfig,
 
     /// Message strings for reminder notifications.
     pub reminder_strings: super::ReminderStringsConfig,

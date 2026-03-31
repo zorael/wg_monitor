@@ -8,8 +8,8 @@ mod state;
 mod stateful;
 mod types;
 
-pub use dispatch::{retry_failed_notifications, send_notification, send_reminder};
-pub use format::{prepare_message_body, prepare_reminder_body};
+pub use dispatch::{retry_failed_notifications, send_alert, send_reminder};
+pub use format::{prepare_alert_body, prepare_reminder_body};
 pub use notifier::Notifier;
 pub use sender::NotificationSender;
 pub use state::NotifierState;

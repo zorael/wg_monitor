@@ -8,8 +8,8 @@ use crate::utils;
 /// strings, enabled status, and notification URLs.
 #[derive(Debug, Default)]
 pub struct BatsignSettings {
-    /// Message strings for Batsign notifications.
-    pub strings: settings::MessageStrings,
+    /// Message strings for Batsign alert notifications.
+    pub alert_strings: settings::AlertStrings,
 
     /// Message strings for Batsign reminder notifications.
     pub reminder_strings: settings::ReminderStrings,
@@ -36,7 +36,7 @@ impl BatsignSettings {
     ///   containing the settings to apply to the current `BatsignSettings`
     ///   instance.
     pub fn apply_file(&mut self, batsign_config: &file_config::BatsignConfig) {
-        self.strings.apply_file(&batsign_config.strings);
+        self.alert_strings.apply_file(&batsign_config.alert_strings);
         self.reminder_strings
             .apply_file(&batsign_config.reminder_strings);
 

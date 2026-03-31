@@ -29,8 +29,8 @@ pub struct BatsignBackend {
     /// Whether to print the responses to the HTTP requests to the terminal.
     show_response: bool,
 
-    /// Message strings for Batsign notifications.
-    strings: settings::MessageStrings,
+    /// Message strings for Batsign alert notifications.
+    alert_strings: settings::AlertStrings,
 
     /// Message strings for Batsign reminder notifications.
     reminder_strings: settings::ReminderStrings,
@@ -53,7 +53,7 @@ impl BatsignBackend {
     /// - `agent`: HTTP agent used to send requests to the Batsign service.
     /// - `url`: Batsign URL to which the notification will be sent.
     /// - `show_response`: Whether to print the responses to the HTTP requests to the terminal.
-    /// - `strings`: Message strings for Batsign notifications.
+    /// - `alert_strings`: Message strings for Batsign alert notifications.
     /// - `reminder_strings`: Message strings for Batsign reminder notifications.
     ///
     /// # Returns
@@ -65,7 +65,7 @@ impl BatsignBackend {
         agent: ureq::Agent,
         url: &str,
         show_response: bool,
-        strings: &settings::MessageStrings,
+        alert_strings: &settings::AlertStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
         let cached_name = format!(
@@ -79,7 +79,7 @@ impl BatsignBackend {
             agent,
             url: url.to_string(),
             show_response,
-            strings: strings.clone(),
+            alert_strings: alert_strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
         }
@@ -102,20 +102,20 @@ impl super::Backend for BatsignBackend {
         &self.cached_name
     }
 
-    /// Composes a message to be sent via Batsign based on the notification
+    /// Composes an alert message to be sent via Batsign based on the notification
     /// context and key delta.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
-    /// - `delta`: The changes detected since the last notification.
+    /// - `delta`: The changes detected since the last check.
     ///
     /// # Returns
     /// - `Some(String)` if a message to send was composed.
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
+    fn compose_alert(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| format!("Subject: {}", h);
-        notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
+        notify::prepare_alert_body(ctx, delta, &self.alert_strings, header_closure)
     }
 
     /// Composes a reminder message to be sent via Batsign based on the notification
@@ -141,7 +141,7 @@ impl super::Backend for BatsignBackend {
     ///
     /// # Parameters
     /// - `ctx`: The notification context (not used in this implementation).
-    /// - `delta`: The changes detected since the last notification
+    /// - `delta`: The changes detected since the last alert
     ///   (not used in this implementation).
     /// - `message`: The already-composed message to send.
     ///

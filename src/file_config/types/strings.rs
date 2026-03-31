@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::settings;
 
-/// Message string configuration struct.
+/// Alert string configuration struct.
 ///
-/// This mirrors the runtime settings struct used by the program for message strings.
+/// This mirrors the runtime settings struct used by the program for alert strings.
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
-pub struct MessageStringsConfig {
+pub struct AlertStringsConfig {
     /// Message header.
     pub header: Option<String>,
 
@@ -61,9 +61,9 @@ pub struct MessageStringsConfig {
     pub peer_no_timestamp: Option<String>,
 }
 
-impl From<&settings::MessageStrings> for MessageStringsConfig {
-    /// Converts a `MessageStrings` into a `MessageStringsConfig` for serialization purposes.
-    fn from(strings: &settings::MessageStrings) -> Self {
+impl From<&settings::AlertStrings> for AlertStringsConfig {
+    /// Converts an `AlertStrings` into an `AlertStringsConfig` for serialization purposes.
+    fn from(strings: &settings::AlertStrings) -> Self {
         Self {
             header: Some(strings.header.clone()),
             first_run_header: Some(strings.first_run_header.clone()),

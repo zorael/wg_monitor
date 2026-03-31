@@ -9,8 +9,8 @@ use crate::utils;
 /// strings, enabled status, and notification commands.
 #[derive(Debug, Default)]
 pub struct CommandSettings {
-    /// Message strings for Command notifications.
-    pub strings: settings::MessageStrings,
+    /// Message strings for Command alert notifications.
+    pub alert_strings: settings::AlertStrings,
 
     /// Message strings for Command reminder notifications.
     pub reminder_strings: settings::ReminderStrings,
@@ -35,7 +35,7 @@ impl CommandSettings {
     /// - `command_config`: The `file_config::CommandConfig` containing the
     ///   settings to apply to the current `CommandSettings` instance.
     pub fn apply_file(&mut self, command_config: &file_config::CommandConfig) {
-        self.strings.apply_file(&command_config.strings);
+        self.alert_strings.apply_file(&command_config.alert_strings);
         self.reminder_strings
             .apply_file(&command_config.reminder_strings);
 

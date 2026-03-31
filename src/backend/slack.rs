@@ -30,8 +30,8 @@ pub struct SlackBackend {
     /// Whether to print the responses to the HTTP requests to the terminal.
     show_response: bool,
 
-    /// Message strings for Slack notifications.
-    strings: settings::MessageStrings,
+    /// Message strings for Slack alert notifications.
+    alert_strings: settings::AlertStrings,
 
     /// Message strings for Slack reminder notifications.
     reminder_strings: settings::ReminderStrings,
@@ -50,7 +50,7 @@ impl SlackBackend {
     /// - `agent`: HTTP agent used to send requests to the Slack webhook URL.
     /// - `url`: Slack webhook URL to which the notification will be sent.
     /// - `show_response`: Whether to print the responses to the HTTP requests to the terminal.
-    /// - `strings`: Message strings for Slack notifications.
+    /// - `alert_strings`: Message strings for Slack alert notifications.
     /// - `reminder_strings`: Message strings for Slack reminder notifications.
     ///
     /// # Returns
@@ -62,7 +62,7 @@ impl SlackBackend {
         agent: ureq::Agent,
         url: &str,
         show_response: bool,
-        strings: &settings::MessageStrings,
+        alert_strings: &settings::AlertStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
         let cached_name = format!("slack#{}", id);
@@ -72,7 +72,7 @@ impl SlackBackend {
             agent,
             url: url.to_string(),
             show_response,
-            strings: strings.clone(),
+            alert_strings: alert_strings.clone(),
             reminder_strings: reminder_strings.clone(),
             cached_name,
         }
@@ -92,20 +92,20 @@ impl super::Backend for SlackBackend {
         &self.cached_name
     }
 
-    /// Composes a message to be sent to a Slack channel based on the notification
+    /// Composes an alert message to be sent to a Slack channel based on the notification
     /// context and key delta.
     ///
     /// # Parameters
     /// - `ctx`: The notification context.
-    /// - `delta`: The changes detected since the last notification.
+    /// - `delta`: The changes detected since the last check.
     ///
     /// # Returns
     /// - `Some(String)` if a message to send was composed.
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
-    fn compose_message(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
+    fn compose_alert(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
         let header_closure = |h: &str| h.to_string();
-        notify::prepare_message_body(ctx, delta, &self.strings, header_closure)
+        notify::prepare_alert_body(ctx, delta, &self.alert_strings, header_closure)
             .map(|message| serde_json::json!({ "text": message }).to_string())
     }
 
@@ -133,7 +133,7 @@ impl super::Backend for SlackBackend {
     ///
     /// # Parameters
     /// - `ctx`: The notification context (not used in this implementation).
-    /// - `delta`: The changes detected since the last notification
+    /// - `delta`: The changes detected since the last alert
     ///   (not used in this implementation).
     /// - `message`: The already-composed message to send.
     ///

@@ -24,4 +24,4 @@ pub use monitor::MonitorSettings;
 pub use pathbufs::PathBufs;
 pub use root::Settings;
 pub use slack::SlackSettings;
-pub use strings::{MessageStrings, ReminderStrings};
+pub use strings::{AlertStrings, ReminderStrings};

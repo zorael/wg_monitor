@@ -9,28 +9,28 @@ pub trait NotificationSender {
     /// multiple instances of the same backend type.
     fn name(&self) -> &str;
 
-    /// Sends a notification based on the provided context and key delta.
+    /// Sends an alert based on the provided context and key delta.
     ///
     /// The context contains information about the current state of peers and
     /// timing, while the key delta represents the changes in peer status that
-    /// triggered the notification.
+    /// triggered the alert.
     ///
     /// # Parameters
     /// - `ctx`: The current notification context, which contains information
     ///   about the peers and timing.
     /// - `delta`: The key delta representing the changes in peer status that
-    ///   triggered the notification.
+    ///   triggered the alert.
     /// # Returns
-    /// A `NotificationResult` indicating the outcome of the notification attempt, which can be:
-    /// - `DryRun(String)`: The notification was not sent because dry run mode is
+    /// A `NotificationResult` indicating the outcome of the alert attempt, which can be:
+    /// - `DryRun(String)`: The alert was not sent because dry run mode is
     ///   enabled, but includes the message that would have been sent.
-    /// - `Success(String, Option<String>)`: The notification was successfully
+    /// - `Success(String, Option<String>)`: The alert was successfully
     ///   sent, including the message that was sent and any output from the backend.
-    /// - `Failure(String, String)`: There was a failure in sending the notification,
+    /// - `Failure(String, String)`: There was a failure in sending the alert,
     ///   including an error message describing the failure and the message that was attempted to be sent.
-    /// - `NoMessage`: The notification was not sent because the rendered message ended up empty.
-    /// - `Skipped`: The notification was skipped due to timing reasons.
-    fn push_notification(
+    /// - `NoMessage`: The alert was not sent because the rendered message ended up empty.
+    /// - `Skipped`: The alert was skipped due to timing reasons.
+    fn push_alert(
         &mut self,
         ctx: &super::Context,
         delta: &super::KeyDelta,

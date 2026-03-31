@@ -22,7 +22,7 @@ use crate::file_config;
 ///
 /// This *must* mirror `file_config::MessageStringsConfig`.
 #[derive(Clone, Debug)]
-pub struct MessageStrings {
+pub struct AlertStrings {
     /// Message header.
     pub header: String,
 
@@ -79,7 +79,7 @@ pub struct MessageStrings {
     pub returning_peer_with_timestamp: String,
 }
 
-impl Default for MessageStrings {
+impl Default for AlertStrings {
     /// Default values for the message strings, used as a base for applying
     /// configuration file overrides.
     fn default() -> Self {
@@ -102,7 +102,7 @@ impl Default for MessageStrings {
     }
 }
 
-impl MessageStrings {
+impl AlertStrings {
     /// Applies the values from a `file_config::MessageStringsConfig` to the
     /// current `MessageStrings` instance.
     ///
@@ -113,7 +113,7 @@ impl MessageStrings {
     /// # Parameters
     /// - `config`: The `file_config::MessageStringsConfig` containing the
     ///   message string settings to apply to the current `MessageStrings` instance.
-    pub fn apply_file(&mut self, config: &file_config::MessageStringsConfig) {
+    pub fn apply_file(&mut self, config: &file_config::AlertStringsConfig) {
         if let Some(header) = &config.header {
             self.header = header.clone();
         }
