@@ -786,46 +786,8 @@ fn run_loop(
         // Record the current time for wide reuse later
         ctx.now = time::SystemTime::now();
 
-        for (key, peer) in ctx.peers.iter() {
-            match peer.last_seen {
-                Some(last_seen) => {
-                    let age = ctx
-                        .now
-                        .duration_since(last_seen)
-                        .unwrap_or(time::Duration::ZERO);
-
-                    if settings.debug {
-                        let dt: chrono::DateTime<chrono::Local> = last_seen.into();
-                        println!(
-                            "  - Peer '{}': last seen {} seconds ago at {}",
-                            peer.human_name,
-                            age.as_secs(),
-                            dt.format("%Y-%m-%d %H:%M:%S")
-                        );
-                    }
-
-                    if age < settings.monitor.timeout {
-                        continue;
-                    }
-
-                    if settings.debug {
-                        println!("... age is greater than timeout, marking as lost");
-                    }
-
-                    ctx.lost_keys.push(key.clone());
-                }
-                None => {
-                    if settings.debug {
-                        println!(
-                            "  - Peer '{}' has never been seen, marking as missing",
-                            peer.human_name
-                        );
-                    }
-
-                    ctx.missing_keys.push(key.clone());
-                }
-            }
-        }
+        // Iterate the peers and populate the lost and missing keys in the context
+        populate_lost_and_missing_keys(ctx, &settings);
 
         // --skip-first logic is here
         if should_skip_next {
@@ -998,5 +960,56 @@ fn end_loop(
         thread::sleep(settings.monitor.retry_interval)
     } else {
         thread::sleep(settings.monitor.check_interval)
+    }
+}
+
+/// Iterates the peers in a `notify::Context` and populates its `lost_keys` and
+/// `missing_keys` members based on when each peer was last seen and the configured timeout.
+///
+/// # Parameters
+/// - `ctx`: The `notify::Context` whose peers will be evaluated and whose
+///   `lost_keys` and `missing_keys` members will be populated accordingly.
+/// - `settings`: The program settings, used to determine the timeout for
+///   considering a peer lost, and for debug output.
+fn populate_lost_and_missing_keys(ctx: &mut notify::Context, settings: &settings::Settings) {
+    for (key, peer) in ctx.peers.iter() {
+        match peer.last_seen {
+            Some(last_seen) => {
+                let Ok(age) = ctx.now.duration_since(last_seen) else {
+                    // This should never happen as the arm is Some(last_seen)
+                    continue;
+                };
+
+                if settings.debug {
+                    let dt: chrono::DateTime<chrono::Local> = last_seen.into();
+                    println!(
+                        "  - Peer '{}': last seen {} seconds ago at {}",
+                        peer.human_name,
+                        age.as_secs(),
+                        dt.format("%Y-%m-%d %H:%M:%S")
+                    );
+                }
+
+                if age < settings.monitor.timeout {
+                    continue;
+                }
+
+                if settings.debug {
+                    println!("... age is greater than timeout, marking as lost");
+                }
+
+                ctx.lost_keys.push(key.clone());
+            }
+            None => {
+                if settings.debug {
+                    println!(
+                        "  - Peer '{}': never been seen, marking as missing",
+                        peer.human_name
+                    );
+                }
+
+                ctx.missing_keys.push(key.clone());
+            }
+        }
     }
 }
