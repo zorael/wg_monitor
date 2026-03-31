@@ -783,6 +783,7 @@ fn run_loop(
             println!();
         }
 
+        // Record the current time for wide reuse later
         ctx.now = time::SystemTime::now();
 
         for (key, peer) in ctx.peers.iter() {
@@ -926,9 +927,18 @@ fn run_loop(
             continue;
         }
 
+        // If we're here there were no changes and no lost/missing peers.
+        // There may however have been notifiers with retries attempted above,
+        // so we need to sleep based on whether or not there are still failures
+        // remaining after the attempt.
+
         end_loop_minimal(ctx, previous_ctx);
 
         if num_notifiers_with_failures > 0 {
+            // Always sleep the base retry interval here even if there have been
+            // consecutive retry failures. Further attempts will be rate-limited
+            // in retry_failed_notifications (by calling next_retry_is_due),
+            // so just rely on that and don't repeat the effort here
             thread::sleep(settings.monitor.retry_interval);
         } else {
             thread::sleep(settings.monitor.check_interval);
@@ -980,6 +990,11 @@ fn end_loop(
     end_loop_minimal(ctx, previous_ctx);
 
     if report.failed > 0 {
+        // Copy/pasted from run_loop;
+        // Always sleep the base retry interval here even if there have been
+        // consecutive retry failures. Further attempts will be rate-limited
+        // in retry_failed_notifications (by calling next_retry_is_due),
+        // so just rely on that and don't repeat the effort here
         thread::sleep(settings.monitor.retry_interval)
     } else {
         thread::sleep(settings.monitor.check_interval)
