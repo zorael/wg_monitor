@@ -83,11 +83,11 @@ impl NotifierState {
             }
             (None, None) => {
                 // Nothing has been sent yet
-                return false;
+                return true;
             }
             _ => {
                 // Any other combination is an error state and should never happen
-                return false;
+                return true;
             }
         };
 
@@ -141,7 +141,7 @@ impl NotifierState {
     ) -> bool {
         let Some(last_failed_send) = self.last_failed_send else {
             // No send has failed yet, so there is nothing previous to delay against.
-            return false;
+            return true;
         };
 
         let growth_multiplier = match self.num_consecutive_failures {
