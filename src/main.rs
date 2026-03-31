@@ -866,7 +866,7 @@ fn run_loop(
             .count() as u32;
 
         if num_notifiers_with_failures > 0 {
-            let retry_report = notify::retry_pending_notifications(ctx, notifiers, &settings);
+            let retry_report = notify::retry_failed_notifications(ctx, notifiers, &settings);
 
             if settings.debug && retry_report.total != retry_report.skipped {
                 println!("{:#?}\n", retry_report);

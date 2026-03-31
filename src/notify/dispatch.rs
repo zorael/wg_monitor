@@ -19,8 +19,7 @@ fn verbose_print(message: &str, verbose: bool) {
     }
 }
 
-/// Retries pending notifications that are due for retrying, and updates the
-/// report with the results of the retry attempts.
+/// Retries failed notifications that are due for another attempt.
 ///
 /// This function iterates through the provided notifiers, checks if their pending
 /// notifications are due for retrying based on the current time and the retry
@@ -39,7 +38,7 @@ fn verbose_print(message: &str, verbose: bool) {
 /// A `DispatchReport` struct containing the results of the retry attempts,
 /// including the total number of notifiers processed, how many were successful,
 /// failed, had no message to send, or were skipped due to timing reasons.
-pub fn retry_pending_notifications(
+pub fn retry_failed_notifications(
     ctx: &super::Context,
     notifiers: &mut [Box<dyn super::StatefulNotifier>],
     settings: &settings::Settings,
