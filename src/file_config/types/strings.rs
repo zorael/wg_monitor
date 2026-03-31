@@ -59,6 +59,11 @@ pub struct AlertStringsConfig {
     /// peers that just appeared, since in all such cases the delta of the
     /// peer's last seen time is less than or equal to the check interval.
     pub peer_no_timestamp: Option<String>,
+
+    /// Message string for a peer that is returning with a timestamp.
+    ///
+    /// This translates to "returning" and "appearing" peers.
+    pub returning_peer_with_timestamp: Option<String>,
 }
 
 impl From<&settings::AlertStrings> for AlertStringsConfig {
@@ -78,6 +83,7 @@ impl From<&settings::AlertStrings> for AlertStringsConfig {
             bullet_point: Some(strings.bullet_point.clone()),
             peer_with_timestamp: Some(strings.peer_with_timestamp.clone()),
             peer_no_timestamp: Some(strings.peer_no_timestamp.clone()),
+            returning_peer_with_timestamp: Some(strings.returning_peer_with_timestamp.clone()),
         }
     }
 }
