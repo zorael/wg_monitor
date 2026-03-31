@@ -27,3 +27,4 @@
 /wg_monitor*
 /report.*
 *.bak
+/RELEASE.md
