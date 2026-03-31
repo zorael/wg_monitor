@@ -150,7 +150,7 @@ pub fn validate_handshakes(terminal_output: &str) -> Result<(), Vec<String>> {
 ///
 /// If a peer is not present in the command output, its last seen timestamp
 /// will stay reset (`None` and `0`). If it was previously present, this means the
-/// peer has been removed from the VPN, and the current behaviour is to treat
+/// peer has been removed from the VPN, and the current behavior is to treat
 /// it as having gone missing.
 ///
 /// # Parameters

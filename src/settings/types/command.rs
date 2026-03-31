@@ -23,7 +23,7 @@ pub struct CommandSettings {
     /// Each command string is executed as a separate non-asynchronous process.
     pub commands: Vec<String>,
 
-    /// Whether to print the output of the executed comomands to the terminal.
+    /// Whether to print the output of the executed commands to the terminal.
     pub show_output: bool,
 }
 
