@@ -740,7 +740,9 @@ fn run_loop(
     notifiers: &mut [Box<dyn notify::StatefulNotifier>],
     settings: settings::Settings,
 ) -> process::ExitCode {
-    let mut should_skip_next = settings.skip_first;
+    // If --skip-first was passed, we want to skip the first run of the loop,
+    // which is where the initial alert would be sent.
+    ctx.should_skip_next = settings.skip_first;
 
     // If `resume` is set, we want to skip the first run. The easiest way is to
     // just set start `loop_iteration` at 1
@@ -790,7 +792,7 @@ fn run_loop(
         populate_lost_and_missing_keys(ctx, &settings);
 
         // --skip-first logic is here
-        if should_skip_next {
+        if ctx.should_skip_next {
             if ctx.is_first_run() {
                 // If you --skip-first the first run, reminders will never be sent
                 // because the stateful notifiers will never have their
@@ -804,7 +806,7 @@ fn run_loop(
                 }
             }
 
-            should_skip_next = false;
+            ctx.should_skip_next = false;
             end_loop_minimal(ctx, previous_ctx);
             thread::sleep(time::Duration::ZERO);
             continue;

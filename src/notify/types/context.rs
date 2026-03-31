@@ -40,6 +40,13 @@ pub struct Context {
     /// prevent the program from sending an initial first-run "program started" notification.
     pub resume: bool,
 
+    /// Whether or not the next loop iteration should be skipped.
+    ///
+    /// It will still play out in the sense that handshakes will be updated and
+    /// the current context will be rotated into the previous context,
+    /// but it will not cause any notifications to be sent.
+    pub should_skip_next: bool,
+
     /// Whether or not a notification based on this context has failed to send.
     pub has_failed: bool,
 
@@ -73,6 +80,7 @@ impl Context {
             now: time::SystemTime::UNIX_EPOCH,
             loop_iteration: 0,
             resume: false,
+            should_skip_next: false,
             has_failed: false,
             peer_list: path::PathBuf::new(),
         }
