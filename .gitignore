@@ -13,12 +13,17 @@
 # Contains mutation testing data
 **/mutants.out*/
 
+# IDE, editor and tools
+/.vscode
+/.cspell
+*.swp
+
 # Other
 *.zip
-/push
+/push*
 /config.toml
 /peers.txt
 /grinds
 /wg_monitor*
 /report.*
-/push*
+*.bak
