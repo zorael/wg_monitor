@@ -2,7 +2,7 @@
 
 /// Trait for sending notifications through a notifier backend.
 pub trait NotificationSender {
-    /// Returns a unique identifier of the backend of the notification sender.
+    /// Returns the unique identifier of the backend of the notification sender.
     fn id(&self) -> usize;
 
     /// Returns the name of the notification sender, used for logging and reporting.
