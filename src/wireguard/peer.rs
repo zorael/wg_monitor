@@ -52,12 +52,13 @@ impl WireGuardPeer {
     /// - `None` if the public key is invalid.
     pub fn new(public_key: &str, human_name: Option<&str>) -> Option<Self> {
         let key = PeerKey::new(public_key)?;
+        let human_name = human_name
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| Self::shorten_key(public_key));
 
         Some(Self {
             public_key: key,
-            human_name: human_name
-                .map(|s| s.to_string())
-                .unwrap_or_else(|| Self::shorten_key(public_key)),
+            human_name,
             last_seen: None,
             last_seen_unix: 0,
         })
