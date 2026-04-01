@@ -197,6 +197,11 @@ fn format_peer_line(
         None => pattern_without_timestamp,
     };
 
+    if pattern.is_empty() {
+        // Don't output a line if the pattern is empty
+        return String::new();
+    }
+
     let when = match peer.last_seen {
         Some(ts) => utils::fuzzy_datestamp_of(&ts),
         None => "never".to_string(),
@@ -265,6 +270,11 @@ fn append_message_section(
     for key in keys {
         if let Some(peer) = peers.get(key) {
             let line = format_peer_line(peer, peer_with_timestamp, peer_no_timestamp);
+
+            if line.is_empty() {
+                continue;
+            }
+
             message.push_str(&format!("{bullet_point}{line}\n"));
         }
     }
