@@ -15,7 +15,6 @@ use crate::settings;
 pub struct SlackBackend {
     /// Unique identifier for the Slack backend instance, used for logging and
     /// identification purposes.
-    #[allow(dead_code)]
     id: usize,
 
     /// HTTP agent used to send requests to the Slack webhook URL.
@@ -81,7 +80,6 @@ impl SlackBackend {
 
 impl super::Backend for SlackBackend {
     /// Returns the unique identifier of this backend instance.
-    #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }

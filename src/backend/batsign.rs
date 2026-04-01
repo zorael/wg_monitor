@@ -88,7 +88,6 @@ impl BatsignBackend {
 
 impl super::Backend for BatsignBackend {
     /// Returns the unique identifier of the backend instance.
-    #[allow(dead_code)]
     fn id(&self) -> usize {
         self.id
     }

@@ -1,7 +1,5 @@
 //! Utility functions for time formatting and conversion.
 
-#![allow(dead_code)]
-
 use std::time;
 
 /// Converts a `time::SystemTime` to a human-readable timestamp string in the

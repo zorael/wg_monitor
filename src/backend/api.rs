@@ -13,7 +13,6 @@ use crate::notify;
 /// for `CommandBackend`).
 pub trait Backend {
     /// Returns the unique identifier of the backend instance.
-    #[allow(dead_code)]
     fn id(&self) -> usize;
 
     /// Returns the name of the backend instance.
