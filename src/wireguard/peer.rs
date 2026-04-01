@@ -122,7 +122,7 @@ impl WireGuardPeer {
     ///
     /// # Returns
     /// `true` if the public key seems valid, `false` otherwise.
-    pub fn validate_public_key(public_key: &str) -> bool {
+    pub fn roughly_validate_public_key(public_key: &str) -> bool {
         const EXPECTED_LENGTH: usize = 44;
 
         if public_key.len() != EXPECTED_LENGTH || !public_key.ends_with('=') {
@@ -184,7 +184,7 @@ impl PeerKey {
     /// `Some(PeerKey)` if the input string is a valid WireGuard public key,
     /// or `None` if it is invalid.
     pub fn new(key: &str) -> Option<Self> {
-        if WireGuardPeer::validate_public_key(key) {
+        if WireGuardPeer::roughly_validate_public_key(key) {
             Some(Self(rc::Rc::from(key)))
         } else {
             None
