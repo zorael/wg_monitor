@@ -54,6 +54,7 @@ mod utils;
 mod wireguard;
 
 use clap::Parser;
+use std::env;
 use std::fs;
 use std::process;
 use std::thread;
@@ -508,10 +509,18 @@ fn save_settings_to_config_file(settings: &settings::Settings) -> process::ExitC
         };
     }
 
+    let dir = match settings.paths.config_dir.display().to_string() {
+        dir if dir == "." => match env::current_dir() {
+            Ok(cwd) => cwd.display().to_string(),
+            Err(_) => "current directory".to_string(),
+        },
+        other => other,
+    };
+
     logging::tsprintln!(
         &settings.disable_timestamps,
         "Configuration and resources written successfully to {}.",
-        settings.paths.config_dir.display()
+        dir
     );
 
     process::ExitCode::SUCCESS
