@@ -839,9 +839,8 @@ fn run_loop(
                 }
             }
 
-            ctx.should_skip_next = false;
             end_loop_minimal(ctx, previous_ctx);
-            thread::sleep(time::Duration::ZERO);
+            ctx.should_skip_next = false; // set it *after* rotating
             continue;
         }
 
