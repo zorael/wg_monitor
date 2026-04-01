@@ -120,22 +120,41 @@ fn main() -> process::ExitCode {
         }
     }
 
-    let peers = match wireguard::read_peer_list(&settings.paths.peer_list, settings.debug) {
+    let peer_list_contents =
+        match wireguard::read_peer_list_file(&settings.paths.peer_list, settings.debug) {
+            Ok(contents) => contents,
+            Err(e) => {
+                logging::tseprintln!(
+                    &settings.disable_timestamps,
+                    "Error reading peer list file {}: {e}",
+                    settings.paths.peer_list.display()
+                );
+                return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
+            }
+        };
+
+    let peers = match wireguard::parse_peer_list(&peer_list_contents, settings.debug) {
         Ok(peers) if peers.is_empty() => {
             logging::tseprintln!(
                 &settings.disable_timestamps,
-                "Peer list file {} is empty.",
+                "Peer list file {} is empty of peers.",
                 settings.paths.peer_list.display()
             );
             return process::ExitCode::from(defaults::exit_codes::EMPTY_PEER_LIST);
         }
         Ok(peers) => peers,
-        Err(e) => {
+        Err(peer_list_errors) => {
             logging::tseprintln!(
                 &settings.disable_timestamps,
-                "Error reading peers file: {e}"
+                "Error parsing peer list file {}:",
+                settings.paths.peer_list.display()
             );
-            return process::ExitCode::from(defaults::exit_codes::ERROR_READING_PEERS_FILE);
+
+            for error in peer_list_errors {
+                eprintln!("  - {error}");
+            }
+
+            return process::ExitCode::from(defaults::exit_codes::FAILED_TO_PARSE_PEER_LIST_FILE);
         }
     };
 
