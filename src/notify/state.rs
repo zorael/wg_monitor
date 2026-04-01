@@ -170,23 +170,30 @@ impl NotifierState {
 
         match &mut self.failed_ctx {
             Some(first_failed_ctx) => {
+                // A failure has occurred previously, so merge the new context
+                // with the old one.
                 first_failed_ctx.merge(ctx);
             }
             None => {
+                // First failure; store context
                 let mut new_failed_ctx = ctx.clone();
                 new_failed_ctx.has_failed = true;
                 self.failed_ctx = Some(new_failed_ctx);
             }
         }
 
-        match &mut self.failed_delta {
-            Some(first_failed_delta) => {
-                if let Some(delta) = delta {
-                    first_failed_delta.merge(delta);
+        if let Some(some_delta) = delta {
+            match &mut self.failed_delta {
+                Some(first_failed_delta) => {
+                    // An alert failure has occurred previously, so merge the
+                    // new delta with the old one.
+                    first_failed_delta.merge(some_delta);
                 }
-            }
-            None => {
-                self.failed_delta = delta.cloned();
+                None => {
+                    // The previous failure was a reminder, so there is no old
+                    // delta to merge with. Store the new delta as is.
+                    self.failed_delta = delta.cloned();
+                }
             }
         }
     }
