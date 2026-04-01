@@ -81,17 +81,6 @@ impl WireGuardPeer {
     /// # Returns
     /// A shortened version of the public key, suitable for display in notifications.
     pub fn shorten_key(public_key: &str) -> String {
-        fn check_for_delimiter(key: &str, delimiter: char) -> Option<String> {
-            if let Some(pos) = key.find(delimiter)
-                && pos > 0
-            {
-                let pre_delimiter = &key[..pos];
-                return Some(pre_delimiter.to_string());
-            }
-
-            None
-        }
-
         // We should not need this; validate_public_key ensures the key is 44
         // characters long. Keep it just in case.
         if public_key.len() < 7 {
@@ -166,6 +155,30 @@ pub fn sort_keys(keys: &mut [PeerKey], peers: &collections::HashMap<PeerKey, Wir
         let timestamp = peers.get(k).map(|p| p.last_seen_unix).unwrap_or(0);
         (timestamp == 0, cmp::Reverse(timestamp))
     });
+}
+
+/// Helper function to check for a delimiter in the first 7 characters of a
+/// public key and return the substring before the delimiter if found, or
+/// `None` if not found.
+///
+/// # Parameters
+/// - `key`: The string to check for the delimiter.
+/// - `delimiter`: The character to look for as a delimiter in the string.
+///
+/// # Returns
+/// - `Some(String)` containing the substring before the delimiter if it is
+///   found and is not the first character.
+/// - `None` if the delimiter is not found or if it is the first character
+///   in the string.
+fn check_for_delimiter(key: &str, delimiter: char) -> Option<String> {
+    if let Some(pos) = key.find(delimiter)
+        && pos > 0
+    {
+        let pre_delimiter = &key[..pos];
+        return Some(pre_delimiter.to_string());
+    }
+
+    None
 }
 
 /// Newtype of `rc::Rc<str>` representing a WireGuard peer's public key,
