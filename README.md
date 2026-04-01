@@ -383,6 +383,8 @@ ExecStart=
 ExecStart=/home/user/src/wg_monitor/wg_monitor --disable-timestamps --verbose --sleep 5m
 ```
 
+The included service file already passes `--sleep 5m`, but you can modify it using `systemctl edit` if it feels too long or too short.
+
 ## ai
 
 [**GitHub Copilot AI**](https://github.com/features/copilot/ai-code-editor) was used (in [**Visual Studio Code**](https://code.visualstudio.com)) for inline suggestions and to tab-complete some code and documentation. [**ChatGPT**](https://chatgpt.com) and [**Claude**](https://claude.ai) were used to answer questions and teach Rust. No code from "write me a function doing *xyz*" prompts is included in this project.
