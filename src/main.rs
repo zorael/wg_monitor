@@ -253,7 +253,7 @@ fn main() -> process::ExitCode {
             humantime::format_duration(settings.monitor.timeout),
         );
         println!(
-            "reminder interval: {}, retry interval: {}",
+            "base reminder interval: {}, base retry interval: {}",
             humantime::format_duration(settings.monitor.reminder_interval),
             humantime::format_duration(settings.monitor.retry_interval),
         );
