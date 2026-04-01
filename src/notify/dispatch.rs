@@ -84,7 +84,13 @@ pub fn retry_failed_notifications(
                     "[{}] DRY RUN; RETRY not sent",
                     n.name()
                 );
+
                 verbose_print(&message, settings.verbose);
+
+                // This does not put back the failing context and delta,
+                // which resolves the failure.
+                // This is technically a successful send attempt,
+                // it's just that the dry run prevented it from actually sending anything.
                 report.successful += 1;
             }
             super::NotificationResult::Success(message, output) => {
@@ -96,7 +102,6 @@ pub fn retry_failed_notifications(
                 );
 
                 verbose_print(&message, settings.verbose);
-                report.successful += 1;
 
                 if let Some(output) = output
                     && !output.is_empty()
@@ -108,6 +113,10 @@ pub fn retry_failed_notifications(
                     );
                     println!("{output}");
                 }
+
+                // This does not put back the failing context and delta,
+                // which resolves the failure.
+                report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
@@ -129,7 +138,12 @@ pub fn retry_failed_notifications(
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
-                // Backend returned an empty message, so nothing to send
+                // Backend returned an empty message, so nothing to send.
+                // This does not put back the failing context and delta,
+                // which resolves the failure.
+                // This is technically a successful send attempt,
+                // it's just that the composed message ended up empty
+                // so there was nothing to actually send.
                 report.no_message += 1;
             }
             super::NotificationResult::Skipped => {
@@ -211,7 +225,6 @@ pub fn send_alert(
                 );
 
                 verbose_print(&message, settings.verbose);
-                report.successful += 1;
 
                 if let Some(output) = output
                     && !output.is_empty()
@@ -223,6 +236,8 @@ pub fn send_alert(
                     );
                     println!("{output}");
                 }
+
+                report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
@@ -231,9 +246,11 @@ pub fn send_alert(
                     "[{}] Failed to send alert:",
                     n.name()
                 );
-                eprintln!("{e}");
 
+                eprintln!("{e}");
                 verbose_print(&message, settings.verbose);
+
+                // Failure handling is done in send_via_notifier
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
@@ -313,7 +330,6 @@ pub fn send_reminder(
                 );
 
                 verbose_print(&message, settings.verbose);
-                report.successful += 1;
 
                 if let Some(output) = output
                     && !output.is_empty()
@@ -325,6 +341,8 @@ pub fn send_reminder(
                     );
                     println!("{output}");
                 }
+
+                report.successful += 1;
             }
             super::NotificationResult::Failure(e, message) => {
                 eprintln!();
@@ -333,9 +351,11 @@ pub fn send_reminder(
                     "[{}] Failed to send reminder:",
                     n.name()
                 );
-                eprintln!("{e}");
 
+                eprintln!("{e}");
                 verbose_print(&message, settings.verbose);
+
+                // Failure handling is done in send_via_notifier
                 report.failed += 1;
             }
             super::NotificationResult::NoMessage => {
@@ -377,6 +397,8 @@ fn send_via_notifier(
     if n.id() > 0 {
         // If this is the second or later notifier of a given backend type,
         // insert a small delay to rate-limit the attempts.
+        // This will delay unnecessarily if id 0 backend has not failed to send,
+        // but it's such a small delay we may as well ignore it.
         thread::sleep(defaults::timing::NOTIFIER_RATE_LIMIT_DELAY);
     }
 
