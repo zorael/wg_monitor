@@ -304,7 +304,7 @@ fn main() -> process::ExitCode {
 ///   configuration directory and any overrides to apply to the settings.
 ///
 /// # Returns
-/// An `InitSettingsResult` which is either:
+/// An `Outcome` which is either:
 /// - `Success` containing the initialized `Settings` instance, boxed in a
 ///   `Box<settings::Settings>` for memory reasons
 /// - `EarlyExitCode` containing a `process::ExitCode` to exit with if
@@ -382,7 +382,7 @@ fn init_settings(cli: &cli::Cli) -> Outcome<Box<settings::Settings>> {
     settings.resolve_wg();
 
     // Box the resulting settings to avoid issues with the size of the Settings struct
-    // making the InitSettingsResult enum too large to compile.
+    // making the Outcome enum too large to compile.
     Outcome::Success(Box::new(settings))
 }
 
