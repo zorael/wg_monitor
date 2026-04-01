@@ -1,6 +1,6 @@
 //! Utility functions for working with vectors of strings.
 
-#![allow(dead_code)]
+//#![allow(dead_code)]
 
 /// Trims whitespace from each string in the input vector and filters out empty
 /// ones, returning a new vector of cleaned strings.
@@ -59,6 +59,7 @@ mod tests_trim {
 /// A tuple containing two vectors:
 /// - The first vector contains elements that are in `one` but not in `other`.
 /// - The second vector contains elements that are in `other` but not in `one`.
+#[cfg(test)]
 pub fn get_vec_difference<T: Clone + PartialEq>(one: &[T], other: &[T]) -> (Vec<T>, Vec<T>) {
     let only_one = get_elements_not_in_other_vec(one, other);
     let only_other = get_elements_not_in_other_vec(other, one);
