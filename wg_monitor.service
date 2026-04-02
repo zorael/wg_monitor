@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 #Environment=WG_MONITOR_CONFIG_DIR=/etc/wg_monitor
-ExecStart=/usr/local/bin/wg_monitor --disable-timestamps --verbose --sleep 5m
+ExecStart=/usr/local/bin/wg_monitor --disable-timestamps --verbose --sleep 2m30s
 Restart=on-failure
 RestartPreventExitStatus=10 11 12 20 21 32 34 40 41 42 43 44 50 60
 RestartSec=30
