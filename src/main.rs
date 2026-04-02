@@ -839,8 +839,9 @@ fn run_loop(
                 }
             }
 
+            ctx.should_skip_next = false;
             end_loop_minimal(ctx, previous_ctx);
-            ctx.should_skip_next = false; // set it *after* rotating
+            ctx.should_skip_next = false;
             continue;
         }
 
