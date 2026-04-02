@@ -400,8 +400,9 @@ pub fn prepare_reminder_body(
 /// - `string_with_placeholders`: The string containing placeholders to be replaced.
 /// - `ctx`: The notification context containing information about peers.
 fn replace_placeholders(string_with_placeholders: &str, ctx: &super::Context) -> String {
-    let num_present = &(ctx.peers.len() - ctx.lost_keys.len() - ctx.missing_keys.len()).to_string();
-    let num_nonpresent = &(ctx.lost_keys.len() + ctx.missing_keys.len()).to_string();
+    let num_nonpresent = ctx.lost_keys.len() + ctx.missing_keys.len();
+    let num_present = &(ctx.peers.len() - num_nonpresent).to_string();
+    let num_nonpresent = &num_nonpresent.to_string();
 
     string_with_placeholders
         .replace("{num_peers}", &ctx.peers.len().to_string())
