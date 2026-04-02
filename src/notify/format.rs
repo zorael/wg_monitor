@@ -194,8 +194,8 @@ fn format_peer_line(
     pattern_without_timestamp: &str,
 ) -> String {
     let pattern = match peer.last_seen {
-        Some(_) => pattern_with_timestamp,
-        None => pattern_without_timestamp,
+        Some(_) if !pattern_with_timestamp.is_empty() => pattern_with_timestamp,
+        _ => pattern_without_timestamp,
     };
 
     if pattern.is_empty() {
