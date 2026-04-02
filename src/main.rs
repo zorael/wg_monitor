@@ -1053,4 +1053,9 @@ fn populate_lost_and_missing_keys(ctx: &mut notify::Context, settings: &settings
             }
         }
     }
+
+    if settings.debug {
+        // Just some extra spacing
+        println!();
+    }
 }
