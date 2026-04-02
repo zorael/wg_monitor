@@ -50,8 +50,6 @@ fn format_generic_alert(
         message.push_str(&strings.first_run_missing);
         message.push('\n');
 
-        let bp = &strings.bullet_point;
-
         for key in ctx.lost_keys.iter().chain(ctx.missing_keys.iter()) {
             if let Some(peer) = ctx.peers.get(key) {
                 let line = format_peer_line(
@@ -59,7 +57,14 @@ fn format_generic_alert(
                     &strings.peer_with_timestamp,
                     &strings.peer_no_timestamp,
                 );
-                message.push_str(&format!("{bp}{line}\n"));
+
+                if line.is_empty() {
+                    continue;
+                }
+
+                message.push_str(&strings.bullet_point);
+                message.push_str(&line);
+                message.push('\n');
             }
         }
 
@@ -275,7 +280,9 @@ fn append_message_section(
                 continue;
             }
 
-            message.push_str(&format!("{bullet_point}{line}\n"));
+            message.push_str(bullet_point);
+            message.push_str(&line);
+            message.push('\n');
         }
     }
 
