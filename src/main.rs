@@ -797,7 +797,7 @@ fn run_loop(
             }
             Err(e) => {
                 logging::tseprintln!(&settings.disable_timestamps, "Error executing command: {e}");
-                thread::sleep(settings.monitor.check_interval);
+                thread::sleep(settings.monitor.retry_interval);
                 continue;
             }
         };
