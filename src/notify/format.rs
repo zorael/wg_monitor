@@ -334,20 +334,14 @@ pub fn prepare_alert_body(
         message.push('\n');
     }
 
-    if body.is_empty() && ctx.is_first_run() {
-        if header.is_empty() {
-            // Nothing to send on first run and no header,
-            // so just skip sending a message.
-            return None;
-        }
-
-        // Nothing to send, but send the first run header to alert that
-        // power is back.
-        let message = utils::unescape(&message).trim_end().to_string();
-        return Some(message);
+    if ctx.is_first_run() && header.is_empty() && body.is_empty() {
+        // First run, no header, nothing to send. Just skip.
+        return None;
     }
 
-    message.push_str(body);
+    if !body.is_empty() {
+        message.push_str(body);
+    }
 
     let message = utils::unescape(&message);
     let message = replace_placeholders(&message, ctx);
