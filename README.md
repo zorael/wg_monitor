@@ -55,6 +55,9 @@ cargo run -- --save
     * [example scripts](#example-scripts)
       * [notify-send-to-all-gui.sh](#notify-send-to-all-guish)
       * [notify-send-to-one.sh](#notify-send-to-onesh)
+* [tailoring messages](#tailoring-messages)
+  * [noteworthy points](#noteworthy-points)
+  * [placeholders](#placeholders)
 * [systemd](#systemd)
   * [except it starts too early](#except-it-starts-too-early)
 * [ai](#ai)
@@ -152,7 +155,7 @@ As part of `--save`, a new `config.toml` will be created in the configuration di
 
 ### `peers.txt`
 
-A new `peers.txt` file will also have been created in the configuration diretcory, next to the `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by whitespace (such as a space or a tab).
+A new `peers.txt` file will also have been created in the configuration directory, next to the `config.toml` file. Complete it with the public keys of the peers you want to monitor. You can make it easier to distinguish between peers by appending a human-readable name after each key, separated by whitespace (such as a space or a tab).
 
 Lines that start with an octothorpe `#` are ignored.
 
@@ -333,6 +336,61 @@ systemd-run --machine=${user}@.host --user \
         "$message"
 ```
 
+## tailoring messages
+
+The `config.toml` file contains `strings` sections for each backend, in which you can define strings that are used in the formatting of messages.
+
+```toml
+[slack.alert_strings]
+header = 'WireGuard Monitor report\n'
+first_run_header = 'WireGuard Monitor starting up\n'
+first_run_missing = 'Missing:\n'
+lost = 'Lost:\n'
+forgot = 'Lost to a network reset:\n'
+appeared = 'Just appeared:\n'
+returned = 'Returned:\n'
+still_lost = 'Still lost:\n'
+still_missing = 'Still have yet to see (since last restart):\n'
+footer = ""
+bullet_point = " - "
+peer_with_timestamp = "{peer} (last seen {ago})"
+peer_no_timestamp = "{peer}"
+returning_peer_with_timestamp = "{peer} (returned {ago})"
+```
+
+### noteworthy points
+
+* You can add extra linebreaks by inserting a newline character `\n` into the string, as exemplified above.
+* You can omit the sections that strings represent from being included in the message by setting them to an empty string `""`.
+* You can omit the entire first-run message by setting `first_run_header` likewise to an empty string `""`. (also achieved by passing `--skip-first`)
+* Peers are indented in peer lists with the `bullet_point` string.
+* Messages end with the `footer` string when set, which can be used to add a signature or some other kind of closing remark.
+* You can prevent peers from being included in messages (at all) by setting both `peer_with_timestamp` and `peer_no_timestamp` to an empty string `""`, leaving only the headers in the message.
+* If all sections with peers to report were omitted due to their strings being empty `""`, the message will in turn end up empty and the program will skip sending it.
+* The Slack backend [supports some Markdown-like formatting](#formatting-messages). The Batsign one does not, and for the external command one it obviously depends on the command it runs.
+* Even if a backend does not support formatting, it may well support Unicode characters (and emoji), so you can still get creative with those.
+
+Experiment with the strings. Run the program with `--dry-run` and an artificially low `timeout` (maybe `30s`) to force some notifications to be simulated. See how the strings you defined are used in the composed message as it gets output to the terminal.
+
+### placeholders
+
+As part of the strings, you can use certain placeholders which will be replaced with actual values when the message to send is composed.
+
+| placeholder | becomes |
+| ----------- | ------- |
+| `{peer}` | the human-readable name of the peer (`*_timestamp` only) |
+| `{key}` | the WireGuard public key of the peer (`*_timestamp` only) |
+| `{ago}` | the time since the last handshake with the peer, in a human-readable format (`*_with_timestamp` only) |
+| `{unix}` | the time since the last handshake with the peer, in seconds since the UNIX epoch (`*_with_timestamp` only) |
+| `{num_peers}` | the number of peers being monitored |
+| `{num_lost}` | the number of peers currently lost |
+| `{num_missing}` | the number of peers currently missing |
+| `{num_present}` | the number of peers currently present; not lost and not missing |
+| `{num_nonpresent}` | the number of peers that are either lost or missing |
+| `{timestamp}` | the current time in `HH:MM:SS` format |
+| `{datestamp}` | the current date and time in `YYYY-MM-DD HH:MM:SS` format |
+| `{version}` | the `x.y.z` version of the program |
+
 ## systemd
 
 The program is preferably run as a [**systemd**](https://systemd.io) service, to have it be automatically restarted upon restoration of power. To facilitate this, [a service unit file](wg_monitor.service) is provided in the repository.
@@ -352,7 +410,7 @@ sudo systemctl edit wg_monitor.service
 
 [Service]
 ExecStart=
-ExecStart=/home/user/src/wg_monitor/wg_monitor --disable-timestamps --verbose
+ExecStart=/home/user/src/wg_monitor/wg_monitor --disable-timestamps --verbose --sleep 2m30s
 
 ### Edits below this comment will be discarded
 ### ...
@@ -383,7 +441,7 @@ ExecStart=
 ExecStart=/home/user/src/wg_monitor/wg_monitor --disable-timestamps --verbose --sleep 5m
 ```
 
-The included service file already passes `--sleep 5m`, but you can modify it using `systemctl edit` if it feels too long or too short.
+The included service file already passes `--sleep 2m30s`, but you can modify it using `systemctl edit` if it feels too long or too short. It should ideally be longer than **two minutes** to give peers enough time to complete their first handshake, but not too long to delay notifications unnecessarily.
 
 ## ai
 
