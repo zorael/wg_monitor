@@ -47,7 +47,8 @@ fn format_generic_alert(
             return message;
         }
 
-        message.push_str(&strings.first_run_missing);
+        let first_run_missing = replace_placeholders(&strings.first_run_missing, ctx);
+        message.push_str(&first_run_missing);
         message.push('\n');
 
         let bp = &strings.bullet_point;
@@ -65,7 +66,7 @@ fn format_generic_alert(
 
         if !message.is_empty() && !strings.footer.is_empty() {
             message.push('\n');
-            message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
+            message.push_str(&replace_placeholders(&strings.footer, ctx));
         }
 
         return message.trim_end().to_string();
@@ -79,7 +80,7 @@ fn format_generic_alert(
             &ctx.peers,
             &mut message,
             keys,
-            header,
+            &replace_placeholders(header, ctx),
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
             &strings.returning_peer_with_timestamp,
@@ -95,7 +96,7 @@ fn format_generic_alert(
 
         if !message.is_empty() && !strings.footer.is_empty() {
             //message.push('\n'); // append_message_section leaves an extra newline
-            message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
+            message.push_str(&replace_placeholders(&strings.footer, ctx));
         }
 
         return message.trim_end().to_string();
@@ -120,7 +121,7 @@ fn format_generic_alert(
 
     if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
-        message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
+        message.push_str(&replace_placeholders(&strings.footer, ctx));
     }
 
     message.trim_end().to_string()
@@ -148,7 +149,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
             &ctx.peers,
             &mut message,
             keys,
-            header,
+            &replace_placeholders(header, ctx),
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
             "",
@@ -163,7 +164,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
 
     if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
-        message.push_str(&replace_footer_placeholders(&strings.footer, ctx));
+        message.push_str(&replace_placeholders(&strings.footer, ctx));
     }
 
     message.trim_end().to_string()
@@ -323,7 +324,8 @@ pub fn prepare_alert_body(
     };
 
     if !header.is_empty() {
-        message.push_str(&header_closure(header));
+        let header = replace_placeholders(header, ctx);
+        message.push_str(&header_closure(&header));
         message.push('\n');
     }
 
@@ -378,7 +380,8 @@ pub fn prepare_reminder_body(
     }
 
     if !strings.header.is_empty() {
-        message.push_str(&header_closure(&strings.header));
+        let header = &replace_placeholders(&strings.header, ctx);
+        message.push_str(&header_closure(header));
         message.push('\n');
     }
 
@@ -388,14 +391,14 @@ pub fn prepare_reminder_body(
     Some(message)
 }
 
-/// Replaces placeholders in the footer string with actual values from the
+/// Replaces placeholders in a string with actual values from the
 /// passed `notify::Context` and the program defaults.
 ///
 /// # Parameters
-/// - `footer`: The footer string containing placeholders to be replaced.
+/// - `string_with_placeholders`: The string containing placeholders to be replaced.
 /// - `ctx`: The notification context containing information about peers.
-fn replace_footer_placeholders(footer: &str, ctx: &super::Context) -> String {
-    footer
+fn replace_placeholders(string_with_placeholders: &str, ctx: &super::Context) -> String {
+    string_with_placeholders
         .replace("{num_peers}", &ctx.peers.len().to_string())
         .replace("{num_lost}", &ctx.lost_keys.len().to_string())
         .replace("{num_missing}", &ctx.missing_keys.len().to_string())
