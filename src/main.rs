@@ -198,20 +198,14 @@ fn main() -> process::ExitCode {
     // Sleep if --sleep was passed, to allow for the interface to come up
     // and/or to allow for peers to be seen before we do the initial handshake check.
     if let Some(duration) = cli.sleep
-        && duration > time::Duration::from_secs(0)
+        && duration > time::Duration::ZERO
     {
         logging::tsprintln!(
             &settings.disable_timestamps,
-            "Sleeping for {} before starting monitoring loop...",
+            "Sleeping for {} before enumerating peers...",
             humantime::format_duration(duration)
         );
-
         thread::sleep(duration);
-
-        logging::tsprintln!(
-            &settings.disable_timestamps,
-            "Finished sleep. Continuing..."
-        );
     }
 
     // Verify that we can execute the `wg show` command but don't actually care
