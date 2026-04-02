@@ -914,8 +914,7 @@ fn run_loop(
             num_notifiers_with_failures += reminder_report.failed;
 
             if settings.debug && reminder_report.total != reminder_report.skipped {
-                println!();
-                println!("{:#?}\n", reminder_report);
+                println!("\n{:#?}\n", reminder_report);
             }
 
             let should_sleep_retry_delay = num_notifiers_with_failures > 0;
