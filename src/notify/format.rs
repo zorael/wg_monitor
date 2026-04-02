@@ -345,6 +345,7 @@ pub fn prepare_alert_body(
 
     let message = utils::unescape(&message);
     let message = replace_placeholders(&message, ctx);
+    let message = message.trim().to_string();
     Some(message)
 }
 
@@ -388,6 +389,7 @@ pub fn prepare_reminder_body(
 
     let message = utils::unescape(&message);
     let message = replace_placeholders(&message, ctx);
+    let message = message.trim().to_string();
     Some(message)
 }
 
