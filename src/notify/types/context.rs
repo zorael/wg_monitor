@@ -173,6 +173,9 @@ impl Context {
     /// Takes another `Context` and merges its lost and missing peer information
     /// into the current `Context`.
     ///
+    /// The `now` timestamp of the current `Context` is also updated to match
+    /// that of the other `Context`.
+    ///
     /// The current `Context` becomes a union of the two.
     ///
     /// # Parameters
@@ -185,12 +188,15 @@ impl Context {
             utils::get_elements_not_in_other_vec(&other.missing_keys, &self.missing_keys);
 
         for key in &lost_unique_to_other {
-            let val = match other.peers.get(key) {
-                Some(peer) => peer.clone(),
-                None => continue,
-            };
+            if let Some(peer) = other.peers.get(key) {
+                self.peers.insert(key.clone(), peer.clone());
+            }
+        }
 
-            self.peers.insert(key.clone(), val);
+        for key in &missing_unique_to_other {
+            if let Some(peer) = other.peers.get(key) {
+                self.peers.insert(key.clone(), peer.clone());
+            }
         }
 
         self.lost_keys.extend(lost_unique_to_other);
