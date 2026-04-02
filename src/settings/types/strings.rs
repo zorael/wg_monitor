@@ -95,9 +95,9 @@ impl Default for AlertStrings {
             still_missing: "Still have yet to see (since last restart):\\n".to_string(),
             footer: String::new(),
             bullet_point: " - ".to_string(),
-            peer_with_timestamp: "{peer} (last seen {when})".to_string(),
+            peer_with_timestamp: "{peer} (last seen {ago})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
-            returning_peer_with_timestamp: "{peer} (returned {when})".to_string(),
+            returning_peer_with_timestamp: "{peer} (returned {ago})".to_string(),
         }
     }
 }
@@ -214,7 +214,7 @@ impl Default for ReminderStrings {
             still_missing: "Still have yet to see (since last restart):\\n".to_string(),
             footer: String::new(),
             bullet_point: " - ".to_string(),
-            peer_with_timestamp: "{peer} (last seen {when})".to_string(),
+            peer_with_timestamp: "{peer} (last seen {ago})".to_string(),
             peer_no_timestamp: "{peer}".to_string(),
         }
     }

@@ -173,10 +173,10 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
 /// Formats a single peer line for the notification message based on the peer's
 /// information and the provided patterns for peers with and without timestamps.
 ///
-/// The pattern can include placeholders `{peer}`, `{key}`, `{when}`,
-/// `{unix}` and `{version}`, which will be replaced with the peer's human-readable name,
-/// public key, last seen time (formatted), last seen time (unix timestamp),
-/// and the program version respectively.
+/// The pattern can include placeholders `{peer}`, `{key}`, `{ago}` and `{unix}`,
+/// which will be replaced with the peer's human-readable name,
+/// public key, time since last seen (formatted) and time since last seen
+/// (unix timestamp), respectively.
 ///
 /// # Parameters
 /// - `peer`: The `WireGuardPeer` whose information is to be formatted into a
@@ -203,7 +203,7 @@ fn format_peer_line(
         return String::new();
     }
 
-    let when = match peer.last_seen {
+    let ago = match peer.last_seen {
         Some(ts) => utils::fuzzy_datestamp_of(&ts),
         None => "never".to_string(),
     };
@@ -211,7 +211,7 @@ fn format_peer_line(
     String::from(pattern)
         .replace("{peer}", &peer.human_name)
         .replace("{key}", peer.public_key.as_str())
-        .replace("{when}", &when)
+        .replace("{ago}", &ago)
         .replace("{unix}", &peer.last_seen_unix.to_string())
 }
 
