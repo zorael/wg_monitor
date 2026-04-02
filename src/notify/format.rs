@@ -134,10 +134,10 @@ fn format_generic_alert(
 /// Builds a generic reminder message based on the provided `Context` and
 /// message strings for reminders.
 ///
-/// This is similar to `format_generic_message` but is used for reminder
+/// This is similar to `format_generic_alert` but is used for reminder
 /// notifications, which only report peers that are still lost or
 /// missing since the last check, in cases where there are no peers that changed
-/// status since the last notification.
+/// status since the last alert.
 ///
 /// # Parameters
 /// - `ctx`: The notification context containing the current state of peers.
@@ -222,7 +222,7 @@ fn format_peer_line(
 /// Appends a section to the notification message for a list of peer keys, using
 /// the specified header and formatting options.
 ///
-/// This is a helper function used by both `format_generic_message` and
+/// This is a helper function used by both `format_generic_alert` and
 /// `format_generic_reminder` to avoid code duplication when adding sections for
 /// different categories of peers (such as lost, missing, still lost, etc.).
 ///
