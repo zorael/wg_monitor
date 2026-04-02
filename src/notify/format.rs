@@ -47,8 +47,7 @@ fn format_generic_alert(
             return message;
         }
 
-        let first_run_missing = replace_placeholders(&strings.first_run_missing, ctx);
-        message.push_str(&first_run_missing);
+        message.push_str(&strings.first_run_missing);
         message.push('\n');
 
         let bp = &strings.bullet_point;
@@ -66,10 +65,10 @@ fn format_generic_alert(
 
         if !message.is_empty() && !strings.footer.is_empty() {
             message.push('\n');
-            message.push_str(&replace_placeholders(&strings.footer, ctx));
+            message.push_str(&strings.footer);
         }
 
-        return message.trim_end().to_string();
+        return message;
     }
 
     let mut add_section = |keys: &[wireguard::PeerKey],
@@ -80,7 +79,7 @@ fn format_generic_alert(
             &ctx.peers,
             &mut message,
             keys,
-            &replace_placeholders(header, ctx),
+            header,
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
             &strings.returning_peer_with_timestamp,
@@ -96,10 +95,10 @@ fn format_generic_alert(
 
         if !message.is_empty() && !strings.footer.is_empty() {
             //message.push('\n'); // append_message_section leaves an extra newline
-            message.push_str(&replace_placeholders(&strings.footer, ctx));
+            message.push_str(&strings.footer);
         }
 
-        return message.trim_end().to_string();
+        return message;
     }
 
     let lost_sans_now_lost = utils::get_elements_not_in_other_vec(&ctx.lost_keys, &delta.now_lost);
@@ -121,10 +120,10 @@ fn format_generic_alert(
 
     if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
-        message.push_str(&replace_placeholders(&strings.footer, ctx));
+        message.push_str(&strings.footer);
     }
 
-    message.trim_end().to_string()
+    message
 }
 
 /// Builds a generic reminder message based on the provided `Context` and
@@ -149,7 +148,7 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
             &ctx.peers,
             &mut message,
             keys,
-            &replace_placeholders(header, ctx),
+            header,
             &strings.peer_with_timestamp,
             &strings.peer_no_timestamp,
             "",
@@ -164,10 +163,10 @@ fn format_generic_reminder(ctx: &super::Context, strings: &settings::ReminderStr
 
     if !message.is_empty() && !strings.footer.is_empty() {
         //message.push('\n'); // append_message_section leaves an extra newline
-        message.push_str(&replace_placeholders(&strings.footer, ctx));
+        message.push_str(&strings.footer);
     }
 
-    message.trim_end().to_string()
+    message
 }
 
 /// Formats a single peer line for the notification message based on the peer's
@@ -324,8 +323,7 @@ pub fn prepare_alert_body(
     };
 
     if !header.is_empty() {
-        let header = replace_placeholders(header, ctx);
-        message.push_str(&header_closure(&header));
+        message.push_str(&header_closure(header));
         message.push('\n');
     }
 
@@ -344,7 +342,8 @@ pub fn prepare_alert_body(
 
     message.push_str(body);
 
-    let message = utils::unescape(&message).trim_end().to_string();
+    let message = utils::unescape(&message);
+    let message = replace_placeholders(&message, ctx);
     Some(message)
 }
 
@@ -380,14 +379,14 @@ pub fn prepare_reminder_body(
     }
 
     if !strings.header.is_empty() {
-        let header = &replace_placeholders(&strings.header, ctx);
-        message.push_str(&header_closure(header));
+        message.push_str(&header_closure(&strings.header));
         message.push('\n');
     }
 
     message.push_str(body);
 
-    let message = utils::unescape(&message).trim_end().to_string();
+    let message = utils::unescape(&message);
+    let message = replace_placeholders(&message, ctx);
     Some(message)
 }
 
