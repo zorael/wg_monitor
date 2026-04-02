@@ -338,7 +338,7 @@ systemd-run --machine=${user}@.host --user \
 
 ## tailoring messages
 
-The `config.toml` file contains `strings` sections for each backend, in which you can define strings that are used in the formatting of messages.
+The `config.toml` file contains `strings` sections for each backend, in which you can define strings to be used in the formatting of messages.
 
 ```toml
 [slack.alert_strings]
@@ -361,20 +361,29 @@ returning_peer_with_timestamp = "{peer} (returned {ago})"
 ### noteworthy points
 
 * You can add extra linebreaks by inserting a newline character `\n` into the string, as exemplified above.
-* You can omit the sections that strings represent from being included in the message by setting them to an empty string `""`.
+* You can prevent the sections that strings represent from being included in the message by setting them to an empty string `""`.
 * You can omit the entire first-run message by setting `first_run_header` likewise to an empty string `""`. (also achieved by passing `--skip-first`)
-* Peers are indented in peer lists with the `bullet_point` string.
-* Messages end with the `footer` string when set, which can be used to add a signature or some other kind of closing remark.
-* You can prevent peers from being included in messages (at all) by setting both `peer_with_timestamp` and `peer_no_timestamp` to an empty string `""`, leaving only the headers in the message.
-* If all sections with peers to report were omitted due to their strings being empty `""`, the message will in turn end up empty and the program will skip sending it.
-* The Slack backend [supports some Markdown-like formatting](#formatting-messages). The Batsign one does not, and for the external command one it obviously depends on the command it runs.
+* Peers are indented in peer lists with the `bullet_point` string, followed immediately by one of the `peer_*` strings.
+* Messages end with the `footer` string when defined, which can be used to add a signature or some other kind of closing remark.
+* You can prevent peers from being included in messages (at all) by setting all of `peer_with_timestamp`, `peer_no_timestamp` and `returning_peer_with_timestamp` to an empty string `""`. This leaves only the headers in the message.
+* If a message is rendered empty, such as if all sections with peers to report were omitted due to their strings being empty `""`, it will not be sent. The footer is not included in this consideration.
+* The Slack backend [supports some Markdown-like formatting](#formatting-messages). The Batsign one does not, and for the external command one it naturally depends on the command it runs.
 * Even if a backend does not support formatting, it may well support Unicode characters (and emoji), so you can still get creative with those.
 
-Experiment with the strings. Run the program with `--dry-run` and an artificially low `timeout` (maybe `30s`) to force some notifications to be simulated. See how the strings you defined are used in the composed message as it gets output to the terminal.
+Experiment with the strings. Run the program with `--dry-run` on an artificially low `timeout` (maybe `20s`) to force some notifications to be simulated. See how the strings you defined are used in the composed message as it gets output to the terminal.
+
+```toml
+[monitor]
+interface = "wg0"
+check_interval = "20s"
+timeout = "40s"
+reminder_interval = "45s"
+retry_interval = "5s"
+```
 
 ### placeholders
 
-As part of the strings, you can use certain placeholders which will be replaced with actual values when the message to send is composed.
+As part of the strings, you can use certain placeholders which will be replaced with actual values when messages are composed.
 
 | placeholder | becomes |
 | ----------- | ------- |
