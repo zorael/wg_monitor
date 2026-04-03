@@ -161,9 +161,9 @@ Lines that start with an octothorpe `#` are ignored.
 
 ```text
 # <public key> <description>
-CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi2= Alice's house
-XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg7= Bob's apartment
-#Wd03M/v1Q7pcGHlfm7nMB4KV/2As9yi5KxSgn9Qa6xl= Eve's cottage
+vfpuUkQqZVkwZx1qvUkqcS+5PzqFqpWVQUO3nK3HXUk= Alice's house
+PL5QAuDP8bM62q85P7YW+M5cz2WilbtKN6LDKhLRXCM= Bob's apartment
+#jZnRVdClxXzoNMhI/8skpP9IafAFQDb+qqhppSQlTWE= Eve's cottage
 ```
 
 ## backends
@@ -176,7 +176,7 @@ Messages to Slack channels can trivially be pushed by use of [webhook URLs](http
 
 It is recommended that you make an entry in `/etc/hosts` to manually resolve `hooks.slack.com` to *an* IP of the underlying Slack server, to avoid potential DNS lookup failures.
 
-URLs must be be quoted. You may enter any number of URLs as long as you separate the individual strings with a comma.
+URLs must be quoted. You may enter any number of URLs as long as you separate the individual strings with a comma.
 
 ```toml
 [slack]
@@ -241,7 +241,7 @@ The order of arguments is as follows:
 
 1. The composed message body, formatted with strings as defined in the configuration file
 2. The path to the `peers.txt` file
-3. The number of time the main loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
+3. The number of times the main loop has run (starting at 0, unless `--resume` was passed, in which case it starts at 1)
 4. A comma-separated string of lost keys in the format "`key1:timestamp1,key2:timestamp2,...`"
 5. A comma-separated string of missing keys in the format "`key1:timestamp1,key2:timestamp2,...`"
 6. In alert notifications, a comma-separated string of keys that are now lost in the format "`key1:timestamp1,key2:timestamp2,...`"
