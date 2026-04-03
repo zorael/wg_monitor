@@ -69,8 +69,7 @@ impl BatsignBackend {
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
         let cached_name = format!(
-            "batsign#{}:{}",
-            id,
+            "batsign#{id}:{}",
             get_email_from_batsign_url(url).unwrap_or("(?)")
         );
 
@@ -113,7 +112,7 @@ impl super::Backend for BatsignBackend {
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_alert(&self, ctx: &notify::Context, delta: &notify::KeyDelta) -> Option<String> {
-        let header_closure = |h: &str| format!("Subject: {}", h);
+        let header_closure = |h: &str| format!("Subject: {h}");
         notify::prepare_alert_body(ctx, delta, &self.alert_strings, header_closure)
     }
 
@@ -128,7 +127,7 @@ impl super::Backend for BatsignBackend {
     /// - `None` if the composed message was empty, in which case nothing
     ///   will be sent.
     fn compose_reminder(&self, ctx: &notify::Context) -> Option<String> {
-        let header_closure = |h: &str| format!("Subject: {}", h);
+        let header_closure = |h: &str| format!("Subject: {h}");
         notify::prepare_reminder_body(ctx, &self.reminder_strings, header_closure)
     }
 

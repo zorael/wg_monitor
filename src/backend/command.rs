@@ -73,7 +73,7 @@ impl CommandBackend {
         alert_strings: &settings::AlertStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
-        let cached_name = format!("command#{}:{}", id, command);
+        let cached_name = format!("command#{id}:{command}");
 
         Self {
             id,

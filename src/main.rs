@@ -532,8 +532,7 @@ fn save_settings_to_config_file(settings: &settings::Settings) -> process::ExitC
 
     logging::tsprintln!(
         &settings.disable_timestamps,
-        "Configuration and resources written successfully to {}.",
-        dir
+        "Configuration and resources written successfully to {dir}.",
     );
 
     process::ExitCode::SUCCESS

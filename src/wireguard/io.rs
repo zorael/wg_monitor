@@ -74,8 +74,7 @@ pub fn parse_peer_list(
             Some(k) if !k.is_empty() => k,
             _ => {
                 errors.push(format!(
-                    "Invalid line in peers file (missing public key): '{}'",
-                    whole_line
+                    "Invalid line in peers file (missing public key): '{whole_line}'",
                 ));
                 continue;
             }
@@ -84,7 +83,7 @@ pub fn parse_peer_list(
         let human_name = parts.next().map(str::trim_start);
 
         let Some(peer) = super::WireGuardPeer::new(key, human_name) else {
-            errors.push(format!("Malformed public key in peers file: '{}'", key));
+            errors.push(format!("Malformed public key in peers file: '{key}'"));
             continue;
         };
 

@@ -64,7 +64,7 @@ impl SlackBackend {
         alert_strings: &settings::AlertStrings,
         reminder_strings: &settings::ReminderStrings,
     ) -> Self {
-        let cached_name = format!("slack#{}", id);
+        let cached_name = format!("slack#{id}");
 
         Self {
             id,
