@@ -296,8 +296,8 @@ mod test {
     fn test_format_key_timestamp_pairs() {
         let mut peers = collections::HashMap::new();
 
-        let key1_str = "CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi0=";
-        let key2_str = "XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg0=";
+        let key1_str = "vfpuUkQqZVkwZx1qvUkqcS+5PzqFqpWVQUO3nK3HXUk=";
+        let key2_str = "PL5QAuDP8bM62q85P7YW+M5cz2WilbtKN6LDKhLRXCM=";
 
         let mut peer1 = wireguard::WireGuardPeer::new(key1_str, Some("Peer 1")).unwrap();
         peer1.last_seen_unix = 1234567890;
@@ -311,8 +311,8 @@ mod test {
         let result = format_key_timestamp_pairs(&peers, &keys);
         assert_eq!(
             result,
-            "CrfE/XA7bVuTv2OVM3wzD2PeHw7EldvkCB8tkdq1Oi0=:1234567890,\
-            XAigmEW/rc0fVvSsnw0xyzElf1vmtFbAe9w7cz+BXg0=:9876543210"
+            "vfpuUkQqZVkwZx1qvUkqcS+5PzqFqpWVQUO3nK3HXUk=:1234567890,\
+            PL5QAuDP8bM62q85P7YW+M5cz2WilbtKN6LDKhLRXCM=:9876543210"
         );
 
         let keys: Vec<wireguard::PeerKey> = Vec::new();
